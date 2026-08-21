@@ -1,0 +1,70 @@
+# CLAUDE.md
+
+Private wedding web app. Currently in **specification phase** — no code yet. Specs live in `specification/`. Read those before proposing implementation.
+
+## Decided facts
+
+**Stack**
+
+- Backend: Go. Single binary, serves both the JSON API and the frontend. Deps: `go-chi/chi/v5`, `go-chi/httplog/v2`, `jmoiron/sqlx`, `go-playground/validator/v10`, `golang.org/x/crypto`, `modernc.org/sqlite` (pure Go, no CGO). **No** `go-chi/cors` (same origin), no ORM, no pgx.
+- Frontend: React + TypeScript + Vite, TanStack Router, TanStack Query, Tailwind, shadcn/ui. Built `dist/` embedded via `go:embed` — one artifact, FE/BE skew impossible. SPA fallback to `index.html` for non-`/api` paths.
+- DB: SQLite at `DB_PATH`, mounted volume. WAL, `foreign_keys=ON`, `busy_timeout=5000`. **Single writer connection** — do not pool writes, SQLite has one writer.
+- Migrations: numbered `.sql` files via `go:embed`, applied in order at startup in a transaction, version tracked in `schema_migration`. Forward-only; no down-migrations.
+- Deployment: one Docker container on the user's own personal server, behind an existing reverse proxy that terminates TLS. Go speaks plain HTTP; trusts `X-Forwarded-For` only from `TRUSTED_PROXY_CIDRS`.
+- Admin: **single** admin, credentials from `ADMIN_USER` / `ADMIN_PASSWORD` env vars in plaintext. No `admin_user` table, no reset flow. Compare with `subtle.ConstantTimeCompare`.
+- Config is env-vars only, no config file. Missing required vars = hard fail at startup.
+- All durable state under `DB_PATH` and `PHOTO_DIR`. Backups are the user's server-side concern, not app code — but never `cp` a live WAL-mode SQLite file; use `VACUUM INTO`.
+- No external SaaS in the critical path.
+
+**Product**
+
+- Audience: ~80 guests / ~60 households. German only. Mobile-first.
+- Wide age range, low tech confidence → accessibility and "log in once" matter more than usual.
+- Auth: per-household code, printed individually on the invite card (variable-data printing). Generic QR on the card points at the site root. Code is the only secret; no username, no password, no email.
+- Code format: 6 chars from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no ambiguous glyphs), printed as `ABC-234`. Input normalized: uppercase, strip spaces/dashes.
+- Session: `HttpOnly`, `Secure`, `SameSite=Lax` cookie, 365-day lifetime.
+- RSVP unit is the **household**, not the individual.
+- Households **can** add plus-ones and children themselves. Guest-added members are flagged as such and shown separately to admins. Soft cap, not a hard wall.
+- Admin sessions are short-lived (hours); household sessions last 365 days with rolling refresh. Different risk profiles.
+- Budget data is admin-only and must be enforced server-side.
+- Page content (schedule, travel, dress code, FAQ, …) is **hardcoded in React components**. No CMS, no Markdown pipeline, no DB-backed text. Content change = rebuild + redeploy; accepted.
+- Seating: layout is a **hand-drawn SVG** checked into the frontend, with stable `id` attributes per table shape. `seating_table.svg_element_id` links DB → shape. App only colors/labels existing shapes, never positions them. No drag-and-drop editor. Guests see the full plan but only their own table is labeled with names.
+- Single-day wedding. No multi-day / arrival-day tracking.
+- **All enum values are English** — DB, API, Go, TypeScript. German only as display labels mapped in the frontend.
+- `guest.attending` is a **single** field carrying attendance *and* scope: `no` | `church_only` | `party_only` | `both`, NULL = unanswered. Contradictory states are unrepresentable. Scope is per guest (exceptions live inside households); the form offers a household-level bulk selector as a UI convenience only.
+- **Scope gates catering.** `meal_choice`, `portion`, `midnight_snack`, and seating apply only to `party_only` / `both`. Every derived count keys off scope, never off "is attending" — otherwise we pay for meals nobody eats.
+- Meal choice: `all` | `vegetarian` | `vegan`. Portion (orthogonal): `none` | `kids` | `full`, default `full` — `none` covers infants and adults not eating. `midnight_snack` is an independent boolean.
+- Transport: `household.transport_seats_needed` / `transport_seats_offered` (church → reception). Used to compute a capacity gap for shuttle planning. The app does **not** match riders to drivers, and stores no phone numbers.
+- `guest.age` (children only) means **age at the wedding date**, asked that way in the UI so it doesn't drift. Caterer age brackets derived at read time, not stored.
+- `guest.seating_need` enum drives physical arrangements: `normal` | `with_parent` | `high_chair` | `stroller` | `wheelchair`. Applies to adults too.
+- Money stored as `INTEGER` cents. Timestamps: UTC RFC3339 `TEXT` (readability when inspecting DB by hand beats epoch ints at this scale). Flags declared `BOOLEAN`.
+- Photo originals kept byte-for-byte, **EXIF intact** — private gallery, and stripping breaks orientation + degrades the archive.
+- Household login codes stored in **plaintext** (must be reprintable; accepted risk) → the SQLite file is a secret.
+
+**Timeline**
+
+- Wedding is 6–12 months out from 2026-08-21. Exact date TBD.
+
+## Architecture rules
+
+Layout is **trimmed hexagonal** (`cmd/`, `internal/domain`, `internal/application`, `internal/infrastructure/{web,persistence,configuration,security,photo}`, `tests/integration`, `web/`). Enforce:
+
+1. `domain` imports no other internal package. Business rules are pure functions over plain structs.
+2. `application` never imports `web` and contains no SQL.
+3. Handlers contain no business rules and no SQL — parse, delegate, format.
+4. **Never serialize domain structs to JSON.** Always explicit DTOs in `web/dto`. Reason is privacy, not purity: `household.code` and `admin_note` must never reach a guest response.
+
+Deliberately absent: port interfaces, mocks, JWT, bcrypt, ORM. Add an interface only when something real needs substituting.
+
+Tests: domain unit tests for RSVP/seating/budget invariants + integration tests over the HTTP API against a real temp-file SQLite. Deps: `stretchr/testify`, `google/go-cmp`. No mocking library.
+
+## Conventions
+
+- Spec and code comments in English. All user-facing UI text in German.
+- **Markdown: no manual line wrapping.** One paragraph = one line. Let the editor soft-wrap.
+- Feature specs: high-level overview in `specification/02-features.md`; detailed per-feature user stories in `specification/features/<feature>.md`.
+- Record rejected options and the reason, not just the chosen one.
+
+## Threat model
+
+Trusted guests (friends and family). Defend against guest **mistakes** and drive-by strangers — not a determined insider. Exception: admin-only data (budget) must be genuinely inaccessible to guest sessions.
