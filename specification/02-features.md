@@ -24,7 +24,7 @@ Priorities: **P0** = site is useless without it · **P1** = ship for invite send
 
 ## F1 — Household login (P0)
 
-Card carries a **generic** QR code (identical on all cards, points at site root) plus an **individually printed** household code. Print shop does variable-data printing for the codes; extra cost accepted (~€55).
+Card carries a **generic** QR code (identical on all cards, points at site root) plus an **individually printed** household code. Print shop has confirmed it does variable-data printing; extra cost accepted (~€55).
 
 Key decisions:
 
@@ -134,3 +134,4 @@ Feature-flagged, opens after the wedding.
 | Email magic links | No reliable email addresses for all guests; adds an SMTP dependency. |
 | "Maybe" RSVP option | Makes catering numbers unusable. |
 | Public site with a private area | Doubles design work; nothing here is for strangers. |
+| Separate save-the-date mailing | Only worth it when the invitation is too far out to be actionable, or when guests must book long-haul travel. Neither holds at nine months with a mostly local guest list. Splitting would also mean two variable-data print runs, or a save-the-date pointing at a site nobody can log into. One mailing in Oct/Nov 2026 does both jobs. |

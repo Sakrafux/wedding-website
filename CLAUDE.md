@@ -43,7 +43,9 @@ Private wedding web app. Currently in **specification phase** — no code yet. S
 
 **Timeline**
 
-- Wedding is 6–12 months out from 2026-08-21. Exact date TBD.
+- Wedding: **2027-07-17** (working assumption; alternatives are within nine days, so a change is a copy edit).
+- **Invitations go out Oct/Nov 2026** — that, not the wedding, is the real deadline. F1/F3/F4/F5/F2/F11 must ship before it; F6/F7/F8/F9/F10 may follow. Dev target: done by end of 2026, ideally Sep/Oct.
+- RSVP deadline ~2 months before the wedding (mid-May 2027). Milestones in `07-roadmap.md` are deliberately undated — order is the plan.
 
 ## Architecture rules
 
@@ -60,7 +62,8 @@ Tests: domain unit tests for RSVP/seating/budget invariants + integration tests 
 
 ## Conventions
 
-- Spec and code comments in English. All user-facing UI text in German.
+- Spec and code comments in English. All user-facing UI text in German, informal **"du"**.
+- Design system (colours, type, components, German enum label map) lives in `specification/05-design.md`. German strings belong in `web/src/lib/labels.ts`, never inline in a component.
 - **Markdown: no manual line wrapping.** One paragraph = one line. Let the editor soft-wrap.
 - Feature specs: high-level overview in `specification/02-features.md`; detailed per-feature user stories in `specification/features/<feature>.md`.
 - Record rejected options and the reason, not just the chosen one.

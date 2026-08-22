@@ -1,14 +1,14 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-08-21 · Planning phase, no code written yet.
+Status: as of 2026-08-22 · Planning phase, no code written yet.
 
 This tracks what is left **to plan**, not to build. Implementation tasks come after the specification is complete.
 
 ## Documents still to write
 
-- [ ] `05-design.md` — visual direction, typography, colour, layout patterns, component inventory, accessibility specifics. Needs your taste as input; blocked on the questions under "Design" below.
-- [ ] `06-privacy-security.md` — what personal data we hold and why, GDPR posture for a private family site, retention and deletion, secret handling (the SQLite file contains plaintext login codes), rate limiting, session handling, what the audit log is for.
-- [ ] `07-roadmap.md` — milestones anchored to the wedding date, with hard gates (see "Sequencing gates" below).
+- [x] `05-design.md` — written 2026-08-22. Warm/traditional, cream + sage + terracotta, Cormorant Garamond display / Source Serif 4 body, 18px base, no dark mode, informal "du". Includes the component inventory and the full German enum label map.
+- [x] `06-privacy-security.md` — written 2026-08-22. Data inventory, GDPR posture (Art. 2(2)(c) household exemption, behave as if it applied anyway), retention and end-of-life procedure, "the database is a secret" and the leak-recovery path, code strength maths, rate limiting, sessions, response hygiene, headers/CSP, photo EXIF risk, logging rules, and a table of deliberate non-defences.
+- [x] `07-roadmap.md` — written 2026-08-22. M0–M9, **undated by design** — order is the plan. Three anchors only: wedding 2027-07-17, send-out Oct/Nov 2026, RSVP deadline ~2 months before the wedding. Splits features into must-ship-before-send-out and can-follow, names F6 as the release valve, and carries the facts/risk tables.
 - [ ] `specification/features/*.md` — detailed user stories per feature, one file each. Written just before each feature is built, not all up front. Priority order: F1 login, F3 RSVP, F4 plus-ones, F5/F6 admin, F7 seating, F8 budget, F9/F10 gallery.
 - [ ] `README.md` — human-facing summary. Written **last**, once the specs are stable.
 
@@ -16,23 +16,25 @@ This tracks what is left **to plan**, not to build. Implementation tasks come af
 
 ### Wedding facts (block content, seating, and the roadmap)
 
-- [ ] Exact wedding date. Everything time-based depends on it: countdown, RSVP deadline, "age at the wedding", roadmap milestones.
-- [ ] Church and reception venues — names, addresses, travel notes.
+- [x] Wedding date: **2027-07-17** assumed as the working date. Set by venue availability, so it becomes firm when the venue is booked — expected early September 2026. Alternatives were 07-16, 07-23, 07-24, all within nine days.
+- [ ] Church and reception venues — names, addresses, travel notes. Being fixed within ~2 weeks of 2026-08-22; this also fixes the wedding date.
 - [ ] Schedule of the day for the Ablauf page.
 - [ ] Room/table layout for the reception, enough to draw the floor-plan SVG.
 - [ ] Dress code wording; gift wishes and bank details.
 - [ ] Caterer age brackets for children's pricing (e.g. 0–3 free / 4–12 reduced / 13+ full) — derived at read time, so this can land late, but the caterer decides the numbers.
-- [ ] Confirm the print shop actually does variable-data printing for the household codes. The whole F1 login design assumes it. Fallback if not: printed code slips inserted per envelope.
+- [x] Print shop does variable-data printing for the household codes — confirmed. F1 stands as specified; the code-slip fallback is not needed.
 
 ### Product decisions still open
 
-- [ ] Launch shape: one launch with the invitations, or a "save the date" phase first?
-- [ ] RSVP deadline date, and what the site shows after it passes.
+- [x] Launch shape: **one launch with the invitations**, sent Oct/Nov 2026. No separate save-the-date — reasoning recorded in `02-features.md` and `07-roadmap.md`.
+- [ ] RSVP deadline: **~2 months before the wedding**, so around mid-May 2027 — exact date still to pick, and it must be picked before send-out because it gets **printed on the card**. Also open: what the site shows after it passes.
 - [ ] Default soft cap on guest-added members (proposed: 2).
-- [ ] Informal "du" vs formal "Sie" throughout the German copy. (Proposed: du.)
+- [x] Informal "du" vs formal "Sie" throughout the German copy. **Decided: du**, with neutral phrasing preferred where it reads naturally. See `05-design.md`.
 - [ ] Does an admin-only "we think they're probably coming" state add value over plain no-answer? Guests would never see it.
 - [ ] Track invitation send-out date per household, to time reminder nudges?
-- [ ] Photo retention: how long does the gallery stay online after the wedding, and what happens to the files afterwards?
+- [ ] Photo retention: how long does the gallery stay online after the wedding, and what happens to the files afterwards? Blocks the end-of-life procedure in `06-privacy-security.md`.
+- [ ] Can the caterer export be name-free (counts + allergies keyed by table) instead of a full guest list? Would remove the largest planned data disclosure.
+- [ ] Draft the German "Datenschutz" page text, alongside the F2 content pages.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
 
 ### Seating detail (for the F7 story)
@@ -41,12 +43,12 @@ This tracks what is left **to plan**, not to build. Implementation tasks come af
 - [ ] Printable seating output for the day itself: what does it look like, and is it produced by the app or by hand from the data?
 - [ ] Does the phone view need a separate, zoomed SVG variant, or does pan/zoom on one drawing suffice?
 
-### Design (blocks `05-design.md`)
+### Design — resolved 2026-08-22, see `05-design.md`
 
-- [ ] Do you have wedding stationery, colours, or fonts the site should match?
-- [ ] Overall feel: warm/traditional, minimal/modern, playful?
-- [ ] Photography available for hero imagery, or is it type-and-colour only at launch?
-- [ ] Dark mode: worth it, or a distraction for this audience?
+- [x] Stationery/colours/fonts to match: none exist. The site defines the palette.
+- [x] Overall feel: warm/traditional.
+- [x] Hero photography: engagement photos exist, hero ships from day one. Final selection and crop still open.
+- [x] Dark mode: rejected.
 
 ### Technical loose ends
 
@@ -69,7 +71,7 @@ Non-negotiable ordering, mostly to avoid painful migrations or reprints:
 
 Small things I know are loose, worth a pass before implementation:
 
-- [ ] `06-privacy-security.md` is referenced from `03-data-model.md` and `04-architecture.md` but does not exist yet.
-- [ ] German UI label mapping for every English enum value is not written down anywhere. It should live in one place in the frontend, and probably be listed in `05-design.md`.
+- [x] `06-privacy-security.md` is referenced from `03-data-model.md` and `04-architecture.md` — now exists.
+- [x] German UI label mapping for every English enum value — now in `05-design.md`, to be implemented as `web/src/lib/labels.ts`.
 - [ ] The API sketch in `04-architecture.md` predates the attendance-scope and transport fields; the RSVP payload shape needs a refresh once the F3 story is written.
-- [ ] No decision recorded on what a guest sees between "RSVP deadline passed" and "seating published" — a period where the site has little to say.
+- [ ] No decision recorded on what a guest sees between "RSVP deadline passed" and "seating published" — a period where the site has little to say. Roughly five weeks (2027-05-23 → late June); `07-roadmap.md` wants this decided during M5.

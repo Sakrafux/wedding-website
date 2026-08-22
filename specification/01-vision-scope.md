@@ -55,6 +55,5 @@ It replaces: a paper insert with schedule/travel info, RSVP cards mailed back, a
 
 ## Open questions
 
-- Exact wedding date, venue, table layout → needed for content and seating.
-- Do we need a "save the date" phase, or does the site launch once with the invites?
+- Venue and table layout — still needed for content and seating. The wedding date is assumed to be 2027-07-17, and invitations go out in Oct/Nov 2026 as a single launch (no save-the-date phase).
 - Photo retention: how long do we keep the gallery online after the wedding?
