@@ -2,15 +2,15 @@
 
 Status: as of 2026-08-22 · Planning phase, no code written yet.
 
-This tracks what is left **to plan**, not to build. Implementation tasks come after the specification is complete.
+This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
 ## Documents still to write
 
-- [x] `05-design.md` — written 2026-08-22. Warm/traditional, cream + sage + terracotta, Cormorant Garamond display / Source Serif 4 body, 18px base, no dark mode, informal "du". Includes the component inventory and the full German enum label map.
-- [x] `06-privacy-security.md` — written 2026-08-22. Data inventory, GDPR posture (Art. 2(2)(c) household exemption, behave as if it applied anyway), retention and end-of-life procedure, "the database is a secret" and the leak-recovery path, code strength maths, rate limiting, sessions, response hygiene, headers/CSP, photo EXIF risk, logging rules, and a table of deliberate non-defences.
-- [x] `07-roadmap.md` — written 2026-08-22. M0–M9, **undated by design** — order is the plan. Three anchors only: wedding 2027-07-17, send-out Oct/Nov 2026, RSVP deadline ~2 months before the wedding. Splits features into must-ship-before-send-out and can-follow, names F6 as the release valve, and carries the facts/risk tables.
-- [ ] `specification/features/*.md` — detailed user stories per feature, one file each. Written just before each feature is built, not all up front. Priority order: F1 login, F3 RSVP, F4 plus-ones, F5/F6 admin, F7 seating, F8 budget, F9/F10 gallery.
-- [ ] `README.md` — human-facing summary. Written **last**, once the specs are stable.
+- [x] [`specification/05-design.md`](specification/05-design.md) — written 2026-08-22. Warm/traditional, cream + sage + terracotta, Cormorant Garamond display / Source Serif 4 body, 18px base, no dark mode, informal "du". Includes the component inventory and the full German enum label map.
+- [x] [`specification/06-privacy-security.md`](specification/06-privacy-security.md) — written 2026-08-22. Data inventory, GDPR posture (Art. 2(2)(c) household exemption, behave as if it applied anyway), retention and end-of-life procedure, "the database is a secret" and the leak-recovery path, code strength maths, rate limiting, sessions, response hygiene, headers/CSP, photo EXIF risk, logging rules, and a table of deliberate non-defences.
+- [x] [`specification/07-roadmap.md`](specification/07-roadmap.md) — written 2026-08-22. M0–M9, **undated by design** — order is the plan. Three anchors only: wedding 2027-07-17, send-out Oct/Nov 2026, RSVP deadline ~2 months before the wedding. Splits features into must-ship-before-send-out and can-follow, names F6 as the release valve, and carries the facts/risk tables.
+- [~] [`specification/features/`](specification/features/README.md) — epic directories with one file per story, tracked in `specification/features/README.md`. **Written: E0 setup (12 stories), F1 login (11 stories).** Every other epic exists in the index as bare checkboxes; detail gets written just before that epic is built. Order: F5 admin households, F3 RSVP, F4 plus-ones, F2 content, F11 quality, F6 dashboard, F8 budget, F9 gallery, F7 seating, F10 uploads.
+- [x] Root [`README.md`](README.md) — written 2026-08-22. What it is, how it is built, the document index, conventions, and the intended run/operate commands. The "Running it" section is marked as unverified until `E0-12` lands, and needs a pass once it has.
 
 ## Decisions needing your input
 
@@ -26,13 +26,13 @@ This tracks what is left **to plan**, not to build. Implementation tasks come af
 
 ### Product decisions still open
 
-- [x] Launch shape: **one launch with the invitations**, sent Oct/Nov 2026. No separate save-the-date — reasoning recorded in `02-features.md` and `07-roadmap.md`.
+- [x] Launch shape: **one launch with the invitations**, sent Oct/Nov 2026. No separate save-the-date — reasoning recorded in [02-features](specification/02-features.md) and [07-roadmap](specification/07-roadmap.md).
 - [ ] RSVP deadline: **~2 months before the wedding**, so around mid-May 2027 — exact date still to pick, and it must be picked before send-out because it gets **printed on the card**. Also open: what the site shows after it passes.
 - [ ] Default soft cap on guest-added members (proposed: 2).
-- [x] Informal "du" vs formal "Sie" throughout the German copy. **Decided: du**, with neutral phrasing preferred where it reads naturally. See `05-design.md`.
+- [x] Informal "du" vs formal "Sie" throughout the German copy. **Decided: du**, with neutral phrasing preferred where it reads naturally. See [05-design](specification/05-design.md).
 - [ ] Does an admin-only "we think they're probably coming" state add value over plain no-answer? Guests would never see it.
 - [ ] Track invitation send-out date per household, to time reminder nudges?
-- [ ] Photo retention: how long does the gallery stay online after the wedding, and what happens to the files afterwards? Blocks the end-of-life procedure in `06-privacy-security.md`.
+- [ ] Photo retention: how long does the gallery stay online after the wedding, and what happens to the files afterwards? Blocks the end-of-life procedure in [06-privacy-security](specification/06-privacy-security.md).
 - [ ] Can the caterer export be name-free (counts + allergies keyed by table) instead of a full guest list? Would remove the largest planned data disclosure.
 - [ ] Draft the German "Datenschutz" page text, alongside the F2 content pages.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
@@ -43,7 +43,7 @@ This tracks what is left **to plan**, not to build. Implementation tasks come af
 - [ ] Printable seating output for the day itself: what does it look like, and is it produced by the app or by hand from the data?
 - [ ] Does the phone view need a separate, zoomed SVG variant, or does pan/zoom on one drawing suffice?
 
-### Design — resolved 2026-08-22, see `05-design.md`
+### Design — resolved 2026-08-22, see [05-design](specification/05-design.md)
 
 - [x] Stationery/colours/fonts to match: none exist. The site defines the palette.
 - [x] Overall feel: warm/traditional.
@@ -72,6 +72,6 @@ Non-negotiable ordering, mostly to avoid painful migrations or reprints:
 Small things I know are loose, worth a pass before implementation:
 
 - [x] `06-privacy-security.md` is referenced from `03-data-model.md` and `04-architecture.md` — now exists.
-- [x] German UI label mapping for every English enum value — now in `05-design.md`, to be implemented as `web/src/lib/labels.ts`.
-- [ ] The API sketch in `04-architecture.md` predates the attendance-scope and transport fields; the RSVP payload shape needs a refresh once the F3 story is written.
-- [ ] No decision recorded on what a guest sees between "RSVP deadline passed" and "seating published" — a period where the site has little to say. Roughly five weeks (2027-05-23 → late June); `07-roadmap.md` wants this decided during M5.
+- [x] German UI label mapping for every English enum value — now in [05-design](specification/05-design.md), to be implemented as `web/src/lib/labels.ts`.
+- [ ] The API sketch in [04-architecture](specification/04-architecture.md) predates the attendance-scope and transport fields; the RSVP payload shape needs a refresh once the F3 stories are written. `F1-B04` already defines the real `/api/me` shape, so the sketch is drifting.
+- [ ] No decision recorded on what a guest sees between "RSVP deadline passed" and "seating published" — a period where the site has little to say. Roughly five weeks in late spring 2027; [07-roadmap](specification/07-roadmap.md) wants this decided during M5.

@@ -7,7 +7,7 @@ Private wedding web app. Currently in **specification phase** — no code yet. S
 **Stack**
 
 - Backend: Go. Single binary, serves both the JSON API and the frontend. Deps: `go-chi/chi/v5`, `go-chi/httplog/v2`, `jmoiron/sqlx`, `go-playground/validator/v10`, `golang.org/x/crypto`, `modernc.org/sqlite` (pure Go, no CGO). **No** `go-chi/cors` (same origin), no ORM, no pgx.
-- Frontend: React + TypeScript + Vite, TanStack Router, TanStack Query, Tailwind, shadcn/ui. Built `dist/` embedded via `go:embed` — one artifact, FE/BE skew impossible. SPA fallback to `index.html` for non-`/api` paths.
+- Frontend: React + TypeScript + Vite, TanStack Router, TanStack Query, Tailwind, shadcn/ui. Package manager is **pnpm** (via corepack, version pinned in `package.json`) — never npm or yarn. Built `dist/` embedded via `go:embed` — one artifact, FE/BE skew impossible. SPA fallback to `index.html` for non-`/api` paths.
 - DB: SQLite at `DB_PATH`, mounted volume. WAL, `foreign_keys=ON`, `busy_timeout=5000`. **Single writer connection** — do not pool writes, SQLite has one writer.
 - Migrations: numbered `.sql` files via `go:embed`, applied in order at startup in a transaction, version tracked in `schema_migration`. Forward-only; no down-migrations.
 - Deployment: one Docker container on the user's own personal server, behind an existing reverse proxy that terminates TLS. Go speaks plain HTTP; trusts `X-Forwarded-For` only from `TRUSTED_PROXY_CIDRS`.
@@ -63,10 +63,21 @@ Tests: domain unit tests for RSVP/seating/budget invariants + integration tests 
 ## Conventions
 
 - Spec and code comments in English. All user-facing UI text in German, informal **"du"**.
+- **Documentation: names first, comments for decisions.** Variable and function names must be sensible and legible — a good name removes the need for a comment. Doc comments on non-trivial functions (exported or not): what it does, why it exists, non-obvious constraints. Inline comments where *appropriate*: non-trivial logic and, above all, **decisions** — why this threshold, why this order, why we deviate from the obvious approach. Also document unusual terms, settings, and magic values.
+- **Do not** comment the self-evident (`== nil` checks, obvious loops, getters). Length is not a trigger: a long function that parses and destructures a request body is trivial and needs no commentary; a short function encoding a business decision does.
+- **Deliberate omissions in DTOs must be commented.** Where a DTO leaves out a field on purpose (`household.code`, `admin_note`), say so and why — otherwise a later reader "fixes" the gap and leaks it. Same for any other privacy- or security-motivated absence.
+- **A stale comment is a bug.** Change the code, update or delete the comment. A comment that lies is worse than no comment.
+- Go doc comments start with the identifier and are full sentences: `// ResolveHousehold returns the household for a login code, or ErrUnknownCode.` Keeps `go doc` output readable.
+- Every migration `.sql` file opens with a header comment stating its intent. Migrations are forward-only with no down-migrations, so that comment is the only record of why the change happened.
 - Design system (colours, type, components, German enum label map) lives in `specification/05-design.md`. German strings belong in `web/src/lib/labels.ts`, never inline in a component.
 - **Markdown: no manual line wrapping.** One paragraph = one line. Let the editor soft-wrap.
-- Feature specs: high-level overview in `specification/02-features.md`; detailed per-feature user stories in `specification/features/<feature>.md`.
+- Feature specs: high-level overview in `specification/02-features.md`. Detail lives in `specification/features/<EPIC>/`, one directory per epic, one file per story, from `_TEMPLATE.md`.
+- **Story IDs are permanent**: `<EPIC>-<B|F><NN>`, e.g. `F3-B02`. Never renumber — append or use a gap. `E0` (setup) and `E-ops` (gates) use a plain sequence.
+- **`specification/features/README.md` is the only place build progress lives.** Checkboxes there; story files never carry a status line. Root `TODO.md` is the separate, planning-level list: open decisions, missing facts, spec debt — not implementation tasks.
+- Backend story leads, frontend story follows, per slice. The backend story defines the endpoint and DTO shape; the frontend story consumes that contract and invents no fields.
+- Story detail is written just before its epic is built. Unwritten stories exist as bare checkbox lines in the index — a tree written months early encodes assumptions the previous epic invalidates.
 - Record rejected options and the reason, not just the chosen one.
+- At the end of a session, add or extend today's entry in `JOURNAL.md` — newest first, `##` date heading, a paragraph on what was done, then a `Time:` line and a `Cost:` line per model. Only describe work actually done in the session; leave time and cost as `<h>` / `$<x>` for the user to fill in.
 
 ## Threat model
 
