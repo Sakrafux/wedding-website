@@ -14,9 +14,9 @@ Added one convention to `CLAUDE.md` off the back of this: comments that point at
 
 Also confirmed the repo layout against a `backend/` + `frontend/` split and kept the spec's root layout: `go:embed` cannot cross the module root, so splitting would force a copy of `frontend/dist` into the Go tree at build time and allow a stale copy in development.
 
-Time: <h>
+Time: 1h
 
-Cost: Opus 5 — $<x>
+Cost: Opus 5 — $4.11
 
 ## 2026-08-22
 
