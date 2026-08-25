@@ -2,6 +2,22 @@
 
 Work log for the wedding web app. Newest entry first. One `##` heading per day, then: what the day was about, a `Time:` line, a `Cost:` line per model used.
 
+## 2026-08-25
+
+First code. `E0-01` done: Go module `github.com/Sakrafux/wedding-website` on Go 1.26, the full package tree from `04-architecture.md` with a `doc.go` in each package carrying that package's rules, chi router with `httplog`, `GET /api/health` returning `{"status":"ok"}`, and graceful shutdown on SIGINT/SIGTERM with all four server timeouts set explicitly. Direct dependencies held to `chi/v5` and `httplog/v2` as the story asks; the integration test uses stdlib `httptest` only, since testify arrives with the real harness in `E0-11`.
+
+The web adapter got split further than `04-architecture.md` originally drew it: `web` now holds only the router, with `handler/`, `httpio/`, `dto/` and `middleware/` beneath it. The forcing constraint is the error envelope — `middleware` has to reject requests in the same shape handlers use, and since `web` imports `middleware` to build the router, envelope writers inside `web` would be an import cycle. `httpio` owns them, so a 401 from the session gate and a 404 from a handler are identical by construction. Its name cost a detour: `helper/` was rejected because it excludes nothing and therefore collects everything, and a shorter `respond.JSON` / `respond.Error` pair was tried and dropped again — a Go function called `Error` reads as the `error` interface method, and `Fail` reads as `testing.T`. The explicit `WriteJSON` / `WriteError` cannot be misread. Spec tree and the deviations section updated to match.
+
+Two more decisions worth recording. `middleware.RealIP` is deliberately not installed — it believes `X-Forwarded-For` from anyone, which would make the login rate limit bypassable, so `F1-B05` will resolve the client IP against `TRUSTED_PROXY_CIDRS` instead. And the error envelope from `04-architecture.md` (`{"error":{"code","message"}}`) already exists in `web/dto` in minimal form, because `/api` needs a JSON 404 today; `E0-06` grows it into the shared domain-error mapping rather than inventing a second shape.
+
+Added one convention to `CLAUDE.md` off the back of this: comments that point at future work must name the story (`E0-06 replaces this`), and a story is not ticked until `grep -rn "<ID>" --include='*.go' .` comes back empty. This code already carries seven such pointers, and they are the comments most likely to rot — the code around them stays correct, so nothing draws the eye to them.
+
+Also confirmed the repo layout against a `backend/` + `frontend/` split and kept the spec's root layout: `go:embed` cannot cross the module root, so splitting would force a copy of `frontend/dist` into the Go tree at build time and allow a stale copy in development.
+
+Time: <h>
+
+Cost: Opus 5 — $<x>
+
 ## 2026-08-22
 
 Finished the rough plan: wrote `05-design.md` (design system, colours, type, German enum labels), `06-privacy-security.md` (threat model, guest-vs-admin data boundaries) and `07-roadmap.md` (undated milestones, invitations Oct/Nov 2026 as the real deadline). Started the per-feature spec split under `specification/features/` with an index README and `_TEMPLATE.md`. Settled on this journal as the place to track effort and AI spend.

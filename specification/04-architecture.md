@@ -55,7 +55,9 @@ Trimmed hexagonal. The layering discipline is kept; the ceremony is not.
 │   │   ├── budget.go
 │   │   └── gallery.go
 │   └── infrastructure/
-│       ├── web/                    # chi handlers
+│       ├── web/                    # router wiring: middleware chain + routes
+│       │   ├── handler/            #   request handlers, one file per resource
+│       │   ├── httpio/             #   JSON + error-envelope writers
 │       │   ├── dto/                #   explicit request/response types
 │       │   ├── middleware/         #   session, admin gate, ratelimit, requestID
 │       │   └── static.go           #   go:embed SPA + index.html fallback
@@ -79,6 +81,7 @@ Trimmed hexagonal. The layering discipline is kept; the ceremony is not.
 - **No `application/port/` interfaces.** Ports exist to allow substitution. There will be exactly one database, forever, and one web adapter. An interface whose only implementations are the real store and a mock buys nothing. Extracting an interface later is a mechanical refactor in Go, not a rewrite — so this is deferred, not foreclosed.
 - **No hand-maintained mocks.** Because the SQLite driver is pure Go, an integration test against a real temp-file database is both easier to write and stronger evidence than a mocked unit test. Mocks are also the artifact most likely to rot in a project touched once a month.
 - **DTOs are kept — but for privacy, not purity.** `household.code` and `household.admin_note` must never appear in a guest's JSON. If handlers serialized domain structs directly, one added field would silently leak a login code. Explicit response types make that class of leak impossible rather than merely unlikely.
+- **`web` is split into `handler/`, `httpio/`, `dto/`, `middleware/`.** A flat `web` package would end up around fifteen handler files next to the router, and — more decisive — `middleware` must reject requests in the same error envelope handlers use. Since `web` imports `middleware` to build the router, envelope writers living in `web` would be an import cycle. `httpio` holds them instead, so a `401` from the session gate and a `404` from a handler are the same shape by construction. `web` itself keeps only the wiring. The name is `httpio` and not `helper/` or `util/`, which exclude nothing and therefore collect everything; its functions keep the explicit `Write` prefix (`WriteJSON`, `WriteError`) because a Go function called `Error` reads as the `error` interface method.
 - **No JWT, no bcrypt in `security/`.** Sessions are opaque random tokens in a DB table: a household session must last a year and stay revocable, which stateless JWTs handle badly. Password hashing is moot with a single plaintext-env admin.
 
 ## Testing
@@ -219,6 +222,7 @@ A restore should be rehearsed once before invitations go out. An untested backup
 |---|---|
 | nginx container serving static, Go serving `/api` | Contradicts the single-container goal for no benefit at this scale. |
 | Frontend served from a mounted directory | Allows FE/BE version skew. Embedding makes it impossible. |
+| `backend/` + `frontend/` top-level split | `go:embed` cannot cross the module root, so the SPA build would have to be copied into the Go tree before every build — an extra step and a stale copy waiting to happen in development. |
 | `mattn/go-sqlite3` (CGO) | Needs a C toolchain in the build and a fatter runtime base; the speed is not needed. |
 | ORM (GORM, ent) | Heavy abstraction over a ~10-table schema we fully understand. sqlx is the right altitude. |
 | Full hexagonal with port interfaces + mocks | One DB and one web adapter forever; substitution is never exercised. Layering kept, ceremony dropped. |

@@ -35,7 +35,7 @@ Epics map to the milestones in [07-roadmap](../07-roadmap.md). The roadmap says 
 
 Nothing user-visible. Exit criterion: the container runs on the real server, behind the real reverse proxy, over HTTPS.
 
-- [ ] `E0-01` Go module, package layout, chi router, httplog
+- [x] `E0-01` Go module, package layout, chi router, httplog
 - [ ] `E0-02` Config from environment, hard fail on missing required vars
 - [ ] `E0-03` SQLite connection: pragmas, single-writer pool, read pool
 - [ ] `E0-04` Migration runner and `schema_migration`
