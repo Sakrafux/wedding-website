@@ -61,15 +61,28 @@ func main() {
 	}
 }
 
-// run wires logger, router and server, then blocks until the process is asked to
-// stop. It exists so that no code path calls os.Exit directly, which would skip
-// deferred cleanup — the database handle and photo directory will rely on that later.
+// run wires logger, database, router and server, then blocks until the process is
+// asked to stop. It exists so that no code path calls os.Exit directly, which would
+// skip deferred cleanup — the database handles are closed that way.
 func run(config configuration.Config, logger *httplog.Logger) error {
+	database, err := configuration.OpenDatabase(config)
+	if err != nil {
+		return err
+	}
+	// Closed after Shutdown returns, so in-flight requests keep a usable handle
+	// through the drain.
+	defer func() {
+		if err := database.Close(); err != nil {
+			logger.Error("closing database failed", "error", err)
+		}
+	}()
+	logger.Info("database opened", "path", config.DatabasePath)
+
 	listenAddr := config.ListenAddr()
 
 	server := &http.Server{
 		Addr:              listenAddr,
-		Handler:           web.NewRouter(logger),
+		Handler:           web.NewRouter(logger, database),
 		ReadHeaderTimeout: readHeaderTimeout,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,

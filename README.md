@@ -97,9 +97,12 @@ Nothing loads `.env` automatically — there is no dotenv dependency, on purpose
 Check it is up:
 
 ```bash
-curl -s localhost:8080/api/health        # {"status":"ok"}
+curl -s localhost:8080/api/health        # {"status":"ok"} — liveness, no dependencies
+curl -s localhost:8080/api/ready         # {"status":"ok","database":"ok"}, 503 if not
 curl -si localhost:8080/api/nope         # JSON 404 envelope, not chi's HTML
 ```
+
+`/api/ready` is the one that proves the process opened the database it was configured with; `/api/health` deliberately never fails on a subsystem, so a restart policy cannot loop on it.
 
 Startup logs the whole config as JSON with `ADMIN_PASSWORD` redacted, so the first log line tells you which values the process actually got. `LOG_LEVEL=debug` is the useful setting locally. Ctrl-C exercises the real graceful-shutdown path rather than killing the process.
 

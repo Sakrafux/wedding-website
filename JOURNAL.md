@@ -8,12 +8,20 @@ Entries stay short. The reasoning behind a decision belongs in the spec, the sto
 
 Done:
 
+- `E0-03` — `configuration.Database`: write pool capped at one connection, separate read-only pool, pragmas carried in the DSN so every connection gets them, parent directory created, both handles closed on shutdown.
+- `GET /api/ready` (`handler.System.Ready`) pinging both pools, 503 with the reason kept in the log.
+- Integration tests: pragmas across concurrent connections per pool, FK violation rejected, concurrent writes serialised, read pool rejects writes and sees committed rows, both `/api/ready` paths. Test helpers moved to `tests/integration/harness_test.go`.
 - `E0-02` — `configuration.Config` + `Load()`, all eight env vars, aggregated validation error, `ADMIN_PASSWORD` redacted in `LogValue`/`String`, unit tests.
 - `main` loads config before the logger and takes the log level from it; failure goes to a plain stderr `slog` handler, exit 1.
 - `.env.example` committed, `.env` and `/local/` gitignored, README `Local development` section.
 
 Decisions:
 
+- Health split into `/api/health` (liveness, no dependencies) and `/api/ready` (pools pinged, 503). Recorded in `04-architecture.md` and `E0-03` instruction 7; the story's "extend the health check" line was rewritten.
+- Read pool DSN omits `journal_mode` — setting it writes the file header, which `mode=ro` cannot. Write pool opens first so the file and its `-wal`/`-shm` exist.
+- `_txlock=immediate` on the write pool: a deferred transaction upgrading mid-flight can hit a `SQLITE_BUSY` that `busy_timeout` cannot resolve.
+- Handlers take `*configuration.Database` directly. `configuration` is a leaf and stays one — wiring lives in `cmd/wedding`, so there is no cycle to defend against and no interface worth writing. Its `doc.go` and the layout in `04-architecture.md` both claimed it owns the DI wiring; corrected.
+- Handlers are resource-scoped structs, one file per group: `handler/system.go` holds `System` plus health, ready and the `/api` fallbacks, all as methods even where there are no dependencies. Rejected a single handler struct for the whole API. In `04-architecture.md` under the deliberate deviations.
 - Env var set but blank counts as absent — failure if required, default if optional.
 - `Load()` reads `os.Getenv` directly; no injected lookup, `t.Setenv` covers the tests.
 - `testify` pulled in early (it was pencilled in for `E0-11`).

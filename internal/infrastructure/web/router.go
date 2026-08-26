@@ -6,6 +6,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httplog/v2"
 
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/handler"
 )
 
@@ -15,15 +16,18 @@ import (
 // Later stories widen the parameter list with handler dependencies. main and the
 // integration tests both construct the router through this one function, so the
 // tests exercise the real middleware chain rather than an approximation of it.
-func NewRouter(logger *httplog.Logger) *chi.Mux {
+func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mux {
+	system := handler.NewSystem(database)
+
 	router := chi.NewRouter()
 	registerMiddleware(router, logger)
 
 	router.Route("/api", func(api chi.Router) {
-		api.Get("/health", handler.Health)
+		api.Get("/health", system.Health)
+		api.Get("/ready", system.Ready)
 
-		api.NotFound(handler.APINotFound)
-		api.MethodNotAllowed(handler.APIMethodNotAllowed)
+		api.NotFound(system.APINotFound)
+		api.MethodNotAllowed(system.APIMethodNotAllowed)
 	})
 
 	return router

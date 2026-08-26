@@ -56,13 +56,13 @@ Trimmed hexagonal. The layering discipline is kept; the ceremony is not.
 │   │   └── gallery.go
 │   └── infrastructure/
 │       ├── web/                    # router wiring: middleware chain + routes
-│       │   ├── handler/            #   request handlers, one file per resource
+│       │   ├── handler/            #   request handlers, one file per resource group
 │       │   ├── httpio/             #   JSON + error-envelope writers
 │       │   ├── dto/                #   explicit request/response types
 │       │   ├── middleware/         #   session, admin gate, ratelimit, requestID
 │       │   └── static.go           #   go:embed SPA + index.html fallback
 │       ├── persistence/            # sqlx stores, concrete types, embedded migrations
-│       ├── configuration/          # env parsing, DI wiring, sqlite pragmas/pools
+│       ├── configuration/          # env parsing, sqlite pragmas/pools (a leaf package)
 │       ├── security/               # session tokens, code normalization, admin compare
 │       └── photo/                  # file storage, thumbnailing
 ├── tests/integration/              # API-level tests against a real temp SQLite
@@ -81,6 +81,7 @@ Trimmed hexagonal. The layering discipline is kept; the ceremony is not.
 - **No `application/port/` interfaces.** Ports exist to allow substitution. There will be exactly one database, forever, and one web adapter. An interface whose only implementations are the real store and a mock buys nothing. Extracting an interface later is a mechanical refactor in Go, not a rewrite — so this is deferred, not foreclosed.
 - **No hand-maintained mocks.** Because the SQLite driver is pure Go, an integration test against a real temp-file database is both easier to write and stronger evidence than a mocked unit test. Mocks are also the artifact most likely to rot in a project touched once a month.
 - **DTOs are kept — but for privacy, not purity.** `household.code` and `household.admin_note` must never appear in a guest's JSON. If handlers serialized domain structs directly, one added field would silently leak a login code. Explicit response types make that class of leak impossible rather than merely unlikely.
+- **Handlers are resource-scoped structs, one file per group.** `System` (health, ready, `/api` fallbacks), later `Auth`, `RSVP`, `Admin` — each file holds the struct, its constructor and its endpoints as methods, dependencies passed in. Rejected: a single handler struct for the whole API, which would hold every store and service and let any endpoint reach any of them, so "which handlers can touch the budget" would stop being answerable from the type. Endpoints with no dependencies are methods too, so construction and route registration have one shape.
 - **`web` is split into `handler/`, `httpio/`, `dto/`, `middleware/`.** A flat `web` package would end up around fifteen handler files next to the router, and — more decisive — `middleware` must reject requests in the same error envelope handlers use. Since `web` imports `middleware` to build the router, envelope writers living in `web` would be an import cycle. `httpio` holds them instead, so a `401` from the session gate and a `404` from a handler are the same shape by construction. `web` itself keeps only the wiring. The name is `httpio` and not `helper/` or `util/`, which exclude nothing and therefore collect everything; its functions keep the explicit `Write` prefix (`WriteJSON`, `WriteError`) because a Go function called `Error` reads as the `error` interface method.
 - **No JWT, no bcrypt in `security/`.** Sessions are opaque random tokens in a DB table: a household session must last a year and stay revocable, which stateless JWTs handle badly. Password hashing is moot with a single plaintext-env admin.
 
@@ -109,10 +110,14 @@ REST-ish JSON under `/api`. No GraphQL, no RPC framework.
 - Request bodies validated with `validator/v10`; validation failures return a field-keyed error object the frontend renders next to inputs.
 - Errors: consistent JSON shape `{ "error": { "code": "...", "message": "..." } }`. `message` is German and safe to show a guest verbatim.
 - Mutating endpoints require the session's household to own the target row — checked server-side on every request, never inferred from what the frontend sent.
+- Health is split in two. `/api/health` touches no dependency: it is what the restart policy polls, and restarting cannot fix an unmounted volume or a wrong `DB_PATH` — it only replaces a legible error with a crash loop. `/api/ready` pings both database pools and answers 503 when either is unreachable; it is the post-deploy smoke check, and the reason for a failure stays in the log because the endpoint is unauthenticated.
 
 Rough surface:
 
 ```
+GET    /api/health                                  → liveness, no dependencies
+GET    /api/ready                                   → dependencies usable, 503 if not
+
 POST   /api/auth/login              { code }        → sets session cookie
 POST   /api/auth/admin/login        { user, pass }  → sets admin session cookie
 POST   /api/auth/logout

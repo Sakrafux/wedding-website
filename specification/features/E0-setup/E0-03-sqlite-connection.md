@@ -13,7 +13,7 @@ As a developer, I want the database opened correctly once, centrally, so that no
 - Open `modernc.org/sqlite` via `jmoiron/sqlx`.
 - Two handles: a **write** pool capped at one connection, and a read pool.
 - The four pragmas applied to **every** connection, not once at open.
-- Health check extended to verify the database responds.
+- A readiness endpoint, `GET /api/ready`, verifying both pools respond.
 
 **Out:**
 
@@ -28,6 +28,7 @@ As a developer, I want the database opened correctly once, centrally, so that no
 4. Read handle: separate `sqlx.DB`, open in read-only mode, a handful of connections.
 5. Both handles closed on shutdown, before the server stops.
 6. Create the parent directory of `DB_PATH` if absent, so a fresh volume mount does not require a manual `mkdir`.
+7. The database check is a **separate** `GET /api/ready`, not an extension of `/api/health`. `/api/health` is what a restart policy polls, and a restart cannot fix an unmounted volume or a wrong `DB_PATH` — failing it there turns a legible error into a crash loop. `/api/ready` answers 503 when a pool is unreachable and keeps the reason in the log, since it is unauthenticated and a driver error carries the database path.
 
 ## Test plan
 
@@ -38,5 +39,5 @@ As a developer, I want the database opened correctly once, centrally, so that no
 
 ## Done when
 
-- [ ] The app opens a database at `DB_PATH` and the health endpoint reports it reachable.
+- [ ] The app opens a database at `DB_PATH` and `GET /api/ready` reports it reachable.
 - [ ] Checkbox ticked in `README.md`.
