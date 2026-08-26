@@ -35,9 +35,9 @@ Decisions:
 - No dotenv dependency: Compose supplies the environment in production, so it would serve the dev shell alone.
 - Makefile (`run`, `test`, frontend-then-Go `build`) deferred to `E0-09` — one command list, not two. Recorded as instruction 6 there.
 
-Time: <h>
+Time: 1.5h
 
-Cost: Opus 5 — $<x>
+Cost: Opus 5 — $9.45
 
 ## 2026-08-25
 
