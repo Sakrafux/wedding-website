@@ -78,7 +78,7 @@ Tests: domain unit tests for RSVP/seating/budget invariants + integration tests 
 - Backend story leads, frontend story follows, per slice. The backend story defines the endpoint and DTO shape; the frontend story consumes that contract and invents no fields.
 - Story detail is written just before its epic is built. Unwritten stories exist as bare checkbox lines in the index — a tree written months early encodes assumptions the previous epic invalidates.
 - Record rejected options and the reason, not just the chosen one.
-- At the end of a session, add or extend today's entry in `JOURNAL.md` — newest first, `##` date heading, a paragraph on what was done, then a `Time:` line and a `Cost:` line per model. Only describe work actually done in the session; leave time and cost as `<h>` / `$<x>` for the user to fill in.
+- At the end of a session, add or extend today's entry in `JOURNAL.md` — newest first, `##` date heading, a `Done:` list, a `Decisions:` list (omit if nothing was decided), then a `Time:` line and a `Cost:` line per model. Entries are terse bullets, one line each. **Do not restate reasoning that lives in a spec, story file or code comment** — record that a decision was made and where it lives. Only describe work actually done in the session; leave time and cost as `<h>` / `$<x>` for the user to fill in.
 
 ## Threat model
 
