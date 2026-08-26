@@ -1,0 +1,10 @@
+-- 0001 — initial schema.
+--
+-- Placeholder. E0-05 fills this file with the full schema from 03-data-model.md; it
+-- exists already because go:embed does not compile against a directory with no
+-- matching files, and the migration runner needs something to run.
+--
+-- Deliberately empty of statements rather than creating a stub table: an applied
+-- version whose contents later change is the one migration failure mode nothing
+-- detects. Any development database created before E0-05 must be deleted, not
+-- migrated.

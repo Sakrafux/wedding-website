@@ -159,3 +159,17 @@ func createParentAndChildTables(t *testing.T, pool *sqlx.DB) {
 	`)
 	require.NoError(t, err)
 }
+
+// TestMigrationsApplyOnFreshDatabase covers the startup order main relies on: the
+// harness opens an empty file and migrates it, exactly as the binary does, so a
+// missing migration shows up here rather than as a missing table in a later story.
+func TestMigrationsApplyOnFreshDatabase(t *testing.T) {
+	database := newTestDatabase(t)
+
+	var versions []string
+	require.NoError(t, database.Read.Select(&versions, `SELECT version FROM schema_migration ORDER BY version`))
+
+	assert.NotEmpty(t, versions, "a fresh database must come up migrated")
+	// E0-05 grows this set; the assertion is on "the runner ran", not on a count.
+	assert.Equal(t, "0001", versions[0])
+}

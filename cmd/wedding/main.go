@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/httplog/v2"
 
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
 )
 
@@ -77,6 +78,12 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 		}
 	}()
 	logger.Info("database opened", "path", config.DatabasePath)
+
+	// Migrations run before the listener starts: serving requests against a
+	// half-migrated schema is worse than a container that refuses to come up.
+	if err := persistence.Migrate(context.Background(), database.Write, logger.Logger); err != nil {
+		return err
+	}
 
 	listenAddr := config.ListenAddr()
 

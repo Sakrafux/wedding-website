@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
 )
 
@@ -34,6 +36,9 @@ func newTestDatabase(t *testing.T) *configuration.Database {
 	t.Cleanup(func() {
 		require.NoError(t, database.Close())
 	})
+
+	// Same order as main: migrate before anything serves a request.
+	require.NoError(t, persistence.Migrate(context.Background(), database.Write, slog.New(slog.NewTextHandler(io.Discard, nil))))
 
 	return database
 }

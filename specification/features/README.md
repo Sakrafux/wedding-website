@@ -38,7 +38,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `E0-01` Go module, package layout, chi router, httplog
 - [x] `E0-02` Config from environment, hard fail on missing required vars
 - [x] `E0-03` SQLite connection: pragmas, single-writer pool, read pool
-- [ ] `E0-04` Migration runner and `schema_migration`
+- [x] `E0-04` Migration runner and `schema_migration`
 - [ ] `E0-05` Migration `0001` — full schema
 - [ ] `E0-06` Error envelope, request ID, panic recovery
 - [ ] `E0-07` Security headers, CSP, robots noindex
