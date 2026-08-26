@@ -2,6 +2,18 @@
 
 Work log for the wedding web app. Newest entry first. One `##` heading per day, then: what the day was about, a `Time:` line, a `Cost:` line per model used.
 
+## 2026-08-26
+
+`E0-02` done: `internal/infrastructure/configuration/config.go` with a `Config` struct and `Load()` reading the eight variables from `04-architecture.md`, plus `.env.example` in the repo root with a comment per variable. Required (`DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`) hard-fail with no defaults; optional ones default to `PORT` 8080, `LOG_LEVEL` info, `SESSION_COOKIE_SECURE` true, `TRUSTED_PROXY_CIDRS` empty. `main` now loads the config before building the logger — the log level comes out of it — so a load failure is reported through a plain stderr `slog` handler and exits 1.
+
+Validation collects every problem and returns them joined, so one restart tells the operator everything that is wrong. `TRUSTED_PROXY_CIDRS` is parsed into `[]netip.Prefix` at load time and a malformed entry fails startup rather than being skipped, because a silently dropped proxy network makes the `F1-B05` rate limit bypassable with nothing later in the system complaining. `ADMIN_PASSWORD` under 12 characters is rejected as a guard against a placeholder reaching the server. `Config` implements `slog.LogValuer` and `String()`, both redacting the password: the startup line is written on every boot, so a leak there lands in every log archive, and the test asserting the absence of the password value is the one test in this package guarding an invisible mistake.
+
+Two smaller decisions. A variable that is set but blank is treated as absent — for required ones that is a failure, for optional ones a fallback — because an empty value in a compose file is a mistake, not a value. And `Load()` reads `os.Getenv` directly instead of taking an injected lookup function: `t.Setenv` covers the tests, and the interface would exist for the tests alone. Testify arrived early as a direct dependency (the `E0-11` story had it pencilled in) since the unit tests wanted it now.
+
+Time: <h>
+
+Cost: Opus 5 — $<x>
+
 ## 2026-08-25
 
 First code. `E0-01` done: Go module `github.com/Sakrafux/wedding-website` on Go 1.26, the full package tree from `04-architecture.md` with a `doc.go` in each package carrying that package's rules, chi router with `httplog`, `GET /api/health` returning `{"status":"ok"}`, and graceful shutdown on SIGINT/SIGTERM with all four server timeouts set explicitly. Direct dependencies held to `chi/v5` and `httplog/v2` as the story asks; the integration test uses stdlib `httptest` only, since testify arrives with the real harness in `E0-11`.

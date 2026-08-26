@@ -4,3 +4,11 @@ web/node_modules/
 *.db
 *.db-wal
 *.db-shm
+
+# Local environment. Holds ADMIN_PASSWORD in plaintext; .env.example is the
+# committed counterpart.
+.env
+.env.local
+
+# Local runtime state: dev database and photo directory from .env.
+/local/

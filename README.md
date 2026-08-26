@@ -4,7 +4,7 @@ A private, invitation-only web app for our wedding. Guests log in with a code pr
 
 Roughly 80 guests across 60 households. German only. Mobile-first. Not public, not indexed, no accounts, no email.
 
-**Status: specification phase. No application code yet.** The specs are complete enough to build from; `specification/features/` is where that starts.
+**Status: early build.** The specs are complete enough to build from; progress lives in `specification/features/README.md`. Currently in `E0` — project setup, nothing user-visible yet.
 
 ## What it does
 
@@ -69,16 +69,48 @@ Conventions that matter:
 
 ## Running it
 
-Not runnable yet — this section is the intended shape, and gets verified as `E0-01` … `E0-12` land.
+The container path is not built yet — `E0-10` adds the Dockerfile and Compose file, and this is the intended shape:
 
 ```bash
 cp .env.example .env      # then fill it in
 docker compose up -d      # migrates on startup, serves on $PORT
 ```
 
-Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default.
+Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default — the error names every problem at once, so one restart tells you everything that is wrong.
 
-Local development runs the Go API and the Vite dev server separately; the production path embeds `web/dist` into the binary.
+## Local development
+
+Requires Go 1.26. Nothing else yet; pnpm and Node join once `E0-08` scaffolds the frontend.
+
+```bash
+cp .env.example .env                     # gitignored: it holds ADMIN_PASSWORD
+mkdir -p local/photos                    # matches the DB_PATH/PHOTO_DIR below
+
+set -a && . ./.env && set +a             # nothing in the app reads .env itself
+go run ./cmd/wedding
+```
+
+For local runs set `DB_PATH=./local/wedding.db`, `PHOTO_DIR=./local/photos` and `SESSION_COOKIE_SECURE=false`. `/local/` is gitignored. The `Secure` flag has to come off because the browser refuses to send a `Secure` cookie over `http://localhost`, which makes login fail with no visible error.
+
+Nothing loads `.env` automatically — there is no dotenv dependency, on purpose, since the deployed container gets its environment from Compose. Export it yourself as above, or pass the variables inline.
+
+Check it is up:
+
+```bash
+curl -s localhost:8080/api/health        # {"status":"ok"}
+curl -si localhost:8080/api/nope         # JSON 404 envelope, not chi's HTML
+```
+
+Startup logs the whole config as JSON with `ADMIN_PASSWORD` redacted, so the first log line tells you which values the process actually got. `LOG_LEVEL=debug` is the useful setting locally. Ctrl-C exercises the real graceful-shutdown path rather than killing the process.
+
+Tests:
+
+```bash
+go test ./...                            # unit + integration, no external services
+gofmt -l . && go vet ./...
+```
+
+Once the frontend exists, local development runs the Go API and the Vite dev server side by side, with Vite proxying `/api`; the production path embeds `web/dist` into the binary instead.
 
 ## Operating it
 

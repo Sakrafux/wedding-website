@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/httplog/v2"
 
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
 )
 
@@ -34,20 +35,27 @@ const (
 	shutdownTimeout = 10 * time.Second
 )
 
-// listenAddr is hardcoded until E0-02 introduces environment configuration (PORT).
-const listenAddr = ":8080"
-
 func main() {
+	// Configuration is loaded before the real logger exists, because it carries the
+	// log level. A load failure is therefore reported through a plain stderr logger.
+	config, err := configuration.Load()
+	if err != nil {
+		slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("configuration failed", "error", err)
+		os.Exit(1)
+	}
+
 	// JSON output: logs go to stdout for the host's log collector, not to a human
 	// tailing a terminal. Concise keeps chi's per-request lines to one entry.
 	logger := httplog.NewLogger("wedding", httplog.Options{
-		LogLevel:        slog.LevelInfo,
+		LogLevel:        config.LogLevel,
 		JSON:            true,
 		Concise:         true,
 		TimeFieldFormat: time.RFC3339,
 	})
+	// Config redacts ADMIN_PASSWORD in its log representation; see Config.LogValue.
+	logger.Info("configuration loaded", "config", config)
 
-	if err := run(logger); err != nil {
+	if err := run(config, logger); err != nil {
 		logger.Error("server terminated", "error", err)
 		os.Exit(1)
 	}
@@ -56,7 +64,9 @@ func main() {
 // run wires logger, router and server, then blocks until the process is asked to
 // stop. It exists so that no code path calls os.Exit directly, which would skip
 // deferred cleanup — the database handle and photo directory will rely on that later.
-func run(logger *httplog.Logger) error {
+func run(config configuration.Config, logger *httplog.Logger) error {
+	listenAddr := config.ListenAddr()
+
 	server := &http.Server{
 		Addr:              listenAddr,
 		Handler:           web.NewRouter(logger),
