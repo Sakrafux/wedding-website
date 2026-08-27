@@ -33,8 +33,8 @@ Decisions:
 - **No exported writer takes a status, code or message.** `WriteError(status, code, message)` was a second write path next to the table and therefore a second chance to leak; every failure now goes through `RespondError`.
 - `domain.ErrorCode` constants live in one block in `domain/errors.go`, not next to each rule — deliberate break with "keep it near the code", so the list can be read against the message table.
 
-Time: 1h
-Cost: $3.44
+Time: 2h
+Cost: $8.36
 
 ## 2026-08-26
 
