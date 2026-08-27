@@ -207,7 +207,6 @@ The one and only mapping from English enum values to German UI text. Lives at `w
 | `normal` | Normaler Platz |
 | `with_parent` | Sitzt bei den Eltern (kein eigener Platz) |
 | `high_chair` | Hochstuhl |
-| `stroller` | Platz für Kinderwagen |
 | `wheelchair` | Platz für Rollstuhl |
 
 ### `guest.kind`

@@ -73,21 +73,21 @@ CRUD households and their members. Generate/regenerate codes. Export a print-sho
 
 ## F6 — Admin: RSVP dashboard (P1)
 
-Headcounts split by scope (church / party / both — three numbers, three different vendors), meal and portion counts, midnight snack count, children by caterer age bracket, special seating needs (high chairs, strollers, wheelchairs), consolidated allergy list, transport seats needed vs. offered and the resulting gap, list of guest-added members, unread household notes, nudge list, CSV export for the caterer. No SQL needed to get the headcount.
+Headcounts split by scope (church / party / both — three numbers, three different vendors), meal and portion counts, midnight snack count, children by caterer age bracket, special needs (high chairs and wheelchair space per guest, prams per household), consolidated allergy list, transport seats needed vs. offered and the resulting gap, list of guest-added members, unread household notes, nudge list, CSV export for the caterer. No SQL needed to get the headcount.
 
 ## F7 — Seating chart (P1)
 
-Admins define tables and assign attending guests to seats. Guests read the result.
+Admins assign attending guests to individual seats, at the church and at the party. Guests read the result.
 
-**Decided — the SVG bridge.** No drag-and-drop editor. The room layout is a hand-drawn SVG, authored outside the app and checked into the frontend. Each table shape carries a stable `id` attribute. In the DB, `seating_table.svg_element_id` points at that shape. The app only ever colors and labels existing shapes — it never positions anything. This buys a real spatial view for a fraction of the effort of a canvas editor.
+**Decided — the SVG bridge.** No drag-and-drop editor. Both layouts are hand-drawn SVGs, authored outside the app and checked into the frontend. Every unit shape *and every seat shape* carries a stable `id` attribute, which `seating_unit.svg_element_id` and `seat.svg_element_id` point at. The app only ever colors and labels existing shapes — it never positions anything. This buys a real spatial view for a fraction of the effort of a canvas editor.
 
-**Admin editing** is list-based: define tables (label, capacity, `svg_element_id`), then assign attending guests to them. Over-capacity is a warning, not a block.
+**Admin editing** is list-based: define units and their seats (label, `svg_element_id`), then assign guests to individual seats. Over-assignment cannot happen — a seat holds one person, and a full unit has no free seat left to pick.
 
 **Guest view** renders the full floor plan so guests can orient themselves in the room — but only their **own** table is highlighted and labeled with names. Other tables are shapes without occupants. Guests learn where they sit, not where everyone else sits.
 
 Gated by the `seating_published` flag; a draft plan is invisible to guests, since a visible draft invites lobbying.
 
-Constraint: only guests attending the party (`party_only` or `both`) are assignable, including guest-added members; church-only guests are never seated. Flipping an RSVP to "no" or "church only", or deleting an added member, does **not** silently drop the assignment — it surfaces as a stale assignment for us to resolve.
+Constraint: a guest is assignable in a venue only if their scope covers it — `party_only`/`both` for party seats, `church_only`/`both` for church seats — and never if `seating_need = 'with_parent'`. Guest-added members are assignable. Flipping an RSVP, or deleting an added member, does **not** silently drop the assignment — it surfaces as a stale assignment for us to resolve.
 
 Open for the detailed story: printable output for the day itself, and whether the SVG needs a second, zoomed variant for phones.
 

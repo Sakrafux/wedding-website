@@ -4,6 +4,28 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-08-27
+
+Done:
+
+- `E0-05` — `0001-initial-schema.sql`: all nine tables, `CHECK` on every enum, FK behaviours, defaults, indexes and the five `app_setting` seed rows. `rsvp_deadline` seeded to `2027-05-17T21:59:59Z`.
+- `tests/integration/schema_test.go`: one rejected insert per enum column, duplicate code, household cascade, both seating RESTRICT paths, one-seat-per-guest-per-venue, both venue-mismatch paths, guest and household defaults, seeded settings.
+- `database_test.go` now uses `household`/`guest` instead of the inline `parent`/`child` stand-in; the `E0-05` forward references are gone.
+- Data model, `02-features`, `06-privacy-security`, `07-roadmap`, `CLAUDE.md` and the F7 story titles updated for the seating rework.
+
+Decisions:
+
+- **Both venues are seated.** `seating_table` → `seating_unit` with a `venue` enum (`church` | `party`); a church pew is the same object as a party table. Was an oversight in the data model.
+- **Seats are rows.** New `seat` table transcribed by hand from the SVG, so an assignment names a specific place. Rejected: an `svg_element_id` on `seat_assignment` with no seat rows — cheaper to set up, but free-seat queries and place cards both want the row. See `03-data-model.md`.
+- `seating_unit.capacity` dropped — capacity is `COUNT(seat)`, so over-assignment is unrepresentable instead of a warning.
+- `venue` is denormalised down `seating_unit → seat → seat_assignment` behind composite FKs, which buys `UNIQUE (guest_id, venue)` without a trigger. Rationale in `03-data-model.md`.
+- `guest.last_name` is required: households of two surnames are common.
+- `stroller` removed from `guest.seating_need` → `household.has_stroller` BOOLEAN. A pram is parked, not sat on, belongs to the household, and nobody brings two — so a flag, not a count.
+- No "log out other devices" — one household, one shared code. `session.user_agent`/`ip` stay, for the audit trail only.
+
+Time: <h>
+Cost: $<x>
+
 ## 2026-08-26
 
 Done:

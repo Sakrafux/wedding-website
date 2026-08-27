@@ -39,7 +39,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `E0-02` Config from environment, hard fail on missing required vars
 - [x] `E0-03` SQLite connection: pragmas, single-writer pool, read pool
 - [x] `E0-04` Migration runner and `schema_migration`
-- [ ] `E0-05` Migration `0001` — full schema
+- [x] `E0-05` Migration `0001` — full schema
 - [ ] `E0-06` Error envelope, request ID, panic recovery
 - [ ] `E0-07` Security headers, CSP, robots noindex
 - [ ] `E0-08` Frontend scaffold: Vite, TS, Tailwind, shadcn, design tokens
@@ -146,11 +146,11 @@ Frontend only — content is hardcoded in components.
 Blocked until the RSVP deadline has passed (Gate 4) and the floor-plan SVG exists.
 
 - [ ] `F7-B01` Domain: assignment validity, stale detection
-- [ ] `F7-B02` Table CRUD with `svg_element_id`
-- [ ] `F7-B03` Assignment endpoints, over-capacity warning
+- [ ] `F7-B02` Seating unit and seat CRUD with `svg_element_id`
+- [ ] `F7-B03` Per-seat assignment endpoints, church and party
 - [ ] `F7-B04` Guest seating endpoint behind `seating_published`
 - [ ] `F7-F01` SVG integration plus a test asserting every `svg_element_id` matches a shape
-- [ ] `F7-F02` Admin table editor
+- [ ] `F7-F02` Admin seating unit and seat editor
 - [ ] `F7-F03` Assignment UI and stale-assignment alert
 - [ ] `F7-F04` Guest seating view with plain-text fallback
 - [ ] `F7-F05` Printable seating output

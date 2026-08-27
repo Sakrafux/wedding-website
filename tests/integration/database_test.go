@@ -56,9 +56,9 @@ func TestPragmasApplyToEveryConnection(t *testing.T) {
 // rejected insert shows the setting has teeth.
 func TestForeignKeyViolationIsRejected(t *testing.T) {
 	database := newTestDatabase(t)
-	createParentAndChildTables(t, database.Write)
 
-	_, err := database.Write.Exec(`INSERT INTO child (parent_id) VALUES (999)`)
+	_, err := database.Write.Exec(
+		`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (999, 'Anna', 'Muster', 'adult', 'seeded')`)
 
 	require.Error(t, err)
 	assert.Contains(t, strings.ToUpper(err.Error()), "FOREIGN KEY")
@@ -69,7 +69,6 @@ func TestForeignKeyViolationIsRejected(t *testing.T) {
 // the one-connection write pool, never rejected with SQLITE_BUSY.
 func TestConcurrentWritesSerialise(t *testing.T) {
 	database := newTestDatabase(t)
-	createParentAndChildTables(t, database.Write)
 
 	var waitGroup sync.WaitGroup
 	for writer := range concurrentQueries {
@@ -77,14 +76,16 @@ func TestConcurrentWritesSerialise(t *testing.T) {
 		go func() {
 			defer waitGroup.Done()
 
-			_, err := database.Write.Exec(`INSERT INTO parent (id, label) VALUES (?, ?)`, writer, fmt.Sprintf("writer-%d", writer))
+			_, err := database.Write.Exec(
+				`INSERT INTO household (display_name, code) VALUES (?, ?)`,
+				fmt.Sprintf("Familie %d", writer), fmt.Sprintf("CODE%02d", writer))
 			assert.NoError(t, err)
 		}()
 	}
 	waitGroup.Wait()
 
 	var rows int
-	require.NoError(t, database.Write.Get(&rows, `SELECT count(*) FROM parent`))
+	require.NoError(t, database.Write.Get(&rows, `SELECT count(*) FROM household`))
 	assert.Equal(t, concurrentQueries, rows)
 }
 
@@ -93,9 +94,8 @@ func TestConcurrentWritesSerialise(t *testing.T) {
 // writer slot.
 func TestReadPoolCannotWrite(t *testing.T) {
 	database := newTestDatabase(t)
-	createParentAndChildTables(t, database.Write)
 
-	_, err := database.Read.Exec(`INSERT INTO parent (id, label) VALUES (1, 'nope')`)
+	_, err := database.Read.Exec(`INSERT INTO household (display_name, code) VALUES ('Familie Nope', 'ABC234')`)
 
 	require.Error(t, err)
 	assert.Contains(t, strings.ToLower(err.Error()), "readonly")
@@ -105,14 +105,13 @@ func TestReadPoolCannotWrite(t *testing.T) {
 // database — an easy thing to get wrong with a mistyped path or an in-memory DSN.
 func TestReadPoolSeesCommittedWrites(t *testing.T) {
 	database := newTestDatabase(t)
-	createParentAndChildTables(t, database.Write)
 
-	_, err := database.Write.Exec(`INSERT INTO parent (id, label) VALUES (1, 'visible')`)
+	_, err := database.Write.Exec(`INSERT INTO household (id, display_name, code) VALUES (1, 'Familie Sichtbar', 'ABC234')`)
 	require.NoError(t, err)
 
-	var label string
-	require.NoError(t, database.Read.Get(&label, `SELECT label FROM parent WHERE id = 1`))
-	assert.Equal(t, "visible", label)
+	var displayName string
+	require.NoError(t, database.Read.Get(&displayName, `SELECT display_name FROM household WHERE id = 1`))
+	assert.Equal(t, "Familie Sichtbar", displayName)
 }
 
 func TestReadyReportsDatabaseReachable(t *testing.T) {
@@ -142,24 +141,6 @@ func TestReadyReportsUnavailableWhenDatabaseClosed(t *testing.T) {
 	assert.NotContains(t, body, "wedding-test.db")
 }
 
-// createParentAndChildTables sets up the smallest schema that can demonstrate a
-// foreign-key violation. Written inline because the real schema arrives in E0-05.
-func createParentAndChildTables(t *testing.T, pool *sqlx.DB) {
-	t.Helper()
-
-	_, err := pool.Exec(`
-		CREATE TABLE parent (
-			id    INTEGER PRIMARY KEY,
-			label TEXT NOT NULL
-		);
-		CREATE TABLE child (
-			id        INTEGER PRIMARY KEY,
-			parent_id INTEGER NOT NULL REFERENCES parent(id)
-		);
-	`)
-	require.NoError(t, err)
-}
-
 // TestMigrationsApplyOnFreshDatabase covers the startup order main relies on: the
 // harness opens an empty file and migrates it, exactly as the binary does, so a
 // missing migration shows up here rather than as a missing table in a later story.
@@ -170,6 +151,7 @@ func TestMigrationsApplyOnFreshDatabase(t *testing.T) {
 	require.NoError(t, database.Read.Select(&versions, `SELECT version FROM schema_migration ORDER BY version`))
 
 	assert.NotEmpty(t, versions, "a fresh database must come up migrated")
-	// E0-05 grows this set; the assertion is on "the runner ran", not on a count.
+	// Asserted on the first version rather than the whole list: a later migration must
+	// not have to touch this test.
 	assert.Equal(t, "0001", versions[0])
 }

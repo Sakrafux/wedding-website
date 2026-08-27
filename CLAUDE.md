@@ -28,15 +28,15 @@ Private wedding web app. Currently in **specification phase** — no code yet. S
 - Admin sessions are short-lived (hours); household sessions last 365 days with rolling refresh. Different risk profiles.
 - Budget data is admin-only and must be enforced server-side.
 - Page content (schedule, travel, dress code, FAQ, …) is **hardcoded in React components**. No CMS, no Markdown pipeline, no DB-backed text. Content change = rebuild + redeploy; accepted.
-- Seating: layout is a **hand-drawn SVG** checked into the frontend, with stable `id` attributes per table shape. `seating_table.svg_element_id` links DB → shape. App only colors/labels existing shapes, never positions them. No drag-and-drop editor. Guests see the full plan but only their own table is labeled with names.
+- Seating: **both venues are seated** (church pews and party tables). Layout is a **hand-drawn SVG** checked into the frontend, with stable `id` attributes per unit *and per seat*. `seating_unit.svg_element_id` and `seat.svg_element_id` link DB → shape; `seat` rows are transcribed from the SVG by hand. App only colors/labels existing shapes, never positions them. No drag-and-drop editor, no `capacity` column (capacity is `COUNT(seat)`). Guests see the full plan but only their own unit is labeled with names.
 - Single-day wedding. No multi-day / arrival-day tracking.
 - **All enum values are English** — DB, API, Go, TypeScript. German only as display labels mapped in the frontend.
 - `guest.attending` is a **single** field carrying attendance *and* scope: `no` | `church_only` | `party_only` | `both`, NULL = unanswered. Contradictory states are unrepresentable. Scope is per guest (exceptions live inside households); the form offers a household-level bulk selector as a UI convenience only.
-- **Scope gates catering.** `meal_choice`, `portion`, `midnight_snack`, and seating apply only to `party_only` / `both`. Every derived count keys off scope, never off "is attending" — otherwise we pay for meals nobody eats.
+- **Scope gates catering.** `meal_choice`, `portion`, `midnight_snack`, and party seating apply only to `party_only` / `both`; church seating to `church_only` / `both`. Every derived count keys off scope, never off "is attending" — otherwise we pay for meals nobody eats.
 - Meal choice: `all` | `vegetarian` | `vegan`. Portion (orthogonal): `none` | `kids` | `full`, default `full` — `none` covers infants and adults not eating. `midnight_snack` is an independent boolean.
 - Transport: `household.transport_seats_needed` / `transport_seats_offered` (church → reception). Used to compute a capacity gap for shuttle planning. The app does **not** match riders to drivers, and stores no phone numbers.
 - `guest.age` (children only) means **age at the wedding date**, asked that way in the UI so it doesn't drift. Caterer age brackets derived at read time, not stored.
-- `guest.seating_need` enum drives physical arrangements: `normal` | `with_parent` | `high_chair` | `stroller` | `wheelchair`. Applies to adults too.
+- `guest.seating_need` enum drives physical arrangements at the seat: `normal` | `with_parent` | `high_chair` | `wheelchair`. Applies to adults too. A pram is **not** in here — `household.has_stroller` BOOLEAN, because it is parked, not sat on, and belongs to the household.
 - Money stored as `INTEGER` cents. Timestamps: UTC RFC3339 `TEXT` (readability when inspecting DB by hand beats epoch ints at this scale). Flags declared `BOOLEAN`.
 - Photo originals kept byte-for-byte, **EXIF intact** — private gallery, and stripping breaks orientation + degrades the archive.
 - Household login codes stored in **plaintext** (must be reprintable; accepted risk) → the SQLite file is a secret.

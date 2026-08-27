@@ -137,8 +137,8 @@ Still to decide, before this date: what the site shows between the deadline and 
 
 ### M6 — Seating
 
-- The hand-drawn floor-plan SVG with stable `id` attributes, checked into the frontend. **Draw it before this milestone starts**, since it depends on the venue's final room layout.
-- Table CRUD, assignment UI, over-capacity warnings, stale-assignment detection.
+- The hand-drawn church and party floor-plan SVGs, with stable `id` attributes per unit and per seat, checked into the frontend. **Draw them before this milestone starts**, since they depend on the venue's and the church's final layout.
+- Seating unit and seat CRUD, per-seat assignment UI, stale-assignment detection.
 - Guest view behind `seating_published`.
 - Printable output for the day.
 
@@ -200,7 +200,7 @@ The RSVP deadline is worth deciding early even though it is enforced late: it sh
 | A code format bug found after printing | Low, catastrophic | Gate 2, plus a physically proof-read card before the run |
 | Guests answer in November and their plans change by May | Certain, for some | The form stays editable to the deadline; the deadline is where numbers freeze |
 | Nobody uses the site and everyone phones instead | Medium | Measured, not guessed: `last_login_at` and the nudge list from week one. The fallback is a phone call per household, which is what would have happened anyway |
-| SVG re-export drops the `id` attributes | Medium | A test that fails if any `seating_table.svg_element_id` has no matching shape. Catches it at build time instead of in June |
+| SVG re-export drops the `id` attributes | Medium | A test that fails if any `seating_unit.svg_element_id` or `seat.svg_element_id` has no matching shape. Catches it at build time instead of in June |
 | Server dies close to the date | Low | Gate 3. A rehearsed restore turns this into an afternoon |
 | Guests answer by WhatsApp instead of the site | High | Not a software problem. Enter it in admin; the dashboard is the source of truth, not the form |
 

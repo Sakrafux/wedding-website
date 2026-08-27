@@ -17,12 +17,13 @@ The governing constraint is the threat model from [01-vision-scope](01-vision-sc
 | Meal choice, portion, midnight snack | `guest` | Caterer order | Own household, admin |
 | Allergies and intolerances | `guest.dietary_note` | Kitchen safety | Own household, admin |
 | Child's age | `guest.age` | Caterer pricing brackets, venue counts | Own household, admin |
-| Seating need | `guest.seating_need` | High chairs, wheelchair space, strollers | Own household, admin |
+| Seating need | `guest.seating_need` | High chairs, wheelchair space | Own household, admin |
+| Pram flag | `household.has_stroller` | Floor space next to a table | Own household, admin |
 | Free-text household note | `household.rsvp_note` | The catch-all for anything the form missed | Own household, admin |
 | Private admin note | `household.admin_note` | Our own planning remarks | **Admin only** |
 | Transport seats needed/offered | `household` | Shuttle capacity gap | Own household, admin |
-| Seat assignment | `seat_assignment` | The seating plan | Own household (own table only), admin |
-| Session records incl. IP and user agent | `session` | Session validity, "log out other devices" | Nobody in the UI; admin via DB |
+| Seat assignment | `seat_assignment` | The seating plan, church and party | Own household (own unit only), admin |
+| Session records incl. IP and user agent | `session` | Session validity and the audit trail | Nobody in the UI; admin via DB |
 | Login and change history | `audit_log` | Settle "but I said we were coming" | **Admin only** |
 | Photos and their EXIF | `photo` + `PHOTO_DIR` | The gallery | All logged-in guests |
 | Request logs (IP, path, status) | stdout → host log collector | Debugging, rate limiting | Server operator |

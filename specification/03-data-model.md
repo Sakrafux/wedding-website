@@ -1,6 +1,6 @@
 # 03 — Data Model
 
-Status: draft · Last updated: 2026-08-21
+Status: draft · Last updated: 2026-08-27
 
 SQLite. Conventions: `INTEGER` primary keys, `BOOLEAN` for flags (SQLite stores these as 0/1; the declared type is for readability and Go driver mapping), timestamps as `TEXT` in UTC RFC3339, money as `INTEGER` cents (never floats), soft deletes only where history matters. Foreign keys enforced (`PRAGMA foreign_keys = ON`), WAL mode.
 
@@ -23,6 +23,7 @@ The unit of authentication and of RSVP.
 | `code` | TEXT UNIQUE | The printed login code, normalized (uppercase, no dashes). |
 | `transport_seats_needed` | INTEGER | Default 0. Seats this household needs for the church → reception trip. Not derived from household size; some members drive themselves. |
 | `transport_seats_offered` | INTEGER | Default 0. Spare seats this household can offer others. |
+| `has_stroller` | BOOLEAN | Default 0. Brings a pram, which needs floor space next to a unit rather than a seat. A flag, not a count: nobody brings two. |
 | `admin_note` | TEXT | Private note for us. Never sent to a guest session. |
 | `rsvp_note` | TEXT | Free-text note from the household to us. The deliberate escape hatch: anything the structured fields do not cover goes here. No length limit worth enforcing beyond a sane cap. Must be surfaced prominently in the admin dashboard — an unread note is a missed request. |
 | `rsvp_note_seen_at` | TEXT NULL | When an admin acknowledged the current note. Older than `rsvp_updated_at` → the note counts as unread again. |
@@ -42,7 +43,7 @@ A person. Belongs to exactly one household.
 | `id` | INTEGER PK | |
 | `household_id` | INTEGER FK → household | |
 | `first_name` | TEXT | |
-| `last_name` | TEXT NULL | Often redundant within a household. |
+| `last_name` | TEXT | Required. Plenty of households are couples with different surnames, so it cannot be inherited from `household.display_name`, and the caterer's and seating lists need the full name. |
 | `kind` | TEXT | `adult` \| `child` |
 | `age` | INTEGER NULL | Children only. **Age at the wedding date**, not at RSVP time — the UI asks it that way so the value does not drift over the months before the event. Feeds caterer pricing brackets and venue headcounts. |
 | `origin` | TEXT | `seeded` (we created it) \| `guest_added` (household added it). Drives the admin delta view. |
@@ -50,7 +51,7 @@ A person. Belongs to exactly one household.
 | `meal_choice` | TEXT NULL | `all` \| `vegetarian` \| `vegan`. `all` = eats everything. NULL when `portion = 'none'` or the guest is not at the party. |
 | `portion` | TEXT | `none` \| `kids` \| `full`. Defaults to `full`. `none` covers infants and adults not eating (e.g. arriving after dinner). |
 | `midnight_snack` | BOOLEAN | Wants the midnight snack. Independent of `portion` — someone skipping dinner may still want it. |
-| `seating_need` | TEXT | `normal` \| `with_parent` (no own seat) \| `high_chair` \| `stroller` \| `wheelchair`. Defaults to `normal`; applies to adults as well as children. |
+| `seating_need` | TEXT | `normal` \| `with_parent` (no own seat) \| `high_chair` \| `wheelchair`. Defaults to `normal`; applies to adults as well as children. Prams are not here — they are parked rather than sat on, and belong to the household: `household.has_stroller`. |
 | `dietary_note` | TEXT | Allergies and intolerances, free text. |
 | `created_at` | TEXT | |
 | `deleted_at` | TEXT NULL | Soft delete. |
@@ -59,35 +60,55 @@ Invariants:
 
 - A household may only delete `guest` rows where `origin = 'guest_added'`, and only before the RSVP deadline. Seeded guests are never deleted by a guest — they get `attending = 'no'`.
 - `seating_need = 'with_parent'` means the guest consumes no seat and must not be assigned one.
-- **`attending` scope gates the catering fields.** `meal_choice`, `portion`, `midnight_snack` and `seat_assignment` are only meaningful for `party_only` and `both`. For `church_only` and `no` they are ignored, and every derived count keys off the scope — not off "is attending". Getting this wrong means paying for meals nobody eats.
+- **`attending` scope gates the catering fields.** `meal_choice`, `portion` and `midnight_snack` are only meaningful for `party_only` and `both`, as is a party `seat_assignment` (a church seat is gated by `church_only`/`both` instead). For `church_only` and `no` they are ignored, and every derived count keys off the scope — not off "is attending". Getting this wrong means paying for meals nobody eats.
 - Transport is only relevant to guests with `attending = 'both'` — `church_only` guests never travel to the reception and `party_only` guests arrive there directly.
 
 **Attendance scope is per guest, not per household**, because the real exceptions are within households — a grandmother attending the ceremony but skipping the party, or children going only to the church. The RSVP form avoids the extra clicking with a household-level selector ("Wir kommen zu: Kirche / Feier / beidem") that sets all members at once, with a per-member override beneath it. That is a UI affordance, not a second column.
 
-### `seating_table`
+### `seating_unit`
 
-A table in the room. Named `seating_table` because `table` is reserved.
+One group of seats: a table at the reception, a pew at the church. **Both venues are seated** — the church needs a plan just as much as the party does, and reserving the front rows for family is the same problem as filling Tisch 4. Named for the role rather than the furniture, and `table` is reserved anyway.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | INTEGER PK | |
-| `number` | INTEGER NULL | Explicit ordering. Avoids "Tisch 10" sorting before "Tisch 2". Null for named tables like the head table. |
-| `label` | TEXT | e.g. "Tisch 4", "Brauttisch". |
-| `capacity` | INTEGER | Drives over-assignment warnings, not a hard block. |
-| `svg_element_id` | TEXT NULL | The `id` attribute of the corresponding shape in the hand-drawn floor-plan SVG. This is the entire link between data and visual. |
+| `venue` | TEXT | `church` \| `party`. |
+| `number` | INTEGER NULL | Explicit ordering. Avoids "Tisch 10" sorting before "Tisch 2". Null for named units like the head table. |
+| `label` | TEXT | e.g. "Tisch 4", "Brauttisch", "Bank 3 links". |
+| `svg_element_id` | TEXT NULL UNIQUE | The `id` attribute of the corresponding shape in the hand-drawn floor plan. This is the entire link between data and visual. |
 
-### `seat_assignment`
+No `capacity` column: seats are enumerated in `seat`, so capacity is `COUNT(seat)` and over-assignment is unrepresentable rather than merely warned about.
+
+### `seat`
+
+One physical place, transcribed by hand from the seat shapes in the SVG. Roughly 140 rows entered once — the price of "you sit *here*" instead of "you sit somewhere at this table".
 
 | Column | Type | Notes |
 |---|---|---|
-| `guest_id` | INTEGER PK, FK → guest | One seat per guest. |
-| `seating_table_id` | INTEGER FK → seating_table | |
+| `id` | INTEGER PK | |
+| `seating_unit_id` | INTEGER FK → seating_unit | `ON DELETE CASCADE`. |
+| `venue` | TEXT | Copy of the unit's venue, kept honest by a composite FK on `(seating_unit_id, venue)` rather than by application code. See below. |
+| `label` | TEXT | e.g. "Platz 4". Goes on the place card. |
+| `svg_element_id` | TEXT UNIQUE | The seat's own shape. Required — a seat the plan cannot point at is a seat nobody can be shown. |
+
+### `seat_assignment`
+
+Which guest sits on which seat. Church and party are assigned independently: a guest attending both gets two rows.
+
+| Column | Type | Notes |
+|---|---|---|
+| `seat_id` | INTEGER PK, FK → seat | Primary key, so one guest per seat needs no further constraint. `ON DELETE RESTRICT`. |
+| `venue` | TEXT | Copy again, part of the composite FK to `seat (id, venue)`. |
+| `guest_id` | INTEGER FK → guest | `ON DELETE CASCADE`. |
 | `assigned_at` | TEXT | |
+
+**Why the venue is denormalised twice.** "One seat per guest *per venue*" is the invariant that matters — a guest seated at two party tables makes every derived count disagree with the room. SQLite cannot express a UNIQUE constraint that reaches across a join, and the alternative is a trigger. Carrying `venue` down the chain `seating_unit → seat → seat_assignment` with composite foreign keys turns it into a plain `UNIQUE (guest_id, venue)`, and the composite FKs are what stop a copy from lying about its venue. Redundant columns that cannot diverge.
 
 Invariants:
 
-- Only guests with `attending IN ('party_only', 'both')`, `deleted_at IS NULL`, and `seating_need != 'with_parent'` may hold an assignment. Church-only guests are never seated.
-- If a guest's RSVP flips to `no` or `church_only`, or a guest-added member is deleted, the assignment is **not** silently removed — it is reported to admins as a stale assignment to resolve. Prevents seats quietly vanishing from a finished plan.
+- Party seats: only guests with `attending IN ('party_only', 'both')`, `deleted_at IS NULL`, and `seating_need != 'with_parent'` may hold one. Church seats: `attending IN ('church_only', 'both')`, same two exclusions.
+- If a guest's RSVP flips in a way that invalidates a seat, or a guest-added member is deleted, the assignment is **not** silently removed — it is reported to admins as a stale assignment to resolve. Prevents seats quietly vanishing from a finished plan.
+- Deleting a `seating_unit` or a `seat` that still holds someone is refused by the database, not worked around.
 
 ### `budget_item`
 
@@ -140,7 +161,7 @@ Files live on a mounted volume, not in SQLite. Thumbnails are derived and regene
 | `subject_type` | TEXT | `household` \| `admin` |
 | `subject_id` | INTEGER NULL | Household id, or NULL for the admin (there is no admin table — credentials come from environment variables). |
 | `created_at`, `expires_at`, `last_seen_at` | TEXT | |
-| `user_agent`, `ip` | TEXT NULL | For the audit trail and for "log out other devices". |
+| `user_agent`, `ip` | TEXT NULL | For the audit trail only, read via the DB. There is no session list in the UI and no "log out other devices": one household shares one code, so a device list would mean nothing to them. |
 
 Household sessions live 365 days with rolling refresh. Admin sessions are short (hours) — different risk profile.
 
@@ -176,17 +197,17 @@ Everything else that is genuinely static (page text, wedding date, venue) is har
 ## Derived views the admin UI needs
 
 - Headcount by scope: church attendees, party attendees, and the overlap. These are three different numbers and three different vendors care about them.
-- Seats actually needed at the party (party attendees, excluding `with_parent`).
+- Seats actually needed per venue (attendees in scope, excluding `with_parent`), against seats available — the number that says whether the room fits.
 - Counts per meal choice and per portion — party attendees only.
 - Midnight snack count — party attendees only.
 - Children by caterer age bracket, computed from `age` (brackets configurable, since every caterer draws them differently).
 - Transport balance: total `transport_seats_needed` vs. total `transport_seats_offered` across households, and the resulting gap — the number that tells us whether to hire a shuttle. Matching individual riders to drivers is done by us offline, not by the app.
-- Special seating needs list: high chairs, strollers, wheelchairs — the things that must be physically arranged.
+- Special needs list: high chairs and wheelchair space per guest, prams per household — the things that must be physically arranged.
 - Consolidated dietary list, grouped so the caterer gets one readable page.
 - Delta list: all `origin = 'guest_added'` guests, newest first.
 - Nudge list: households with `rsvp_submitted_at IS NULL`.
 - Households with a non-empty `rsvp_note`, flagged unread until an admin marks it seen.
-- Stale seat assignments: assignments whose guest is no longer attending or is deleted.
+- Stale seat assignments: assignments whose guest is no longer attending that venue, or is deleted.
 - Budget rollup: planned vs. actual vs. paid per category and overall, with per-head items resolved against the live headcount, and total cost shown separately from our own cost after `external_cents`.
 
 ## Rejected fields
@@ -199,7 +220,8 @@ Everything else that is genuinely static (page text, wedding date, venue) is har
 | `meal_option` table | Only three fixed choices — collapsed to a `CHECK`-constrained column on `guest`. |
 | `guest.age_band` | Replaced by a plain `age` integer (defined as age at the wedding date) plus `seating_need` and `portion`. Bands are derived at read time, so a caterer's bracket boundaries can change without a migration. |
 | `guest.kids_menu` BOOLEAN | Two states were not enough — infants eat nothing. Replaced by the three-way `portion` enum. |
-| `sort_order` | Only justified where display order differs from natural order; `seating_table.number` handles the one real case. |
+| `sort_order` | Only justified where display order differs from natural order; `seating_unit.number` handles the one real case. |
+| `seating_unit.capacity` | Redundant once every seat is a row — capacity is `COUNT(seat)`, and an over-assignment warning is replaced by there being no free seat to assign. |
 | `admin_user` table | One admin, low stakes. Credentials live in environment variables; see [04-architecture](04-architecture.md). |
 | `household.phone` | We already know these people. Transport counts are for estimating shuttle capacity, not for the app to match riders to drivers. |
 | Separate `attending` + `scope` columns | Folded into one `attending` enum so "declined but attending the party" is unrepresentable rather than merely invalid. |
