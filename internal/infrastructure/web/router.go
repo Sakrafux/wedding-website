@@ -2,12 +2,11 @@ package web
 
 import (
 	"github.com/go-chi/chi/v5"
-	// Aliased: this file will also import our own middleware package.
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httplog/v2"
 
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/handler"
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
 )
 
 // NewRouter builds the application router: global middleware, the /api tree and
@@ -37,15 +36,17 @@ func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mu
 // exist before the logger records it, and the recoverer must sit inside the logger
 // so a panic still produces a request log line.
 func registerMiddleware(router *chi.Mux, logger *httplog.Logger) {
-	router.Use(chimiddleware.RequestID)
+	router.Use(middleware.RequestID)
 
 	// chi's middleware.RealIP is deliberately not used: it believes X-Forwarded-For
 	// from any source, which would make the login rate limit trivially bypassable.
 	// F1-B05 resolves the client IP against TRUSTED_PROXY_CIDRS instead.
 
-	router.Use(httplog.RequestLogger(logger))
+	// httplog.Handler, not httplog.RequestLogger: the latter is a chain that bundles
+	// chi's own RequestID and Recoverer, and both are replaced here — chi's RequestID
+	// would overwrite our speakable ID with its "host/pid-000123" format, and chi's
+	// Recoverer answers with an empty body instead of the error envelope.
+	router.Use(httplog.Handler(logger))
 
-	// Placeholder recovery so a panic cannot kill the process. E0-06 replaces this
-	// with one that emits the JSON error envelope and the request ID.
-	router.Use(chimiddleware.Recoverer)
+	router.Use(middleware.Recoverer)
 }

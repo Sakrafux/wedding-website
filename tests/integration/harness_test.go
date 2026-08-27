@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog/v2"
 	"github.com/stretchr/testify/require"
 
@@ -45,8 +46,9 @@ func newTestDatabase(t *testing.T) *configuration.Database {
 
 // newTestServer starts the production router on a random port.
 //
-// The logger is set to Error so a passing test run stays readable; a failing
-// assertion says more than a request log line would.
+// Logs are discarded so a passing test run stays readable; a failing assertion says
+// more than a request log line would, and the panic-recovery test would otherwise
+// print a stack trace that reads like a failure.
 func newTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
@@ -58,8 +60,27 @@ func newTestServer(t *testing.T) *httptest.Server {
 func newTestServerWithDatabase(t *testing.T, database *configuration.Database) *httptest.Server {
 	t.Helper()
 
-	logger := httplog.NewLogger("wedding-test", httplog.Options{LogLevel: slog.LevelError})
-	server := httptest.NewServer(web.NewRouter(logger, database))
+	return newTestServerWithRoutes(t, database, nil)
+}
+
+// newTestServerWithRoutes appends extra routes to the production router, for a test
+// that needs a handler no real endpoint provides yet — one that panics, say.
+//
+// The routes are added to the real mux, so they run behind the real middleware
+// chain; that is the point, since the middleware is what is under test.
+func newTestServerWithRoutes(t *testing.T, database *configuration.Database, register func(chi.Router)) *httptest.Server {
+	t.Helper()
+
+	logger := &httplog.Logger{
+		Logger:  slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError})),
+		Options: httplog.Options{Concise: true},
+	}
+	router := web.NewRouter(logger, database)
+	if register != nil {
+		register(router)
+	}
+
+	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 
 	return server

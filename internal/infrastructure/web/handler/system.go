@@ -44,7 +44,7 @@ func (system *System) Health(w http.ResponseWriter, r *http.Request) {
 func (system *System) Ready(w http.ResponseWriter, r *http.Request) {
 	if err := system.database.Ping(r.Context()); err != nil {
 		httplog.LogEntry(r.Context()).Error("readiness check failed", "error", err)
-		httpio.WriteError(w, r, http.StatusServiceUnavailable, "not_ready", "Der Dienst ist gerade nicht bereit. Bitte versuche es in einem Moment noch einmal.")
+		httpio.RespondError(w, r, httpio.ErrNotReady)
 		return
 	}
 
@@ -57,10 +57,10 @@ func (system *System) Ready(w http.ResponseWriter, r *http.Request) {
 // Inside /api a miss is a genuine miss and must answer JSON — the frontend's fetch
 // layer should never have to parse HTML to learn that it called the wrong URL.
 func (system *System) APINotFound(w http.ResponseWriter, r *http.Request) {
-	httpio.WriteError(w, r, http.StatusNotFound, "not_found", "Diese Adresse gibt es nicht.")
+	httpio.RespondError(w, r, httpio.ErrNotFound)
 }
 
 // APIMethodNotAllowed answers a known /api path called with the wrong method.
 func (system *System) APIMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	httpio.WriteError(w, r, http.StatusMethodNotAllowed, "method_not_allowed", "Diese Anfrage ist hier nicht erlaubt.")
+	httpio.RespondError(w, r, httpio.ErrMethodNotAllowed)
 }

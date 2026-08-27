@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httplog/v2"
 
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/dto"
@@ -25,13 +26,20 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, status int, body any) {
 	}
 }
 
-// WriteError answers with the API's error envelope. See dto.ErrorResponse.
+// writeErrorBody stamps the request ID onto an error body and writes it.
 //
-// code is a stable English identifier the frontend may branch on; message is
-// German and shown to the guest verbatim, so callers must keep internal detail
-// such as SQL or file paths out of it.
-func WriteError(w http.ResponseWriter, r *http.Request, status int, code, message string) {
-	WriteJSON(w, r, status, dto.ErrorResponse{
-		Error: dto.ErrorBody{Code: code, Message: message},
-	})
+// Unexported on purpose: every error response goes through RespondError, so that the
+// code, the status and the German message can only come from the one table in
+// respond.go. A public writer taking a code and a message would let a handler invent
+// either, which is how one endpoint ends up leaking a database string.
+//
+// The ID is read from chi's context key, which middleware.RequestID writes and
+// httplog also reads — that shared key is what makes the body, the X-Request-Id
+// header and the log line agree. It is empty when the middleware did not run, as
+// in a test calling a handler directly; the envelope then simply has no ID, which
+// beats failing the response over a support convenience.
+func writeErrorBody(w http.ResponseWriter, r *http.Request, status int, body dto.ErrorBody) {
+	body.RequestID = chimiddleware.GetReqID(r.Context())
+
+	WriteJSON(w, r, status, dto.ErrorResponse{Error: body})
 }

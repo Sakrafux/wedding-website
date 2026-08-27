@@ -12,6 +12,11 @@ Done:
 - `tests/integration/schema_test.go`: one rejected insert per enum column, duplicate code, household cascade, both seating RESTRICT paths, one-seat-per-guest-per-venue, both venue-mismatch paths, guest and household defaults, seeded settings.
 - `database_test.go` now uses `household`/`guest` instead of the inline `parent`/`child` stand-in; the `E0-05` forward references are gone.
 - Data model, `02-features`, `06-privacy-security`, `07-roadmap`, `CLAUDE.md` and the F7 story titles updated for the seating rework.
+- `E0-06` — `middleware.RequestID` (7 chars, unambiguous base32, `X-Request-Id` on every response) and `middleware.Recoverer` (stack into the structured log, envelope out); both replace chi's versions, so the router now uses `httplog.Handler` instead of `httplog.RequestLogger`.
+- Error envelope gained `request_id` and an optional `fields` map.
+- Tests: `httpio/write_test.go` (one ID in header, body and log line; client-supplied header ignored; `fields` omitted when empty) and `tests/integration/error_envelope_test.go` (unknown route, success header, panic leaks nothing, field-keyed validation). Harness gained `newTestServerWithRoutes` and now discards log output.
+- `domain/errors.go` — `Error{Code, cause}` plus `NewError`/`WrapError`, and the central `ErrorCode` list (first entry: `unknown_login_code`). `httpio.RespondError` maps code → status + German message via the `errorResponses` table; tests cover wrapped codes, unmapped codes and non-domain errors failing closed.
+- `httpio` narrowed to `WriteJSON` + `RespondError`: `WriteError`, `WriteValidationError` and `WriteInternalError` are gone, the transport codes (`not_found`, `method_not_allowed`, `not_ready`, `validation_failed`, `internal_error`) moved into the same table as sentinels, and validation became `httpio.ValidationError`. Handlers and the recoverer now pass errors, not statuses.
 
 Decisions:
 
@@ -22,9 +27,14 @@ Decisions:
 - `guest.last_name` is required: households of two surnames are common.
 - `stroller` removed from `guest.seating_need` → `household.has_stroller` BOOLEAN. A pram is parked, not sat on, belongs to the household, and nobody brings two — so a flag, not a count.
 - No "log out other devices" — one household, one shared code. `session.user_agent`/`ip` stay, for the audit trail only.
+- Request ID is 7 speakable base32 chars, generated with `math/rand/v2`, stored under chi's context key so httplog logs the same value; an incoming `X-Request-Id` is ignored. Rationale in `middleware/requestid.go`.
+- Validation failures answer **400**, not 422 — the frontend branches on the presence of `fields`, so a second status buys nothing. In `httpio`'s `errorResponses` table.
+- **Domain errors carry a code, not a message or a status.** One `errorResponses` table in `httpio` maps code → status + German text, so it is the full list of what a guest can be shown; unmapped codes and non-domain errors fail closed to a generic 500. Rejected `AppError{Type, Message}` with the message echoed to the client; reasoning in `04-architecture.md`.
+- **No exported writer takes a status, code or message.** `WriteError(status, code, message)` was a second write path next to the table and therefore a second chance to leak; every failure now goes through `RespondError`.
+- `domain.ErrorCode` constants live in one block in `domain/errors.go`, not next to each rule — deliberate break with "keep it near the code", so the list can be read against the message table.
 
-Time: <h>
-Cost: $<x>
+Time: 1h
+Cost: $3.44
 
 ## 2026-08-26
 
