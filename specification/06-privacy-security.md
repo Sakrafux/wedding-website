@@ -108,7 +108,7 @@ Per-IP limiting on both login endpoints, on the order of **10 failures per hour*
 
 - Token: 256 bits from `crypto/rand`, base64url-encoded.
 - Stored as a **SHA-256 hash** in `session.id`; the raw token exists only in the cookie. A leaked database therefore does not hand over live sessions — though it does hand over the codes, so this is defence in depth, not a barrier.
-- Cookie: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`. `SESSION_COOKIE_SECURE=false` exists **only** for local development over plain HTTP and must never be false in production.
+- Cookie: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=$PUBLIC_BASE_PATH` (`/hochzeit`). Not `Path=/`: the site shares a hostname with other apps behind the same reverse proxy, and a root-scoped cookie would be sent to all of them. `SESSION_COOKIE_SECURE=false` exists **only** for local development over plain HTTP and must never be false in production.
 - Household sessions: 365 days, rolling refresh on use (extend at most once a day to avoid a write per request). Long life is a deliberate UX choice — "log in once, ever" is a stated product goal, and the alternative is a phone call.
 - Admin sessions: hours, no rolling refresh. Different risk profile, as recorded in [04-architecture](04-architecture.md).
 - Logout deletes the session row, so revocation is immediate and real. This is why sessions are opaque DB tokens rather than JWTs.

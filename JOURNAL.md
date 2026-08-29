@@ -28,7 +28,7 @@ Done:
 - Smoke-tested the built binary: `/`, `/rsvp`, a hashed asset and `/api/nope` all correct, security headers intact on the SPA response.
 - `E0-10` — three-stage `Dockerfile`: node 24 + corepack bundle, `golang:1.26-alpine` with `CGO_ENABLED=0`, `distroless/static-debian12:nonroot` runtime. 23.1 MB, no shell, UID 65532.
 - `/data` and `/data/photos` staged in the build stage and copied with `--chown=nonroot`, so a fresh named volume inherits writable directories — the runtime image has no shell to `mkdir` with.
-- `compose.example.yaml`: single `wedding-data` volume at `/data`, `restart: unless-stopped`, loopback-only port publishing, `${VAR:?}` guards that fail before the container starts. The real `compose.yaml` is gitignored — it describes the server, not the app.
+- Compose stays out of the repo entirely: one `/data` volume, `restart: unless-stopped`, no published ports. What the file must contain is documented in the README instead.
 - `.dockerignore` covering `node_modules`, `web/dist`, `.git`, `local/`, `*.db*`, `.env`.
 - `Makefile`: `docker-build` / `docker-push` targets against `server-andreas.local:5000`.
 - Verified end to end: build from a clean context, `compose up` migrates and answers `/api/health`, restart preserves the database, a missing `ADMIN_PASSWORD` fails at startup with the `E0-02` message.
@@ -38,6 +38,12 @@ Done:
 - `fixtures_test.go`: `seedHousehold(t, pool, withCode/withDisplayName/withAdminNote/withGuests/withAdult/withChild)`, plus the low-level `insert*` helpers moved over from `schema_test.go`. Codes come from a counter over the F1-B01 alphabet.
 - `assertNoLeak` walks the decoded JSON and rejects `code`, `admin_note` and the budget columns by field name, with `$.error.code` the one documented exception; extra secret *values* can be passed in.
 - `harness_smoke_test.go` tests the harness itself: smoke, real file not `:memory:`, temp DB gone after the test, two parallel subtests isolated, fixture defaults and options, and `findLeak` proven to fire on each private field.
+- `E0-12` — the app is deployed and reachable over HTTPS through the real proxy, under the path prefix `/hochzeit`.
+- Path prefix wired through three places, each from one literal: Vite `base` (bundle asset URLs), the proxy's `handle_path` (strips it), `PUBLIC_BASE_PATH` (scopes the session cookie). Router `basepath` and the new `web/src/lib/api.ts` both read `import.meta.env.BASE_URL`.
+- `middleware.StripPublicBasePath` lets the binary answer prefixed URLs itself, so `make preview` and a direct curl behave like the proxied site. `NewRouter` now takes the `Config`.
+- `PUBLIC_BASE_PATH` added to config with normalisation (leading slash, no trailing) and tests; a non-path value fails startup rather than silently widening the cookie's scope.
+- Integration tests: the embedded `index.html` must reference assets under the prefix, and the prefixed paths must answer like the stripped ones.
+- README: deploy procedure, the Caddy block, what the deployment must provide, and how to derive `TRUSTED_PROXY_CIDRS`. `compose.example.yaml` deleted — the Compose file describes a machine, not the app.
 - Image pushed to `server-andreas.local:5000/wedding:latest` (digest `sha256:3e625cdf…`). Docker here is Rancher Desktop, so `insecure-registries` and the `10.0.0.45 server-andreas.local` hosts entry had to go inside the lima VM via `rdctl shell`, not on the host.
 
 Decisions:
@@ -54,6 +60,9 @@ Decisions:
 - `assertNoLeak` splits into a pure `findLeak(body) string` plus a thin assertion, so the privacy check is itself testable without a fake `*testing.T`.
 - `google/go-cmp` deliberately not added yet: nothing so far needs a struct diff `testify` cannot express, and an unused dependency is a decision nobody made.
 - The login/cookie helper the story asks for is deferred to `F1-B04`, which is where the endpoint appears; the cookie jar is already in the client.
+- Site lives at `/hochzeit`, not `/apps/wedding`: the URL is printed on the invitation card, so it is user-facing text and follows the German rule.
+- A path prefix rather than its own hostname — accepted cost: the frontend carries a base path, and the cookie must be scoped so it is not sent to the neighbouring apps on that hostname.
+- `TRUSTED_PROXY_CIDRS` cannot be verified until `F1-B05` resolves `X-Forwarded-For`; the test-plan item stays open in the story file with that note.
 - The image is built from a named registry path (`server-andreas.local:5000/wedding`) rather than a bare name: the server's registry is plain HTTP, so both daemons need it in `insecure-registries`. Noted in the README.
 - Compose takes `TRUSTED_PROXY_CIDRS` with `${VAR?}` and not `${VAR:?}` — empty is a meaningful value ("trust no proxy"), only an absent variable is an error.
 - No `HEALTHCHECK` in the image: distroless has no shell or curl to run one. Liveness is the reverse proxy's job against `/api/health`.

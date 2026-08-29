@@ -53,8 +53,8 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 ### Technical loose ends
 
 - [ ] Pick the Go thumbnailing library (deferred until F8/F9 is built).
-- [ ] Confirm the reverse proxy in use on your server, so `TRUSTED_PROXY_CIDRS` and the deployment notes are concrete.
-- [ ] Decide the Docker Compose shape and volume paths for `DB_PATH` and `PHOTO_DIR`.
+- [x] Reverse proxy: Caddy, path-routed as `/hochzeit` on a shared Docker network. Snippet and `TRUSTED_PROXY_CIDRS` in the README deploy section.
+- [x] Compose shape and volumes decided in `E0-10`/`E0-12`: one `/data` mount plus a photo mount, bind-mounted, documented in the README.
 - [ ] CI: any, or local build and push only?
 
 ## Sequencing gates

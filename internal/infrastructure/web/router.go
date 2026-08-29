@@ -16,11 +16,11 @@ import (
 // Later stories widen the parameter list with handler dependencies. main and the
 // integration tests both construct the router through this one function, so the
 // tests exercise the real middleware chain rather than an approximation of it.
-func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mux {
+func NewRouter(logger *httplog.Logger, database *configuration.Database, config configuration.Config) *chi.Mux {
 	system := handler.NewSystem(database)
 
 	router := chi.NewRouter()
-	registerMiddleware(router, logger)
+	registerMiddleware(router, logger, config)
 
 	router.Get("/robots.txt", system.Robots)
 
@@ -42,7 +42,12 @@ func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mu
 // registerMiddleware installs the global chain. Order matters: the request ID must
 // exist before the logger records it, and the recoverer must sit inside the logger
 // so a panic still produces a request log line.
-func registerMiddleware(router *chi.Mux, logger *httplog.Logger) {
+func registerMiddleware(router *chi.Mux, logger *httplog.Logger, config configuration.Config) {
+	// First in the chain, so that everything after it — routing, logging, the SPA
+	// handler — sees the same path whether or not the reverse proxy stripped the
+	// public prefix. A no-op when the app is served at the root.
+	router.Use(middleware.StripPublicBasePath(config.PublicBasePath))
+
 	router.Use(middleware.RequestID)
 
 	// Outside the recoverer, so that the 500 an unrecovered panic produces still

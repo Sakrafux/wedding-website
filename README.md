@@ -69,19 +69,31 @@ Conventions that matter:
 
 ## Running it
 
-```bash
-cp .env.example .env                      # then fill it in
-cp compose.example.yaml compose.yaml      # then adapt it to the server
-docker compose up -d                      # migrates on startup, serves on 127.0.0.1:8080
-```
+One container, behind a reverse proxy that terminates TLS. The Compose file lives on the server and is deliberately not in this repository: it describes a machine — host paths, networks, container names — not the app.
 
-Both copies are gitignored. `.env` holds `ADMIN_PASSWORD` in plaintext, and the real `compose.yaml` describes the server — networks, proxy wiring, paths — which is deployment detail, not app detail. `compose.example.yaml` is the committed shape.
+Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `PUBLIC_BASE_PATH`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default — the error names every problem at once, so one restart tells you everything that is wrong.
 
-Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default — the error names every problem at once, so one restart tells you everything that is wrong.
+What the deployment has to provide:
 
-The image sets `DB_PATH` and `PHOTO_DIR` itself, both under the single `/data` volume; Compose supplies the rest and refuses to start if `ADMIN_USER`, `ADMIN_PASSWORD` or `TRUSTED_PROXY_CIDRS` are absent from the `.env` next to it. `TRUSTED_PROXY_CIDRS` may be empty — that means "trust no proxy" — but it has to be written down.
+- **Two writable directories**, mounted at `DB_PATH`'s parent and at `PHOTO_DIR`. 
+- **A network the proxy can reach it on.** Nothing is published on the host: the proxy is not merely the intended way in but the only one. The container's name is what the proxy addresses, so pin it rather than letting Compose derive one from the directory.
+- **`SESSION_COOKIE_SECURE=true`** — the proxy terminates TLS, so the process speaks plain HTTP while the cookie must still be marked `Secure`.
 
-The port is published on loopback only. The reverse proxy is the sole way in; binding `0.0.0.0` would expose the app on the LAN without TLS. Override with `BIND_ADDR` / `HOST_PORT` if the proxy lives on another interface or in another Docker network.
+Both mounts hold durable state, so both belong in the backup.
+
+### Where it is served
+
+The site is served under a **path prefix**, `/hochzeit`, because it shares a hostname with other apps behind the same proxy. German prefix on purpose: the URL is printed on the invitation card, so it is user-facing text. Three places have to agree on it, and each derives it from one literal:
+
+| Place | Value | Why |
+|---|---|---|
+| `web/vite.config.ts` `base` | `/hochzeit/` | Baked into the bundle; the browser resolves every asset URL against it. Reachable as `import.meta.env.BASE_URL`, which the router's `basepath` and `lib/api.ts` both read, so the prefix is written once |
+| The proxy's route | `/hochzeit*`, prefix stripped | Go then sees `/api/…` and `/assets/…`, so no route is written twice |
+| `PUBLIC_BASE_PATH` | `/hochzeit` | The prefix is stripped before Go sees it, so it cannot be inferred — and the session cookie must be scoped to it, or it is sent to every neighbouring app on the hostname |
+
+The binary also answers the prefixed paths itself (`StripPublicBasePath`), so a request that still carries the prefix behaves like one the proxy already stripped. That keeps `make preview` and a curl straight at the container honest instead of serving `index.html` and then 404-ing every asset under it.
+
+One consequence of sharing a hostname: `/robots.txt` at the domain root belongs to whatever is mounted at `/`, not to this app. Crawler exclusion therefore rests on the `X-Robots-Tag: noindex, nofollow` header from `E0-07`, set on every response, plus the `<meta name="robots">` in `index.html`.
 
 The image is a three-stage build — pnpm bundle, `CGO_ENABLED=0` Go binary, `distroless/static:nonroot` runtime — and lands at roughly 23 MB with no shell in it. It carries no `HEALTHCHECK` for that reason; `GET /api/health` is there for the proxy to call.
 
@@ -90,7 +102,58 @@ make docker-build         # build the image
 make docker-push          # push to server-andreas.local:5000
 ```
 
-The registry speaks plain HTTP, so both the pushing and the pulling Docker daemon need it under `insecure-registries` in `/etc/docker/daemon.json`.
+The registry speaks plain HTTP, so the pushing daemon needs it under `insecure-registries` in `/etc/docker/daemon.json`. Pulling from the registry's own host over `localhost:5000` needs no such entry, since Docker trusts loopback by default.
+
+### Reverse proxy
+
+Caddy, terminating TLS and routing several apps on one hostname by path:
+
+```caddyfile
+handle_path /hochzeit* {
+    reverse_proxy wedding:8080
+}
+```
+
+`handle_path` rather than `handle` is the load-bearing choice: it strips the prefix, which is why `PUBLIC_BASE_PATH` has to be configured and why the Go routes are written without it. `wedding` is the container name, so that name is pinned in Compose. The block must come before any catch-all `handle`, which would otherwise swallow it.
+
+`reverse_proxy` sets `X-Forwarded-For` and `X-Forwarded-Proto` by default. Neither needs configuring, but both must survive — do not add a `header_up` that clears them.
+
+### Deploy procedure
+
+From the dev machine:
+
+```bash
+make docker-push                          # builds the frontend, the binary, the image; pushes to the registry
+```
+
+On the server, from a shell in the directory holding the Compose file:
+
+```bash
+docker compose pull
+docker compose up -d
+docker compose logs -n 20                 # migration lines, then "listening"
+```
+
+Then check from outside, over HTTPS:
+
+```bash
+curl -si https://<domain>/hochzeit/api/health   # 200 + JSON, security headers intact
+curl -s  https://<domain>/hochzeit/rsvp | head  # the SPA shell, not a proxy 404
+```
+
+`ADMIN_PASSWORD` is stored in plaintext wherever the environment is defined — keep that file at mode `0600`, and generate the value rather than inventing one:
+
+```bash
+openssl rand -base64 24
+```
+
+`TRUSTED_PROXY_CIDRS` must cover the network the proxy reaches the container on:
+
+```bash
+docker network inspect <network> --format '{{(index .IPAM.Config 0).Subnet}}'
+```
+
+It cannot be fully verified yet: until `F1-B05` resolves `X-Forwarded-For`, the logged `remoteIP` is the direct peer — the proxy's own address — which is correct but proves nothing about the CIDR. Check it by observation when `F1-B05` lands: load the site from a phone on mobile data and confirm the logged client IP is the phone's. A wrong value makes every guest look like one client, so login rate limiting protects nothing while appearing to work.
 
 ## Local development
 
@@ -114,10 +177,10 @@ The frontend runs as a second server, not as part of the Go build:
 ```bash
 corepack enable                          # once
 cd web && pnpm install
-pnpm dev                                 # http://localhost:5173
+pnpm dev                                 # http://localhost:5173/hochzeit/
 ```
 
-Open **5173**, not 8080. Vite serves the app and proxies `/api` through to the Go process on 8080, so the browser sees a single origin — which is not just convenience: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and whatever was last built into `web/dist`, embedded at compile time — stale unless you just ran `make build`.
+Open **5173**, not 8080, and mind the `/hochzeit/` prefix: the dev server mirrors the production URL, and Vite rewrites `/hochzeit/api/…` to `/api/…` on its way to Go exactly as Caddy does — so the two environments cannot disagree about what the backend receives. The single origin is not just convenience either: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and whatever was last built into `web/dist`, embedded at compile time — stale unless you just ran `make build`.
 
 Frontend checks, run from `web/`:
 

@@ -14,8 +14,9 @@ web/node_modules/
 .env
 .env.local
 
-# The real Compose file. Describes the server — networks, proxy wiring, paths — not
-# the app; compose.example.yaml is the committed counterpart.
+# The Compose file. It describes the server — bind paths, networks, the proxy's
+# container names — not the app, and it is written once on the machine that runs it.
+# The README documents what it has to contain.
 compose.yaml
 compose.override.yaml
 

@@ -89,7 +89,7 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 
 	server := &http.Server{
 		Addr:              listenAddr,
-		Handler:           web.NewRouter(logger, database),
+		Handler:           web.NewRouter(logger, database, config),
 		ReadHeaderTimeout: readHeaderTimeout,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,

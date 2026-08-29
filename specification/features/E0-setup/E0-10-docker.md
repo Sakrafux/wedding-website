@@ -11,7 +11,7 @@ As an admin, I want one small container with two volumes, so that deploying is `
 **In:**
 
 - Multi-stage `Dockerfile`: node build → go build → distroless/scratch runtime.
-- `compose.example.yaml` with the volume mounts and environment. The real `compose.yaml` is gitignored: it describes the server — networks, proxy wiring — not the app.
+- The Compose shape — volume mounts, environment, network — documented in the README. `compose.yaml` itself is gitignored: it describes the server, not the app.
 - Non-root runtime user.
 
 **Out:**

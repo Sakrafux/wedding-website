@@ -7,7 +7,7 @@ Status: draft · Last updated: 2026-08-21
 One Docker container on a personal server, behind an already-existing reverse proxy that terminates TLS.
 
 ```
-Internet → reverse proxy (TLS) → :8080 wedding container
+Internet → Caddy (TLS, strips /hochzeit) → :8080 wedding container
                                    ├── Go binary (chi)
                                    │    ├── /api/*  JSON API
                                    │    └── /*      embedded SPA (index.html fallback)
@@ -201,6 +201,7 @@ Environment variables only. No config file.
 | `ADMIN_USER` | Admin username |
 | `ADMIN_PASSWORD` | Admin password, plaintext. Only readable with direct server access; accepted. |
 | `SESSION_COOKIE_SECURE` | Off for local development only |
+| `PUBLIC_BASE_PATH` | Public path prefix; scopes the session cookie |
 | `TRUSTED_PROXY_CIDRS` | Whose `X-Forwarded-For` to believe |
 | `LOG_LEVEL` | |
 
