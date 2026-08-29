@@ -80,7 +80,7 @@ Configuration is environment variables only, no config file. Required: `DB_PATH`
 
 ## Local development
 
-Requires Go 1.26. Nothing else yet; pnpm and Node join once `E0-08` scaffolds the frontend.
+Requires Go 1.26 and Node 24 with corepack. The frontend's package manager is pinned in `web/package.json`; `corepack enable` is what makes your shell honour that pin instead of whatever pnpm happens to be on your `PATH`.
 
 ```bash
 cp .env.example .env                     # gitignored: it holds ADMIN_PASSWORD
@@ -93,6 +93,26 @@ go run ./cmd/wedding
 For local runs set `DB_PATH=./local/wedding.db`, `PHOTO_DIR=./local/photos` and `SESSION_COOKIE_SECURE=false`. `/local/` is gitignored. The `Secure` flag has to come off because the browser refuses to send a `Secure` cookie over `http://localhost`, which makes login fail with no visible error.
 
 Nothing loads `.env` automatically — there is no dotenv dependency, on purpose, since the deployed container gets its environment from Compose. Export it yourself as above, or pass the variables inline.
+
+The frontend runs as a second server, not as part of the Go build:
+
+```bash
+corepack enable                          # once
+cd web && pnpm install
+pnpm dev                                 # http://localhost:5173
+```
+
+Open **5173**, not 8080. Vite serves the app and proxies `/api` through to the Go process on 8080, so the browser sees a single origin — which is not just convenience: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and, from `E0-09`, whatever was last built into `web/dist` — stale unless you just ran `pnpm build`.
+
+Frontend checks, run from `web/`:
+
+```bash
+pnpm build                               # type check, then bundle into dist/
+pnpm lint                                # oxlint
+pnpm format                              # prettier
+```
+
+More detail, and why each dependency is there: [web/README.md](web/README.md).
 
 Check it is up:
 
@@ -113,7 +133,6 @@ go test ./...                            # unit + integration, no external servi
 gofmt -l . && go vet ./...
 ```
 
-Once the frontend exists, local development runs the Go API and the Vite dev server side by side, with Vite proxying `/api`; the production path embeds `web/dist` into the binary instead.
 
 ## Operating it
 

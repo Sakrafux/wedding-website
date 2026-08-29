@@ -1,0 +1,163 @@
+@import "tailwindcss";
+@import "./styles/fonts.css";
+
+/* The design tokens from specification/05-design.md, verbatim. Components reference
+   these names — `bg-paper`, `text-ink-muted` — and never a hex value, so a palette
+   change is one edit here.
+
+   There is no dark variant and no `@custom-variant dark`: dark mode is a recorded
+   rejection, not an omission. Adding one doubles every measured contrast pair. */
+@theme {
+  --color-paper: #faf7f0;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f2ede3;
+
+  --color-ink: #3a3226;
+  --color-ink-muted: #6b6152;
+  --color-line: #e2dacb;
+
+  /* Interactive: buttons, links, focus rings, active nav. */
+  --color-primary: #4a5d4e;
+  --color-primary-hover: #3c4c40;
+  --color-primary-soft: #e7ede6;
+
+  /* Attention, never action. `accent` is a fill colour and `accent-strong` is the
+     text colour — the split exists so nobody has to remember which shade clears
+     4.5:1 on paper. */
+  --color-accent: #a8503c;
+  --color-accent-strong: #8e4231;
+  --color-accent-soft: #f6e9e4;
+
+  --color-success: #3f6b4a;
+  --color-warning: #8a6a1f;
+  --color-danger: #9a3324;
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+
+  /* Type scale. Two values in the design doc mean mobile / desktop; only the mobile
+     size lives here, because mobile is the design target and the desktop step is a
+     responsive utility on the few elements that need it.
+
+     Sizes are in rem against the 18px root set below, so browser zoom and OS font
+     scaling move all of them together. `small` is the floor — nothing smaller
+     ships, because 16px is already the readability limit for this audience. */
+  --text-display: 2.2222rem; /* 40px */
+  --text-display--line-height: 1.2;
+  --text-h1: 1.6667rem; /* 30px */
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.3333rem; /* 24px */
+  --text-h2--line-height: 1.2;
+  --text-h3: 1.1111rem; /* 20px */
+  --text-h3--line-height: 1.3;
+  --text-body: 1rem; /* 18px */
+  --text-body--line-height: 1.6;
+  --text-small: 0.8889rem; /* 16px */
+  --text-small--line-height: 1.5;
+
+  /* Inputs and buttons take `rounded-lg`, cards `rounded-xl`. Two radii, never
+     mixed. */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /* One soft shadow for cards. No layered elevation system — the paper metaphor
+     carries the depth. */
+  --shadow-card: 0 1px 3px rgb(58 50 38 / 0.08);
+}
+
+/* shadcn/ui components are copied into this repo and reference its own variable
+   names. They are mapped onto our tokens here rather than edited out of each
+   component, so `shadcn add` keeps working unmodified.
+
+   Note the collision: shadcn's `--accent` is a hover tint, not our terracotta
+   attention colour, so it maps to `primary-soft`. Our accent stays reachable under
+   its own token name. */
+:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-paper);
+  --secondary: var(--color-surface-sunken);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-surface-sunken);
+  --muted-foreground: var(--color-ink-muted);
+  --accent: var(--color-primary-soft);
+  --accent-foreground: var(--color-primary-hover);
+  --destructive: var(--color-danger);
+  --border: var(--color-line);
+  --input: var(--color-line);
+  --ring: var(--color-primary);
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  /* 18px, not the 16px web default: this audience should not have to discover
+     browser zoom. Expressed in rem so it is a multiple of whatever the reader has
+     configured, rather than an override of it — `font-size: 18px` here would
+     silently defeat an OS font-scale setting.
+
+     One consequence, accepted: Tailwind's spacing unit is also rem, so the whole
+     4px grid renders at 4.5px. Type and spacing scale together, which is what
+     keeps the layout proportional; the px values in 05-design.md were written
+     against a 16px root and are read as ratios, not absolutes. */
+  html {
+    font-size: 1.125rem;
+  }
+
+  body {
+    @apply bg-paper text-ink font-body text-body;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold;
+  }
+
+  /* Set once, globally, so that no component can forget it and no component has to
+     remember it. Removing an outline without replacing it is banned. */
+  :focus-visible {
+    @apply outline-primary outline-2 outline-offset-2;
+  }
+
+  /* Headcounts, budget cents and seat numbers all want columns that line up. */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* All motion here is decoration, so honouring the preference costs nothing. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

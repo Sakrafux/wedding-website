@@ -42,7 +42,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `E0-05` Migration `0001` — full schema
 - [x] `E0-06` Error envelope, request ID, panic recovery
 - [x] `E0-07` Security headers, CSP, robots noindex
-- [ ] `E0-08` Frontend scaffold: Vite, TS, Tailwind, shadcn, design tokens
+- [x] `E0-08` Frontend scaffold: Vite, TS, Tailwind, shadcn, design tokens
 - [ ] `E0-09` `go:embed` of `dist/` and SPA fallback
 - [ ] `E0-10` Dockerfile, Compose, volumes
 - [ ] `E0-11` Integration test harness against temp-file SQLite

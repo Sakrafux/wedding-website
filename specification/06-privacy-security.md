@@ -178,7 +178,7 @@ The **audit log** exists to answer disputes — "but I said we were coming", "wh
 - Container runs as a **non-root user**; the runtime image is distroless or scratch, which the pure-Go SQLite driver makes possible. Smaller image, smaller attack surface, no shell to land in.
 - Only the app port is published, and only to the reverse proxy — the container is not reachable from the internet directly.
 - Volumes are the only writable paths.
-- Dependencies are few and boring by design. `go mod tidy` plus `govulncheck` before each deploy is proportionate; a continuous scanning setup is not.
+- Dependencies are few and boring by design. `go mod tidy` plus `govulncheck`, and `pnpm audit` for the frontend, before each deploy is proportionate; a continuous scanning setup is not. Frontend versions are fixed by `pnpm-lock.yaml` and installed with `--frozen-lockfile`; pnpm's default refusal to run install scripts stays on, since an unreviewed `postinstall` is the realistic supply-chain risk, not a patch-level drift.
 - **Rehearse a backup restore before invitations go out** — gate 3 in the TODO. Also verify that the restored database actually contains the codes, because after send-out the guest list is irreplaceable.
 - Never `cp` a live WAL-mode SQLite file; use `VACUUM INTO`. A torn backup is worse than none, because it looks like one.
 

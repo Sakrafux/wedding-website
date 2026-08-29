@@ -12,6 +12,23 @@ Done:
 - `System.Robots` serves `/robots.txt` with a blanket disallow, from Go rather than the frontend's `public/`.
 - `tests/integration/security_headers_test.go`: header set asserted on an API response, an error response and a non-`/api` path, each also asserted to be set exactly once; `robots.txt` body and content type.
 - CSP verification against the real bundle is deferred to `E0-08`/`E0-09`; header verification through the real proxy to `E0-12`.
+- `E0-08` — `web/` scaffolded: Vite 8, React 19, TS 6 (`strict`, `noUncheckedIndexedAccess`), Tailwind 4, shadcn/ui with `Button`/`Input`/`Label`/`Card`, TanStack Router (file-based) and Query, pnpm pinned via `packageManager`.
+- All design tokens from `05-design.md` live in `src/index.css` as Tailwind 4 `@theme` variables, with shadcn's own variable names mapped onto them; global focus-visible ring and `prefers-reduced-motion` in the base layer.
+- Cormorant Garamond 600 and Source Serif 4 self-hosted as Latin + Latin-Extended `.woff2` in `src/assets/fonts/`, OFL note beside them.
+- `src/lib/enums.ts` (English unions) and `src/lib/labels.ts` (the only German enum labels), each map typed `Record<Union, …>` — verified that removing a key fails `tsc`.
+- Built `dist/index.html` contains no inline script or style, so the `E0-07` CSP holds against the real bundle.
+- `web/README.md` rewritten: a justification per dependency (runtime and tooling), the lockfile/pinning policy, the linting and formatting rules, and the `@/` double-declaration warning. Root README covers setup, so `web/` links to it instead of repeating it.
+- Prettier added with `prettier-plugin-tailwindcss`; `format` / `format:check` scripts. Double quotes, semicolons, 2-space indent, 120 columns — reasoning in `web/README.md`; 120 matches `lll`'s default and this repo's Go p99. Markdown is in `.prettierignore` so the repo keeps one Markdown convention.
+- Root README "Local development" now covers the frontend: `corepack enable`, `pnpm dev` on 5173, why to open 5173 rather than 8080, and the frontend check commands.
+
+Decisions:
+
+- Latin-Extended is bundled alongside Latin: guest surnames carry Czech, Polish and Hungarian diacritics. Rationale in `src/styles/fonts.css`.
+- Root font size is `1.125rem`, so Tailwind's spacing unit is 4.5px rather than 4px; type and spacing scale together and the px values in `05-design.md` are read as ratios. Rationale in `src/index.css`.
+- `src/routeTree.gen.ts` is committed — `pnpm build` type checks before Vite generates it. Noted in `web/README.md`.
+- **oxlint + prettier, no eslint.** Rationale in `web/README.md` and `CLAUDE.md`; revisit only if a type-aware rule would have caught a real bug.
+- Versions stay as `^` ranges pinned by `pnpm-lock.yaml`; `E0-10` must install with `--frozen-lockfile`, and `pnpm audit` joins `govulncheck` in the pre-deploy check.
+- TanStack router and query devtools mounted from `src/components/Devtools.tsx` behind a dynamic `import()`, not a static import guarded by `import.meta.env.DEV` — a static import survives dead-code elimination and would ship the panels to guests. Verified absent from `dist/`.
 
 Time: <h>
 Cost: $<x>
