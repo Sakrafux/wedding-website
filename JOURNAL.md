@@ -4,6 +4,18 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-08-29
+
+Done:
+
+- `E0-07` — `middleware.SecurityHeaders`: CSP, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, `X-Robots-Tag`, exactly the table in `06-privacy-security.md`. Registered outside the recoverer so an unrecovered panic still carries them.
+- `System.Robots` serves `/robots.txt` with a blanket disallow, from Go rather than the frontend's `public/`.
+- `tests/integration/security_headers_test.go`: header set asserted on an API response, an error response and a non-`/api` path, each also asserted to be set exactly once; `robots.txt` body and content type.
+- CSP verification against the real bundle is deferred to `E0-08`/`E0-09`; header verification through the real proxy to `E0-12`.
+
+Time: <h>
+Cost: $<x>
+
 ## 2026-08-27
 
 Done:

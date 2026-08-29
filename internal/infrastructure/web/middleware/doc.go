@@ -1,6 +1,6 @@
-// Package middleware holds the app-specific HTTP middleware: the request ID, panic
-// recovery, household session resolution, the admin-only gate, login rate limiting
-// and trusted-proxy client IP resolution.
+// Package middleware holds the app-specific HTTP middleware: the request ID,
+// security headers, panic recovery, household session resolution, the admin-only
+// gate, login rate limiting and trusted-proxy client IP resolution.
 //
 // Request ID and panic recovery exist here rather than coming from chi because both
 // of chi's versions fail a requirement of this app: its ID format cannot be read

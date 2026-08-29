@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/go-chi/httplog/v2"
@@ -49,6 +50,25 @@ func (system *System) Ready(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpio.WriteJSON(w, r, http.StatusOK, dto.ReadyResponse{Status: "ok", Database: "ok"})
+}
+
+// robotsTxt disallows everything. The site is private; no part of it should ever
+// appear in a search result.
+const robotsTxt = "User-agent: *\nDisallow: /\n"
+
+// Robots serves robots.txt.
+//
+// Served by Go rather than shipped as a file in the frontend's public directory so
+// that it exists before the SPA does and cannot be dropped by a change to the Vite
+// build. It is a request to well-behaved crawlers only — the X-Robots-Tag header
+// set on every response is what actually keeps pages out of an index.
+func (system *System) Robots(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
+	if _, err := io.WriteString(w, robotsTxt); err != nil {
+		httplog.LogEntry(r.Context()).Error("robots.txt write failed", "error", err)
+	}
 }
 
 // APINotFound answers an unmatched path under /api.

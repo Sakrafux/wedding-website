@@ -9,8 +9,8 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
 )
 
-// NewRouter builds the application router: global middleware, the /api tree and
-// its JSON fallbacks.
+// NewRouter builds the application router: global middleware, robots.txt, the /api
+// tree and its JSON fallbacks.
 //
 // Later stories widen the parameter list with handler dependencies. main and the
 // integration tests both construct the router through this one function, so the
@@ -20,6 +20,8 @@ func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mu
 
 	router := chi.NewRouter()
 	registerMiddleware(router, logger)
+
+	router.Get("/robots.txt", system.Robots)
 
 	router.Route("/api", func(api chi.Router) {
 		api.Get("/health", system.Health)
@@ -37,6 +39,10 @@ func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mu
 // so a panic still produces a request log line.
 func registerMiddleware(router *chi.Mux, logger *httplog.Logger) {
 	router.Use(middleware.RequestID)
+
+	// Outside the recoverer, so that the 500 an unrecovered panic produces still
+	// carries the headers.
+	router.Use(middleware.SecurityHeaders)
 
 	// chi's middleware.RealIP is deliberately not used: it believes X-Forwarded-For
 	// from any source, which would make the login rate limit trivially bypassable.
