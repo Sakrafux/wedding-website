@@ -7,43 +7,43 @@ import (
 )
 
 func TestHealthReturnsOK(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/api/health")
+	response := app.get("/api/health")
 
-	if status != http.StatusOK {
-		t.Errorf("status = %d, want %d", status, http.StatusOK)
+	if response.Status != http.StatusOK {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusOK)
 	}
-	if want := `{"status":"ok"}`; body != want {
-		t.Errorf("body = %s, want %s", body, want)
+	if want := `{"status":"ok"}`; response.Body != want {
+		t.Errorf("body = %s, want %s", response.Body, want)
 	}
-	if !strings.HasPrefix(contentType, "application/json") {
-		t.Errorf("Content-Type = %q, want application/json", contentType)
+	if !strings.HasPrefix(response.ContentType, "application/json") {
+		t.Errorf("Content-Type = %q, want application/json", response.ContentType)
 	}
 }
 
 // TestUnknownAPIPathReturnsJSON guards the contract the frontend's fetch layer
 // depends on: a miss under /api is JSON, never the SPA's index.html.
 func TestUnknownAPIPathReturnsJSON(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/api/does-not-exist")
+	response := app.get("/api/does-not-exist")
 
-	if status != http.StatusNotFound {
-		t.Errorf("status = %d, want %d", status, http.StatusNotFound)
+	if response.Status != http.StatusNotFound {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusNotFound)
 	}
-	if !strings.HasPrefix(contentType, "application/json") {
-		t.Errorf("Content-Type = %q, want application/json", contentType)
+	if !strings.HasPrefix(response.ContentType, "application/json") {
+		t.Errorf("Content-Type = %q, want application/json", response.ContentType)
 	}
-	if !strings.Contains(body, `"code":"not_found"`) {
-		t.Errorf("body = %s, want an error envelope with code not_found", body)
+	if !strings.Contains(response.Body, `"code":"not_found"`) {
+		t.Errorf("body = %s, want an error envelope with code not_found", response.Body)
 	}
 }
 
 func TestWrongMethodOnKnownPathReturnsJSON(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	response, err := http.Post(server.URL+"/api/health", "application/json", nil)
+	response, err := http.Post(app.URL+"/api/health", "application/json", nil)
 	if err != nil {
 		t.Fatalf("POST /api/health: %v", err)
 	}

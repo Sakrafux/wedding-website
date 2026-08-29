@@ -29,12 +29,12 @@ As a developer, I want a one-line way to spin up a fully migrated temporary data
 
 ## Test plan
 
-- [ ] The smoke test starts the harness, calls `/api/health`, and passes.
-- [ ] Two tests running in parallel do not interfere.
-- [ ] The temp database is removed after the run.
-- [ ] `assertNoLeak` fails when handed a body containing `admin_note` — test the test.
+- [x] The smoke test starts the harness, calls `/api/health`, and passes.
+- [x] Two tests running in parallel do not interfere.
+- [x] The temp database is removed after the run.
+- [x] `assertNoLeak` fails when handed a body containing `admin_note` — test the test.
 
 ## Done when
 
-- [ ] A new integration test needs three lines of setup.
-- [ ] Checkbox ticked in `README.md`.
+- [x] A new integration test needs three lines of setup.
+- [x] Checkbox ticked in `README.md`.

@@ -33,6 +33,11 @@ Done:
 - `Makefile`: `docker-build` / `docker-push` targets against `server-andreas.local:5000`.
 - Verified end to end: build from a clean context, `compose up` migrates and answers `/api/health`, restart preserves the database, a missing `ADMIN_PASSWORD` fails at startup with the `E0-02` message.
 - Root README: "Running it" rewritten for the real container path, registry push and the `insecure-registries` requirement.
+- `E0-11` — `newTestApp(t)` is now the single entry point: temp-file SQLite, migrations, the production router and a cookie-jar client, all cleaned up via `t.Cleanup`. Every existing integration test migrated onto it; `newTestServer`/`newTestDatabase` are gone.
+- Request helpers on the app (`get`, `postJSON`) return a `testResponse` with the body already read — `Status`, `ContentType`, `Body`, `decodeJSON`, `errorEnvelope`.
+- `fixtures_test.go`: `seedHousehold(t, pool, withCode/withDisplayName/withAdminNote/withGuests/withAdult/withChild)`, plus the low-level `insert*` helpers moved over from `schema_test.go`. Codes come from a counter over the F1-B01 alphabet.
+- `assertNoLeak` walks the decoded JSON and rejects `code`, `admin_note` and the budget columns by field name, with `$.error.code` the one documented exception; extra secret *values* can be passed in.
+- `harness_smoke_test.go` tests the harness itself: smoke, real file not `:memory:`, temp DB gone after the test, two parallel subtests isolated, fixture defaults and options, and `findLeak` proven to fire on each private field.
 - Image pushed to `server-andreas.local:5000/wedding:latest` (digest `sha256:3e625cdf…`). Docker here is Rancher Desktop, so `insecure-registries` and the `10.0.0.45 server-andreas.local` hosts entry had to go inside the lima VM via `rdctl shell`, not on the host.
 
 Decisions:
@@ -45,6 +50,10 @@ Decisions:
 - Embed lives in `web/embed.go`, not next to the handler: an embed directive cannot reach outside its package directory. Package named `frontend` to avoid colliding with `infrastructure/web`.
 - SPA fallback answers 200, and nothing outside `/api` ever 404s — the handler cannot tell a typo from a client-side route. Rationale in `static.go`.
 - Content types come from an explicit table, not `mime.TypeByExtension`, whose answers depend on the image's `/etc/mime.types`.
+- The harness lives in `harness_test.go`, not the `harness.go` the story named: it is only ever used by tests, and a non-test file would compile it into the package proper.
+- `assertNoLeak` splits into a pure `findLeak(body) string` plus a thin assertion, so the privacy check is itself testable without a fake `*testing.T`.
+- `google/go-cmp` deliberately not added yet: nothing so far needs a struct diff `testify` cannot express, and an unused dependency is a decision nobody made.
+- The login/cookie helper the story asks for is deferred to `F1-B04`, which is where the endpoint appears; the cookie jar is already in the client.
 - The image is built from a named registry path (`server-andreas.local:5000/wedding`) rather than a bare name: the server's registry is plain HTTP, so both daemons need it in `insecure-registries`. Noted in the README.
 - Compose takes `TRUSTED_PROXY_CIDRS` with `${VAR?}` and not `${VAR:?}` — empty is a meaningful value ("trust no proxy"), only an absent variable is an error.
 - No `HEALTHCHECK` in the image: distroless has no shell or curl to run one. Liveness is the reverse proxy's job against `/api/health`.

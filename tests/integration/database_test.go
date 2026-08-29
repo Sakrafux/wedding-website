@@ -17,7 +17,7 @@ import (
 const concurrentQueries = 8
 
 func TestPragmasApplyToEveryConnection(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	pools := map[string]*sqlx.DB{"write": database.Write, "read": database.Read}
 	for name, pool := range pools {
@@ -55,7 +55,7 @@ func TestPragmasApplyToEveryConnection(t *testing.T) {
 // connection: reading the pragma only shows what one connection was told, while a
 // rejected insert shows the setting has teeth.
 func TestForeignKeyViolationIsRejected(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	_, err := database.Write.Exec(
 		`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (999, 'Anna', 'Muster', 'adult', 'seeded')`)
@@ -68,7 +68,7 @@ func TestForeignKeyViolationIsRejected(t *testing.T) {
 // two households submitting an RSVP at the same second must both succeed, queued by
 // the one-connection write pool, never rejected with SQLITE_BUSY.
 func TestConcurrentWritesSerialise(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	var waitGroup sync.WaitGroup
 	for writer := range concurrentQueries {
@@ -93,7 +93,7 @@ func TestConcurrentWritesSerialise(t *testing.T) {
 // accidentally routed through it fails here instead of silently occupying the single
 // writer slot.
 func TestReadPoolCannotWrite(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	_, err := database.Read.Exec(`INSERT INTO household (display_name, code) VALUES ('Familie Nope', 'ABC234')`)
 
@@ -104,7 +104,7 @@ func TestReadPoolCannotWrite(t *testing.T) {
 // TestReadPoolSeesCommittedWrites is the check that the two handles are the same
 // database — an easy thing to get wrong with a mistyped path or an in-memory DSN.
 func TestReadPoolSeesCommittedWrites(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	_, err := database.Write.Exec(`INSERT INTO household (id, display_name, code) VALUES (1, 'Familie Sichtbar', 'ABC234')`)
 	require.NoError(t, err)
@@ -115,37 +115,36 @@ func TestReadPoolSeesCommittedWrites(t *testing.T) {
 }
 
 func TestReadyReportsDatabaseReachable(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/api/ready")
+	response := app.get("/api/ready")
 
-	assert.Equal(t, http.StatusOK, status)
-	assert.True(t, strings.HasPrefix(contentType, "application/json"), "Content-Type = %q", contentType)
-	assert.JSONEq(t, `{"status":"ok","database":"ok"}`, body)
+	assert.Equal(t, http.StatusOK, response.Status)
+	assert.True(t, strings.HasPrefix(response.ContentType, "application/json"), "Content-Type = %q", response.ContentType)
+	assert.JSONEq(t, `{"status":"ok","database":"ok"}`, response.Body)
 }
 
 // TestReadyReportsUnavailableWhenDatabaseClosed exercises the 503 path without
 // deleting the file: a closed pool is the same observable condition as an unmounted
 // volume, and it is the only one a test can produce deterministically.
 func TestReadyReportsUnavailableWhenDatabaseClosed(t *testing.T) {
-	database := newTestDatabase(t)
-	server := newTestServerWithDatabase(t, database)
-	require.NoError(t, database.Close())
+	app := newTestApp(t)
+	require.NoError(t, app.Database.Close())
 
-	status, _, body := get(t, server.URL, "/api/ready")
+	response := app.get("/api/ready")
 
-	assert.Equal(t, http.StatusServiceUnavailable, status)
-	assert.Contains(t, body, `"code":"not_ready"`)
+	assert.Equal(t, http.StatusServiceUnavailable, response.Status)
+	assert.Contains(t, response.Body, `"code":"not_ready"`)
 	// The reason belongs in the log, not in an unauthenticated response: a driver
 	// error carries the database path.
-	assert.NotContains(t, body, "wedding-test.db")
+	assert.NotContains(t, response.Body, "wedding-test.db")
 }
 
 // TestMigrationsApplyOnFreshDatabase covers the startup order main relies on: the
 // harness opens an empty file and migrates it, exactly as the binary does, so a
 // missing migration shows up here rather than as a missing table in a later story.
 func TestMigrationsApplyOnFreshDatabase(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	var versions []string
 	require.NoError(t, database.Read.Select(&versions, `SELECT version FROM schema_migration ORDER BY version`))

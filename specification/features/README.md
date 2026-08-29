@@ -45,7 +45,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `E0-08` Frontend scaffold: Vite, TS, Tailwind, shadcn, design tokens
 - [x] `E0-09` `go:embed` of `dist/` and SPA fallback
 - [x] `E0-10` Dockerfile, Compose, volumes
-- [ ] `E0-11` Integration test harness against temp-file SQLite
+- [x] `E0-11` Integration test harness against temp-file SQLite
 - [ ] `E0-12` Deploy to the real server behind the real proxy
 
 ## F1 — Household login · M1 · P0

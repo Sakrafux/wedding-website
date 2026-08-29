@@ -47,18 +47,18 @@ func firstHashedAsset(t *testing.T, bundle fs.FS) string {
 
 func TestRootServesIndexHTML(t *testing.T) {
 	requireBundle(t)
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/")
+	response := app.get("/")
 
-	if status != http.StatusOK {
-		t.Errorf("status = %d, want %d", status, http.StatusOK)
+	if response.Status != http.StatusOK {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusOK)
 	}
-	if !strings.HasPrefix(contentType, "text/html") {
-		t.Errorf("Content-Type = %q, want text/html", contentType)
+	if !strings.HasPrefix(response.ContentType, "text/html") {
+		t.Errorf("Content-Type = %q, want text/html", response.ContentType)
 	}
-	if !strings.Contains(body, `<div id="root">`) {
-		t.Errorf("body is not the SPA shell: %q", body)
+	if !strings.Contains(response.Body, `<div id="root">`) {
+		t.Errorf("body is not the SPA shell: %q", response.Body)
 	}
 }
 
@@ -66,18 +66,18 @@ func TestRootServesIndexHTML(t *testing.T) {
 // the browser's router, and must answer the shell with 200 rather than a 404.
 func TestClientSideRouteServesIndexHTML(t *testing.T) {
 	requireBundle(t)
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/rsvp")
+	response := app.get("/rsvp")
 
-	if status != http.StatusOK {
-		t.Errorf("status = %d, want %d", status, http.StatusOK)
+	if response.Status != http.StatusOK {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusOK)
 	}
-	if !strings.HasPrefix(contentType, "text/html") {
-		t.Errorf("Content-Type = %q, want text/html", contentType)
+	if !strings.HasPrefix(response.ContentType, "text/html") {
+		t.Errorf("Content-Type = %q, want text/html", response.ContentType)
 	}
-	if !strings.Contains(body, `<div id="root">`) {
-		t.Errorf("body is not the SPA shell: %q", body)
+	if !strings.Contains(response.Body, `<div id="root">`) {
+		t.Errorf("body is not the SPA shell: %q", response.Body)
 	}
 }
 
@@ -87,28 +87,28 @@ func TestClientSideRouteServesIndexHTML(t *testing.T) {
 // health_test.go asserts the same thing without the bundle.
 func TestUnknownAPIPathStillReturnsJSONWithBundlePresent(t *testing.T) {
 	requireBundle(t)
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/api/unknown")
+	response := app.get("/api/unknown")
 
-	if status != http.StatusNotFound {
-		t.Errorf("status = %d, want %d", status, http.StatusNotFound)
+	if response.Status != http.StatusNotFound {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusNotFound)
 	}
-	if !strings.HasPrefix(contentType, "application/json") {
-		t.Errorf("Content-Type = %q, want application/json", contentType)
+	if !strings.HasPrefix(response.ContentType, "application/json") {
+		t.Errorf("Content-Type = %q, want application/json", response.ContentType)
 	}
-	if !strings.Contains(body, `"code":"not_found"`) {
-		t.Errorf("body = %q, want the error envelope", body)
+	if !strings.Contains(response.Body, `"code":"not_found"`) {
+		t.Errorf("body = %q, want the error envelope", response.Body)
 	}
 }
 
 func TestHashedAssetIsImmutableAndIndexIsNot(t *testing.T) {
 	bundle := requireBundle(t)
-	server := newTestServer(t)
+	app := newTestApp(t)
 
 	asset := firstHashedAsset(t, bundle)
 
-	assetResponse, err := http.Get(server.URL + "/" + asset)
+	assetResponse, err := http.Get(app.URL + "/" + asset)
 	if err != nil {
 		t.Fatalf("GET /%s: %v", asset, err)
 	}
@@ -121,7 +121,7 @@ func TestHashedAssetIsImmutableAndIndexIsNot(t *testing.T) {
 		t.Errorf("Cache-Control for /%s = %q, want %q", asset, assetResponse.Header.Get("Cache-Control"), want)
 	}
 
-	indexResponse, err := http.Get(server.URL + "/")
+	indexResponse, err := http.Get(app.URL + "/")
 	if err != nil {
 		t.Fatalf("GET /: %v", err)
 	}
@@ -137,14 +137,14 @@ func TestHashedAssetIsImmutableAndIndexIsNot(t *testing.T) {
 // browser knows about.
 func TestUnknownAssetPathServesIndexHTML(t *testing.T) {
 	requireBundle(t)
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, _ := get(t, server.URL, "/assets/does-not-exist.js")
+	response := app.get("/assets/does-not-exist.js")
 
-	if status != http.StatusOK {
-		t.Errorf("status = %d, want %d", status, http.StatusOK)
+	if response.Status != http.StatusOK {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusOK)
 	}
-	if !strings.HasPrefix(contentType, "text/html") {
-		t.Errorf("Content-Type = %q, want text/html", contentType)
+	if !strings.HasPrefix(response.ContentType, "text/html") {
+		t.Errorf("Content-Type = %q, want text/html", response.ContentType)
 	}
 }

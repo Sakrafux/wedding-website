@@ -35,9 +35,9 @@ func assertSecurityHeaders(t *testing.T, header http.Header, path string) {
 }
 
 func TestSecurityHeadersOnAPIResponse(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	response, err := http.Get(server.URL + "/api/health")
+	response, err := http.Get(app.URL + "/api/health")
 	if err != nil {
 		t.Fatalf("GET /api/health: %v", err)
 	}
@@ -49,9 +49,9 @@ func TestSecurityHeadersOnAPIResponse(t *testing.T) {
 // TestSecurityHeadersOnErrorResponse guards the case that matters most in practice:
 // an error path that writes its own response must not bypass the headers.
 func TestSecurityHeadersOnErrorResponse(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	response, err := http.Get(server.URL + "/api/does-not-exist")
+	response, err := http.Get(app.URL + "/api/does-not-exist")
 	if err != nil {
 		t.Fatalf("GET /api/does-not-exist: %v", err)
 	}
@@ -63,9 +63,9 @@ func TestSecurityHeadersOnErrorResponse(t *testing.T) {
 // TestSecurityHeadersOnNonAPIResponse covers the SPA fallback: index.html carries
 // the same headers as the API, which is where the CSP actually matters.
 func TestSecurityHeadersOnNonAPIResponse(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	response, err := http.Get(server.URL + "/rsvp")
+	response, err := http.Get(app.URL + "/rsvp")
 	if err != nil {
 		t.Fatalf("GET /rsvp: %v", err)
 	}
@@ -75,17 +75,17 @@ func TestSecurityHeadersOnNonAPIResponse(t *testing.T) {
 }
 
 func TestRobotsTxtDisallowsEverything(t *testing.T) {
-	server := newTestServer(t)
+	app := newTestApp(t)
 
-	status, contentType, body := get(t, server.URL, "/robots.txt")
+	response := app.get("/robots.txt")
 
-	if status != http.StatusOK {
-		t.Errorf("status = %d, want %d", status, http.StatusOK)
+	if response.Status != http.StatusOK {
+		t.Errorf("status = %d, want %d", response.Status, http.StatusOK)
 	}
-	if !strings.HasPrefix(contentType, "text/plain") {
-		t.Errorf("Content-Type = %q, want text/plain", contentType)
+	if !strings.HasPrefix(response.ContentType, "text/plain") {
+		t.Errorf("Content-Type = %q, want text/plain", response.ContentType)
 	}
-	if want := "User-agent: *\nDisallow: /"; body != want {
-		t.Errorf("body = %q, want %q", body, want)
+	if want := "User-agent: *\nDisallow: /"; response.Body != want {
+		t.Errorf("body = %q, want %q", response.Body, want)
 	}
 }

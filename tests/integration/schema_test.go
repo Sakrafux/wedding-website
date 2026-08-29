@@ -1,10 +1,8 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +13,7 @@ import (
 // enum value has already been stored.
 
 func TestEnumColumnsRejectUnknownValues(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 
 	// One case per CHECK-constrained column. English values only; a German label
@@ -54,7 +52,7 @@ func TestEnumColumnsRejectUnknownValues(t *testing.T) {
 // TestDuplicateHouseholdCodeIsRejected is what lets code generation retry on conflict
 // instead of checking first and racing.
 func TestDuplicateHouseholdCodeIsRejected(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	insertHousehold(t, database.Write, "ABC234")
 
 	_, err := database.Write.Exec(`INSERT INTO household (display_name, code) VALUES ('Familie Zwei', 'ABC234')`)
@@ -64,7 +62,7 @@ func TestDuplicateHouseholdCodeIsRejected(t *testing.T) {
 }
 
 func TestDeletingHouseholdCascadesToGuests(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 	insertGuest(t, database.Write, householdID, "Anna")
 
@@ -80,7 +78,7 @@ func TestDeletingHouseholdCascadesToGuests(t *testing.T) {
 // seating_unit → seat → seat_assignment: dropping a table out from under a finished
 // plan must fail, not silently unseat people.
 func TestDeletingSeatingUnitWithAssignmentIsRefused(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 	guestID := insertGuest(t, database.Write, householdID, "Anna")
 	unitID := insertSeatingUnit(t, database.Write, "party", "Tisch 1")
@@ -100,7 +98,7 @@ func TestDeletingSeatingUnitWithAssignmentIsRefused(t *testing.T) {
 // the same guest may be seated once in the church and once at the party, never twice in
 // the same venue.
 func TestGuestHoldsOneSeatPerVenue(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 	guestID := insertGuest(t, database.Write, householdID, "Anna")
 
@@ -126,7 +124,7 @@ func TestGuestHoldsOneSeatPerVenue(t *testing.T) {
 // column on seat_assignment is a copy, and the composite FK is what stops the copy from
 // lying about which venue the seat belongs to.
 func TestSeatAssignmentVenueMustMatchTheSeat(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 	guestID := insertGuest(t, database.Write, householdID, "Anna")
 	unitID := insertSeatingUnit(t, database.Write, "party", "Tisch 1")
@@ -143,7 +141,7 @@ func TestSeatAssignmentVenueMustMatchTheSeat(t *testing.T) {
 
 // TestSeatVenueMustMatchItsUnit closes the same loop one level up.
 func TestSeatVenueMustMatchItsUnit(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	unitID := insertSeatingUnit(t, database.Write, "party", "Tisch 1")
 
 	_, err := database.Write.Exec(
@@ -158,7 +156,7 @@ func TestSeatVenueMustMatchItsUnit(t *testing.T) {
 // TestGuestDefaultsMatchTheDataModel guards the values a household never sees a control
 // for: an unanswered guest still has to produce a sane catering row.
 func TestGuestDefaultsMatchTheDataModel(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 	guestID := insertGuest(t, database.Write, householdID, "Anna")
 
@@ -182,7 +180,7 @@ func TestGuestDefaultsMatchTheDataModel(t *testing.T) {
 }
 
 func TestHouseholdLogisticsDefaultsAreEmpty(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 	householdID := insertHousehold(t, database.Write, "ABC234")
 
 	var household struct {
@@ -199,7 +197,7 @@ func TestHouseholdLogisticsDefaultsAreEmpty(t *testing.T) {
 }
 
 func TestAppSettingsAreSeeded(t *testing.T) {
-	database := newTestDatabase(t)
+	database := newTestApp(t).Database
 
 	settings := map[string]string{}
 	rows, err := database.Read.Queryx(`SELECT key, value FROM app_setting`)
@@ -219,64 +217,4 @@ func TestAppSettingsAreSeeded(t *testing.T) {
 		"uploads_open":           "false",
 		"gallery_visible":        "false",
 	}, settings)
-}
-
-func insertHousehold(t *testing.T, pool *sqlx.DB, code string) int64 {
-	t.Helper()
-
-	result, err := pool.Exec(`INSERT INTO household (display_name, code) VALUES (?, ?)`, "Familie "+code, code)
-	require.NoError(t, err)
-	return lastInsertID(t, result)
-}
-
-func insertGuest(t *testing.T, pool *sqlx.DB, householdID int64, firstName string) int64 {
-	t.Helper()
-
-	// Only the columns without a default, so the defaults stay observable.
-	result, err := pool.Exec(
-		`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (?, ?, 'Muster', 'adult', 'seeded')`,
-		householdID, firstName,
-	)
-	require.NoError(t, err)
-	return lastInsertID(t, result)
-}
-
-func insertSeatingUnit(t *testing.T, pool *sqlx.DB, venue, label string) int64 {
-	t.Helper()
-
-	result, err := pool.Exec(
-		`INSERT INTO seating_unit (venue, label, svg_element_id) VALUES (?, ?, ?)`,
-		venue, label, fmt.Sprintf("%s-%s", venue, label),
-	)
-	require.NoError(t, err)
-	return lastInsertID(t, result)
-}
-
-func insertSeat(t *testing.T, pool *sqlx.DB, seatingUnitID int64, venue, label string) int64 {
-	t.Helper()
-
-	result, err := pool.Exec(
-		`INSERT INTO seat (seating_unit_id, venue, label, svg_element_id) VALUES (?, ?, ?, ?)`,
-		seatingUnitID, venue, label, fmt.Sprintf("%s-%d-%s", venue, seatingUnitID, label),
-	)
-	require.NoError(t, err)
-	return lastInsertID(t, result)
-}
-
-func assignSeat(t *testing.T, pool *sqlx.DB, seatID int64, venue string, guestID int64) {
-	t.Helper()
-
-	_, err := pool.Exec(
-		`INSERT INTO seat_assignment (seat_id, venue, guest_id) VALUES (?, ?, ?)`,
-		seatID, venue, guestID,
-	)
-	require.NoError(t, err)
-}
-
-func lastInsertID(t *testing.T, result interface{ LastInsertId() (int64, error) }) int64 {
-	t.Helper()
-
-	id, err := result.LastInsertId()
-	require.NoError(t, err)
-	return id
 }
