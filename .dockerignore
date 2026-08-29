@@ -1,0 +1,16 @@
+# Everything the build context does not need. A database file baked into an image is
+# both a fat layer and a leaked secret — the login codes are stored in plaintext.
+.git
+.gitignore
+node_modules
+web/node_modules
+web/dist
+local
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+/wedding
+specification
+*.md

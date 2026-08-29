@@ -69,14 +69,28 @@ Conventions that matter:
 
 ## Running it
 
-The container path is not built yet — `E0-10` adds the Dockerfile and Compose file, and this is the intended shape:
-
 ```bash
-cp .env.example .env      # then fill it in
-docker compose up -d      # migrates on startup, serves on $PORT
+cp .env.example .env                      # then fill it in
+cp compose.example.yaml compose.yaml      # then adapt it to the server
+docker compose up -d                      # migrates on startup, serves on 127.0.0.1:8080
 ```
 
+Both copies are gitignored. `.env` holds `ADMIN_PASSWORD` in plaintext, and the real `compose.yaml` describes the server — networks, proxy wiring, paths — which is deployment detail, not app detail. `compose.example.yaml` is the committed shape.
+
 Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default — the error names every problem at once, so one restart tells you everything that is wrong.
+
+The image sets `DB_PATH` and `PHOTO_DIR` itself, both under the single `/data` volume; Compose supplies the rest and refuses to start if `ADMIN_USER`, `ADMIN_PASSWORD` or `TRUSTED_PROXY_CIDRS` are absent from the `.env` next to it. `TRUSTED_PROXY_CIDRS` may be empty — that means "trust no proxy" — but it has to be written down.
+
+The port is published on loopback only. The reverse proxy is the sole way in; binding `0.0.0.0` would expose the app on the LAN without TLS. Override with `BIND_ADDR` / `HOST_PORT` if the proxy lives on another interface or in another Docker network.
+
+The image is a three-stage build — pnpm bundle, `CGO_ENABLED=0` Go binary, `distroless/static:nonroot` runtime — and lands at roughly 23 MB with no shell in it. It carries no `HEALTHCHECK` for that reason; `GET /api/health` is there for the proxy to call.
+
+```bash
+make docker-build         # build the image
+make docker-push          # push to server-andreas.local:5000
+```
+
+The registry speaks plain HTTP, so both the pushing and the pulling Docker daemon need it under `insecure-registries` in `/etc/docker/daemon.json`.
 
 ## Local development
 

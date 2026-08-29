@@ -26,6 +26,14 @@ Done:
 - `tests/integration/static_test.go`: root and deep link return the shell, unknown asset falls through, hashed asset vs. `index.html` cache headers, `/api` miss stays JSON. Skips when no bundle is embedded.
 - `Makefile`: `build` (frontend then Go), `build-web`, `run` (exports `.env`), `preview` (exports `.env`), `test` (`go test`, `gofmt`, `go vet`), `fmt`, `lint`, `clean`.
 - Smoke-tested the built binary: `/`, `/rsvp`, a hashed asset and `/api/nope` all correct, security headers intact on the SPA response.
+- `E0-10` — three-stage `Dockerfile`: node 24 + corepack bundle, `golang:1.26-alpine` with `CGO_ENABLED=0`, `distroless/static-debian12:nonroot` runtime. 23.1 MB, no shell, UID 65532.
+- `/data` and `/data/photos` staged in the build stage and copied with `--chown=nonroot`, so a fresh named volume inherits writable directories — the runtime image has no shell to `mkdir` with.
+- `compose.example.yaml`: single `wedding-data` volume at `/data`, `restart: unless-stopped`, loopback-only port publishing, `${VAR:?}` guards that fail before the container starts. The real `compose.yaml` is gitignored — it describes the server, not the app.
+- `.dockerignore` covering `node_modules`, `web/dist`, `.git`, `local/`, `*.db*`, `.env`.
+- `Makefile`: `docker-build` / `docker-push` targets against `server-andreas.local:5000`.
+- Verified end to end: build from a clean context, `compose up` migrates and answers `/api/health`, restart preserves the database, a missing `ADMIN_PASSWORD` fails at startup with the `E0-02` message.
+- Root README: "Running it" rewritten for the real container path, registry push and the `insecure-registries` requirement.
+- Image pushed to `server-andreas.local:5000/wedding:latest` (digest `sha256:3e625cdf…`). Docker here is Rancher Desktop, so `insecure-registries` and the `10.0.0.45 server-andreas.local` hosts entry had to go inside the lima VM via `rdctl shell`, not on the host.
 
 Decisions:
 
@@ -37,10 +45,14 @@ Decisions:
 - Embed lives in `web/embed.go`, not next to the handler: an embed directive cannot reach outside its package directory. Package named `frontend` to avoid colliding with `infrastructure/web`.
 - SPA fallback answers 200, and nothing outside `/api` ever 404s — the handler cannot tell a typo from a client-side route. Rationale in `static.go`.
 - Content types come from an explicit table, not `mime.TypeByExtension`, whose answers depend on the image's `/etc/mime.types`.
+- The image is built from a named registry path (`server-andreas.local:5000/wedding`) rather than a bare name: the server's registry is plain HTTP, so both daemons need it in `insecure-registries`. Noted in the README.
+- Compose takes `TRUSTED_PROXY_CIDRS` with `${VAR?}` and not `${VAR:?}` — empty is a meaningful value ("trust no proxy"), only an absent variable is an error.
+- No `HEALTHCHECK` in the image: distroless has no shell or curl to run one. Liveness is the reverse proxy's job against `/api/health`.
+- Named volume rather than a bind mount, since all state lives under one `/data` root either way and the backup story is unchanged.
 - TanStack router and query devtools mounted from `src/components/Devtools.tsx` behind a dynamic `import()`, not a static import guarded by `import.meta.env.DEV` — a static import survives dead-code elimination and would ship the panels to guests. Verified absent from `dist/`.
 
-Time: 1.5h (tentative)
-Cost: $10.18 (tentative)
+Time: 2h (tentative)
+Cost: $13.28 (tentative)
 
 ## 2026-08-27
 

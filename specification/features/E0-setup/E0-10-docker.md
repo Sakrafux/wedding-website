@@ -11,7 +11,7 @@ As an admin, I want one small container with two volumes, so that deploying is `
 **In:**
 
 - Multi-stage `Dockerfile`: node build → go build → distroless/scratch runtime.
-- `compose.yaml` with the volume mounts and environment.
+- `compose.example.yaml` with the volume mounts and environment. The real `compose.yaml` is gitignored: it describes the server — networks, proxy wiring — not the app.
 - Non-root runtime user.
 
 **Out:**
@@ -32,14 +32,14 @@ As an admin, I want one small container with two volumes, so that deploying is `
 
 ## Test plan
 
-- [ ] `docker build` succeeds from a clean checkout.
-- [ ] Image size is under ~30 MB.
-- [ ] `docker compose up` starts, migrates, and answers the health endpoint.
-- [ ] The container runs as non-root — verify the UID.
-- [ ] Stopping and restarting preserves the database in the volume.
-- [ ] Starting without a required env var fails fast with the message from `E0-02`.
+- [x] `docker build` succeeds from a clean checkout.
+- [x] Image size is under ~30 MB.
+- [x] `docker compose up` starts, migrates, and answers the health endpoint.
+- [x] The container runs as non-root — verify the UID.
+- [x] Stopping and restarting preserves the database in the volume.
+- [x] Starting without a required env var fails fast with the message from `E0-02`.
 
 ## Done when
 
-- [ ] A fresh machine with the repo and Compose can run the app.
-- [ ] Checkbox ticked in `README.md`.
+- [x] A fresh machine with the repo and Compose can run the app.
+- [x] Checkbox ticked in `README.md`.

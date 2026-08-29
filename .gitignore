@@ -14,5 +14,10 @@ web/node_modules/
 .env
 .env.local
 
+# The real Compose file. Describes the server — networks, proxy wiring, paths — not
+# the app; compose.example.yaml is the committed counterpart.
+compose.yaml
+compose.override.yaml
+
 # Local runtime state: dev database and photo directory from .env.
 /local/

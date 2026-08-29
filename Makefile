@@ -1,15 +1,22 @@
 # Command list for local development. The deployed container gets its environment
-# from Compose (E0-10) and never reads .env — the dotenv handling here exists for
-# the dev shell alone, which is why nothing in the app parses .env itself.
+# from Compose and never reads .env — the dotenv handling here exists for the dev
+# shell alone, which is why nothing in the app parses .env itself.
 
 BINARY := wedding
 WEB_DIR := web
+
+# Image registry on the personal server. Plain HTTP, so the pushing and the pulling
+# daemon both need it listed under "insecure-registries" — configured on the hosts,
+# not here (see E0-12).
+REGISTRY := server-andreas.local:5000
+IMAGE := $(REGISTRY)/wedding
+TAG ?= latest
 
 # gofmt takes directories, not packages, so the package list is turned back into
 # paths. Plain `gofmt -l .` would walk web/node_modules.
 GO_DIRS = $(shell go list -f '{{.Dir}}' ./...)
 
-.PHONY: all build build-web run preview test fmt lint clean
+.PHONY: all build build-web run preview test fmt lint clean docker-build docker-push
 
 all: build
 
@@ -45,6 +52,15 @@ fmt:
 
 lint:
 	cd $(WEB_DIR) && pnpm lint && pnpm typecheck
+
+## docker-build — the deployable image. The frontend is built inside the image, so
+# this ignores whatever is currently in web/dist and never depends on `make build`.
+docker-build:
+	docker build -t $(IMAGE):$(TAG) .
+
+## docker-push — publish to the server's registry. Deployment itself is E0-12.
+docker-push: docker-build
+	docker push $(IMAGE):$(TAG)
 
 clean:
 	rm -f $(BINARY)
