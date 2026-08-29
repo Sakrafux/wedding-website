@@ -69,8 +69,8 @@ Decisions:
 - Named volume rather than a bind mount, since all state lives under one `/data` root either way and the backup story is unchanged.
 - TanStack router and query devtools mounted from `src/components/Devtools.tsx` behind a dynamic `import()`, not a static import guarded by `import.meta.env.DEV` — a static import survives dead-code elimination and would ship the panels to guests. Verified absent from `dist/`.
 
-Time: 2h (tentative)
-Cost: $13.28 (tentative)
+Time: 6h
+Cost: $36.55
 
 ## 2026-08-27
 
