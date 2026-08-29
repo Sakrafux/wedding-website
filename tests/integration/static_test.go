@@ -132,53 +132,6 @@ func TestHashedAssetIsImmutableAndIndexIsNot(t *testing.T) {
 	}
 }
 
-// TestBundleReferencesThePublicBasePath guards the one thing the reverse proxy
-// cannot fix. Caddy serves the app under /hochzeit and strips that prefix, so Go
-// answers at the root either way — but the browser resolves the asset URLs in
-// index.html against the public path, and a bundle built without Vite's `base` would
-// point at /assets/…, which on that host belongs to another app entirely.
-//
-// The literal is repeated here on purpose: it is the deployment contract, and a test
-// that imported it from the frontend build would follow a change instead of catching
-// it. It must match PUBLIC_BASE_PATH and the handle_path rule in the Caddyfile.
-func TestBundleReferencesThePublicBasePath(t *testing.T) {
-	requireBundle(t)
-	app := newTestApp(t)
-
-	response := app.get("/")
-
-	if !strings.Contains(response.Body, `src="/hochzeit/assets/`) {
-		t.Errorf("index.html does not reference assets under the public base path:\n%s", response.Body)
-	}
-}
-
-// TestPrefixedPathsAreServedWhenTheProxyDoesNotStrip covers the other half of the
-// deployment: production runs behind handle_path, which strips /hochzeit, but a
-// curl straight at the container or `make preview` does not. Both must answer the
-// same thing, or the only way to check a container is through the proxy.
-func TestPrefixedPathsAreServedWhenTheProxyDoesNotStrip(t *testing.T) {
-	requireBundle(t)
-	app := newTestAppWithBasePath(t, "/hochzeit", nil)
-
-	for path, wantContentType := range map[string]string{
-		"/hochzeit":            "text/html",
-		"/hochzeit/":           "text/html",
-		"/hochzeit/rsvp":       "text/html",
-		"/hochzeit/api/health": "application/json",
-	} {
-		t.Run(path, func(t *testing.T) {
-			response := app.get(path)
-
-			if response.Status != http.StatusOK {
-				t.Errorf("status = %d, want %d", response.Status, http.StatusOK)
-			}
-			if !strings.HasPrefix(response.ContentType, wantContentType) {
-				t.Errorf("Content-Type = %q, want %q", response.ContentType, wantContentType)
-			}
-		})
-	}
-}
-
 // TestUnknownAssetPathServesIndexHTML documents the accepted trade-off: outside
 // /api nothing 404s, because the handler cannot tell a typo from a route the
 // browser knows about.

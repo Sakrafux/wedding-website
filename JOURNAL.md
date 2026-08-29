@@ -45,6 +45,8 @@ Done:
 - Integration tests: the embedded `index.html` must reference assets under the prefix, and the prefixed paths must answer like the stripped ones.
 - README: deploy procedure, the Caddy block, what the deployment must provide, and how to derive `TRUSTED_PROXY_CIDRS`. `compose.example.yaml` deleted — the Compose file describes a machine, not the app.
 - Image pushed to `server-andreas.local:5000/wedding:latest` (digest `sha256:3e625cdf…`). Docker here is Rancher Desktop, so `insecure-registries` and the `10.0.0.45 server-andreas.local` hosts entry had to go inside the lima VM via `rdctl shell`, not on the host.
+- Path prefix removed again: the app got its own subdomain. Gone are `PUBLIC_BASE_PATH` and its config normalisation, `middleware.StripPublicBasePath`, Vite's `base`, the router `basepath`, `web/src/lib/api.ts` and the two prefix integration tests. `NewRouter` takes `(logger, database)` again; the dev proxy forwards `/api` unchanged.
+- README, `04-architecture`, `06-privacy-security`, `.env.example`, `TODO.md` and the `E0-12` story updated to the subdomain deployment; Caddy block is now a plain site block.
 
 Decisions:
 
@@ -68,9 +70,11 @@ Decisions:
 - No `HEALTHCHECK` in the image: distroless has no shell or curl to run one. Liveness is the reverse proxy's job against `/api/health`.
 - Named volume rather than a bind mount, since all state lives under one `/data` root either way and the backup story is unchanged.
 - TanStack router and query devtools mounted from `src/components/Devtools.tsx` behind a dynamic `import()`, not a static import guarded by `import.meta.env.DEV` — a static import survives dead-code elimination and would ship the panels to guests. Verified absent from `dist/`.
+- Own subdomain instead of a path prefix, reversing the E0-12 decision above. Session cookie goes back to `Path=/` (nothing else lives on that hostname); rationale in `06-privacy-security.md` and the README's "Where it is served".
+- `web/src/lib/api.ts` deleted rather than kept returning `/api${path}`: with no prefix it wrapped nothing and had no callers.
 
 Time: 6h
-Cost: $36.55
+Cost: $38.17
 
 ## 2026-08-27
 

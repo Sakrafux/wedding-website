@@ -7,12 +7,12 @@ Status: draft · Last updated: 2026-08-21
 One Docker container on a personal server, behind an already-existing reverse proxy that terminates TLS.
 
 ```
-Internet → Caddy (TLS, strips /hochzeit) → :8080 wedding container
-                                   ├── Go binary (chi)
-                                   │    ├── /api/*  JSON API
-                                   │    └── /*      embedded SPA (index.html fallback)
-                                   ├── /data/wedding.db      (mounted volume)
-                                   └── /data/photos/         (mounted volume)
+Internet → Caddy (TLS, own subdomain) → :8080 wedding container
+                                  ├── Go binary (chi)
+                                  │    ├── /api/*  JSON API
+                                  │    └── /*      embedded SPA (index.html fallback)
+                                  ├── /data/wedding.db      (mounted volume)
+                                  └── /data/photos/         (mounted volume)
 ```
 
 The Go process speaks plain HTTP internally. It does **not** manage certificates. It trusts `X-Forwarded-For` for client IPs (needed for login rate limiting) — but only when the request arrives from a configured trusted proxy CIDR, otherwise the header is spoofable and rate limiting becomes bypassable.
@@ -201,7 +201,6 @@ Environment variables only. No config file.
 | `ADMIN_USER` | Admin username |
 | `ADMIN_PASSWORD` | Admin password, plaintext. Only readable with direct server access; accepted. |
 | `SESSION_COOKIE_SECURE` | Off for local development only |
-| `PUBLIC_BASE_PATH` | Public path prefix; scopes the session cookie |
 | `TRUSTED_PROXY_CIDRS` | Whose `X-Forwarded-For` to believe |
 | `LOG_LEVEL` | |
 

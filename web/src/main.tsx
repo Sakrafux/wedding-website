@@ -20,10 +20,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// basepath from BASE_URL, not a literal: the app is served under /hochzeit/, so
-// every route the router builds or matches has to carry that prefix. Vite is the one
-// place the prefix is configured; see vite.config.ts.
-const router = createRouter({ routeTree, basepath: import.meta.env.BASE_URL });
+const router = createRouter({ routeTree });
 
 // Gives useNavigate, Link and the rest their typed route paths. Without it every
 // route string is just a string.

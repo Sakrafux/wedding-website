@@ -71,7 +71,7 @@ Conventions that matter:
 
 One container, behind a reverse proxy that terminates TLS. The Compose file lives on the server and is deliberately not in this repository: it describes a machine — host paths, networks, container names — not the app.
 
-Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `PUBLIC_BASE_PATH`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default — the error names every problem at once, so one restart tells you everything that is wrong.
+Configuration is environment variables only, no config file. Required: `DB_PATH`, `PHOTO_DIR`, `ADMIN_USER`, `ADMIN_PASSWORD`. Optional: `PORT`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`, `TRUSTED_PROXY_CIDRS`. A missing required variable is a hard failure at startup, not a silent default — the error names every problem at once, so one restart tells you everything that is wrong.
 
 What the deployment has to provide:
 
@@ -83,17 +83,9 @@ Both mounts hold durable state, so both belong in the backup.
 
 ### Where it is served
 
-The site is served under a **path prefix**, `/hochzeit`, because it shares a hostname with other apps behind the same proxy. German prefix on purpose: the URL is printed on the invitation card, so it is user-facing text. Three places have to agree on it, and each derives it from one literal:
+The site has its **own subdomain** and is served at the root, so nothing carries a path prefix: Vite builds asset URLs against `/`, the router matches at `/`, and Go serves the same paths the browser asks for. Earlier it lived under `/hochzeit` on a shared hostname; that is gone, along with `PUBLIC_BASE_PATH`, the Vite `base` and the prefix-stripping middleware.
 
-| Place | Value | Why |
-|---|---|---|
-| `web/vite.config.ts` `base` | `/hochzeit/` | Baked into the bundle; the browser resolves every asset URL against it. Reachable as `import.meta.env.BASE_URL`, which the router's `basepath` and `lib/api.ts` both read, so the prefix is written once |
-| The proxy's route | `/hochzeit*`, prefix stripped | Go then sees `/api/…` and `/assets/…`, so no route is written twice |
-| `PUBLIC_BASE_PATH` | `/hochzeit` | The prefix is stripped before Go sees it, so it cannot be inferred — and the session cookie must be scoped to it, or it is sent to every neighbouring app on the hostname |
-
-The binary also answers the prefixed paths itself (`StripPublicBasePath`), so a request that still carries the prefix behaves like one the proxy already stripped. That keeps `make preview` and a curl straight at the container honest instead of serving `index.html` and then 404-ing every asset under it.
-
-One consequence of sharing a hostname: `/robots.txt` at the domain root belongs to whatever is mounted at `/`, not to this app. Crawler exclusion therefore rests on the `X-Robots-Tag: noindex, nofollow` header from `E0-07`, set on every response, plus the `<meta name="robots">` in `index.html`.
+The subdomain also makes `/robots.txt` ours, and the app serves it. Crawler exclusion is belt and braces: that file, the `X-Robots-Tag: noindex, nofollow` header from `E0-07` on every response, and the `<meta name="robots">` in `index.html`.
 
 The image is a three-stage build — pnpm bundle, `CGO_ENABLED=0` Go binary, `distroless/static:nonroot` runtime — and lands at roughly 23 MB with no shell in it. It carries no `HEALTHCHECK` for that reason; `GET /api/health` is there for the proxy to call.
 
@@ -106,15 +98,15 @@ The registry speaks plain HTTP, so the pushing daemon needs it under `insecure-r
 
 ### Reverse proxy
 
-Caddy, terminating TLS and routing several apps on one hostname by path:
+Caddy, terminating TLS for the app's own subdomain:
 
 ```caddyfile
-handle_path /hochzeit* {
+<subdomain> {
     reverse_proxy wedding:8080
 }
 ```
 
-`handle_path` rather than `handle` is the load-bearing choice: it strips the prefix, which is why `PUBLIC_BASE_PATH` has to be configured and why the Go routes are written without it. `wedding` is the container name, so that name is pinned in Compose. The block must come before any catch-all `handle`, which would otherwise swallow it.
+`wedding` is the container name, so that name is pinned in Compose. A site block for its own hostname needs no path handling at all — the app owns every path under it.
 
 `reverse_proxy` sets `X-Forwarded-For` and `X-Forwarded-Proto` by default. Neither needs configuring, but both must survive — do not add a `header_up` that clears them.
 
@@ -137,8 +129,8 @@ docker compose logs -n 20                 # migration lines, then "listening"
 Then check from outside, over HTTPS:
 
 ```bash
-curl -si https://<domain>/hochzeit/api/health   # 200 + JSON, security headers intact
-curl -s  https://<domain>/hochzeit/rsvp | head  # the SPA shell, not a proxy 404
+curl -si https://<subdomain>/api/health   # 200 + JSON, security headers intact
+curl -s  https://<subdomain>/rsvp | head  # the SPA shell, not a proxy 404
 ```
 
 `ADMIN_PASSWORD` is stored in plaintext wherever the environment is defined — keep that file at mode `0600`, and generate the value rather than inventing one:
@@ -177,10 +169,10 @@ The frontend runs as a second server, not as part of the Go build:
 ```bash
 corepack enable                          # once
 cd web && pnpm install
-pnpm dev                                 # http://localhost:5173/hochzeit/
+pnpm dev                                 # http://localhost:5173/
 ```
 
-Open **5173**, not 8080, and mind the `/hochzeit/` prefix: the dev server mirrors the production URL, and Vite rewrites `/hochzeit/api/…` to `/api/…` on its way to Go exactly as Caddy does — so the two environments cannot disagree about what the backend receives. The single origin is not just convenience either: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and whatever was last built into `web/dist`, embedded at compile time — stale unless you just ran `make build`.
+Open **5173**, not 8080: Vite forwards `/api/…` to Go, so the browser talks to one origin exactly as it does in production. The single origin is not just convenience either: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and whatever was last built into `web/dist`, embedded at compile time — stale unless you just ran `make build`.
 
 Frontend checks, run from `web/`:
 

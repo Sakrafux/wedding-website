@@ -19,7 +19,6 @@ const (
 	envAdminUser           = "ADMIN_USER"
 	envAdminPassword       = "ADMIN_PASSWORD"
 	envSessionCookieSecure = "SESSION_COOKIE_SECURE"
-	envPublicBasePath      = "PUBLIC_BASE_PATH"
 	envTrustedProxyCIDRs   = "TRUSTED_PROXY_CIDRS"
 	envLogLevel            = "LOG_LEVEL"
 )
@@ -44,15 +43,6 @@ type Config struct {
 	AdminUser           string
 	AdminPassword       string
 	SessionCookieSecure bool
-	// PublicBasePath is the path prefix the app is reached under from the outside,
-	// with a leading and no trailing slash ("/hochzeit"), or "/" when it is served
-	// at the root. The reverse proxy strips the prefix, so no request ever
-	// carries it and it cannot be derived — it has to be configured.
-	//
-	// Its one job is the session cookie's Path: with Path=/ the cookie would also be
-	// sent to every other app on the same hostname. F1-B02 is what reads it; it is
-	// configured here already because E0-12 is where the prefix became a fact.
-	PublicBasePath string
 	// TrustedProxyCIDRs lists the networks whose X-Forwarded-For header is believed.
 	// Empty means "trust nobody": the direct peer address is the client IP.
 	TrustedProxyCIDRs []netip.Prefix
@@ -84,7 +74,6 @@ func Load() (Config, error) {
 	// deliberate act for local development, never the consequence of a forgotten
 	// variable in production.
 	config.SessionCookieSecure = optionalBool(envSessionCookieSecure, true, &problems)
-	config.PublicBasePath = optionalBasePath(&problems)
 	config.TrustedProxyCIDRs = optionalPrefixes(&problems)
 
 	if len(problems) > 0 {
@@ -114,7 +103,6 @@ func (config Config) LogValue() slog.Value {
 		slog.String("admin_user", config.AdminUser),
 		slog.String("admin_password", redacted),
 		slog.Bool("session_cookie_secure", config.SessionCookieSecure),
-		slog.String("public_base_path", config.PublicBasePath),
 		slog.String("trusted_proxy_cidrs", strings.Join(proxies, ",")),
 		slog.String("log_level", config.LogLevel.String()),
 	)
@@ -166,31 +154,6 @@ func optionalLogLevel(problems *[]error) slog.Level {
 		return defaultLogLevel
 	}
 	return level
-}
-
-// optionalBasePath normalizes PUBLIC_BASE_PATH to a leading slash and no trailing
-// one, so that callers can concatenate without thinking about it. "/" stays "/",
-// since a cookie Path of "" is not the same thing.
-//
-// A value that is not a path at all fails startup rather than being repaired: the
-// session cookie's scope is a security boundary, and quietly widening it to "/"
-// would hand the cookie to every neighbouring app on the same hostname.
-func optionalBasePath(problems *[]error) string {
-	raw, ok := lookupEnv(envPublicBasePath)
-	if !ok {
-		return "/"
-	}
-
-	if !strings.HasPrefix(raw, "/") {
-		*problems = append(*problems, fmt.Errorf("%s must start with a slash, got %q", envPublicBasePath, raw))
-		return "/"
-	}
-
-	trimmed := strings.TrimRight(raw, "/")
-	if trimmed == "" {
-		return "/"
-	}
-	return trimmed
 }
 
 func optionalBool(name string, fallback bool, problems *[]error) bool {

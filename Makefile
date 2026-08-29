@@ -8,7 +8,7 @@ WEB_DIR := web
 # Image registry on the personal server. Plain HTTP, so the pushing and the pulling
 # daemon both need it listed under "insecure-registries" — configured on the hosts,
 # not here (see E0-12).
-REGISTRY := server-andreas.local:5000
+REGISTRY := 10.0.0.45:5000
 IMAGE := $(REGISTRY)/wedding
 TAG ?= latest
 

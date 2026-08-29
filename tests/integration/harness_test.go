@@ -44,9 +44,7 @@ type testApp struct {
 	Client *http.Client
 }
 
-// newTestApp starts an application on its own database, served at the root — which
-// is what the Go process sees in production too, since Caddy strips the public path
-// prefix before the request arrives.
+// newTestApp starts an application on its own database.
 //
 // Every call gets a fresh temp directory, so tests share nothing and may run in
 // parallel. Cleanup is registered here rather than returned: a teardown a test can
@@ -65,20 +63,12 @@ func newTestApp(t *testing.T) *testApp {
 func newTestAppWithRoutes(t *testing.T, register func(chi.Router)) *testApp {
 	t.Helper()
 
-	return newTestAppWithBasePath(t, "/", register)
-}
-
-// newTestAppWithBasePath is newTestAppWithRoutes for a test that needs the app to
-// believe it is served under a path prefix, as it is in production.
-func newTestAppWithBasePath(t *testing.T, basePath string, register func(chi.Router)) *testApp {
-	t.Helper()
-
 	// A real file rather than :memory: — an in-memory database gives every
 	// connection its own private schema, which would make the two pools invisible
 	// to each other and hide exactly the bugs these tests exist to catch.
 	databasePath := filepath.Join(t.TempDir(), "wedding-test.db")
 
-	config := configuration.Config{DatabasePath: databasePath, PublicBasePath: basePath}
+	config := configuration.Config{DatabasePath: databasePath}
 
 	database, err := configuration.OpenDatabase(config)
 	require.NoError(t, err)
@@ -89,7 +79,7 @@ func newTestAppWithBasePath(t *testing.T, basePath string, register func(chi.Rou
 	// Same order as main: migrate before anything serves a request.
 	require.NoError(t, persistence.Migrate(context.Background(), database.Write, discardingLogger().Logger))
 
-	router := web.NewRouter(discardingLogger(), database, config)
+	router := web.NewRouter(discardingLogger(), database)
 	if register != nil {
 		register(router)
 	}
