@@ -1,5 +1,5 @@
 // Command wedding is the single binary that serves the wedding web app: the JSON
-// API under /api and, from E0-09 onward, the embedded React SPA on every other path.
+// API under /api and the embedded React SPA on every other path.
 package main
 
 import (

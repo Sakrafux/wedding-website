@@ -16,7 +16,7 @@ export default defineConfig({
   },
   server: {
     // The Go binary serves the API on 8080 in development; in production both come
-    // from the same origin via go:embed (E0-09), so no CORS anywhere.
+    // from the same origin via go:embed, so no CORS anywhere.
     proxy: {
       "/api": "http://localhost:8080",
     },

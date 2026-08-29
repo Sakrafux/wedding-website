@@ -1,6 +1,5 @@
 // Package web is the wiring point of the HTTP adapter: it assembles the chi
-// router from the global middleware chain, the handlers and — from E0-09 — the
-// embedded SPA.
+// router from the global middleware chain, the handlers and the embedded SPA.
 //
 // The adapter is split so that each part has one job and the import graph stays
 // acyclic:

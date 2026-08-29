@@ -1,5 +1,9 @@
 /wedding
-web/dist/
+# Build output. The directory itself is tracked via its .gitkeep: the Go binary
+# embeds web/dist, and an embed of a directory that does not exist fails the build
+# on a clean checkout before the frontend has ever been built.
+web/dist/*
+!web/dist/.gitkeep
 web/node_modules/
 *.db
 *.db-wal

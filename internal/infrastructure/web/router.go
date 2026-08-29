@@ -7,10 +7,11 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/handler"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
+	frontend "github.com/Sakrafux/wedding-website/web"
 )
 
 // NewRouter builds the application router: global middleware, robots.txt, the /api
-// tree and its JSON fallbacks.
+// tree with its JSON fallbacks, and the embedded SPA on everything else.
 //
 // Later stories widen the parameter list with handler dependencies. main and the
 // integration tests both construct the router through this one function, so the
@@ -30,6 +31,10 @@ func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mu
 		api.NotFound(system.APINotFound)
 		api.MethodNotAllowed(system.APIMethodNotAllowed)
 	})
+
+	// Registered last and as the catch-all, so /api keeps its own JSON 404: an
+	// unknown API path must never fall through to the SPA and answer HTML.
+	router.NotFound(newStaticHandler(frontend.Bundle()).ServeHTTP)
 
 	return router
 }

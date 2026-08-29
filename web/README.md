@@ -1,6 +1,6 @@
 # Frontend
 
-React + TypeScript + Vite. The built `dist/` is embedded into the Go binary with `go:embed` (`E0-09`), so there is one artifact and a frontend/backend version skew is impossible.
+React + TypeScript + Vite. The built `dist/` is embedded into the Go binary with `go:embed`, so there is one artifact and a frontend/backend version skew is impossible.
 
 Setup and how to run the two dev servers together: [root README, "Local development"](../README.md#local-development). This file covers only what is specific to `web/`.
 
@@ -62,6 +62,7 @@ Markdown is excluded from prettier so the repo keeps one Markdown convention: no
 | `src/lib/labels.ts` | The only place a German enum label is written. |
 | `src/index.css` | Design tokens from [05-design](../specification/05-design.md), plus the global base layer. |
 | `src/assets/fonts/` | Self-hosted `.woff2`. No Google Fonts request at runtime — the CSP forbids it. |
+| `scripts/write-dist-gitkeep.mjs` | Runs at the end of `pnpm build`. Vite empties `dist/`, and `dist/.gitkeep` has to survive: the Go binary embeds `web/dist`, and an embed with no matching files fails the backend build on a clean checkout. |
 
 `@/` resolves to `src/`, declared twice on purpose: in `vite.config.ts` for the bundler and in `tsconfig` `paths` for the type checker. They are separate resolvers and must be kept in step.
 

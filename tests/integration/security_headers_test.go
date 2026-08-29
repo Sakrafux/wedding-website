@@ -60,8 +60,8 @@ func TestSecurityHeadersOnErrorResponse(t *testing.T) {
 	assertSecurityHeaders(t, response.Header, "/api/does-not-exist")
 }
 
-// TestSecurityHeadersOnNonAPIResponse covers what E0-09 turns into the SPA's
-// index.html. Until then the path 404s, and the headers are the assertion.
+// TestSecurityHeadersOnNonAPIResponse covers the SPA fallback: index.html carries
+// the same headers as the API, which is where the CSP actually matters.
 func TestSecurityHeadersOnNonAPIResponse(t *testing.T) {
 	server := newTestServer(t)
 

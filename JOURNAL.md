@@ -20,6 +20,12 @@ Done:
 - `web/README.md` rewritten: a justification per dependency (runtime and tooling), the lockfile/pinning policy, the linting and formatting rules, and the `@/` double-declaration warning. Root README covers setup, so `web/` links to it instead of repeating it.
 - Prettier added with `prettier-plugin-tailwindcss`; `format` / `format:check` scripts. Double quotes, semicolons, 2-space indent, 120 columns — reasoning in `web/README.md`; 120 matches `lll`'s default and this repo's Go p99. Markdown is in `.prettierignore` so the repo keeps one Markdown convention.
 - Root README "Local development" now covers the frontend: `corepack enable`, `pnpm dev` on 5173, why to open 5173 rather than 8080, and the frontend check commands.
+- `E0-09` — `web/embed.go` (package `frontend`) embeds `dist` with `all:`, `internal/infrastructure/web/static.go` serves it: real file if present, `index.html` with 200 otherwise, explicit MIME table, `immutable` on `/assets/`, `no-cache` on `index.html`. Registered as the router's `NotFound`, so `/api` keeps its JSON 404.
+- `web/dist/.gitkeep` committed with a `.gitignore` exception, so `go build` works on a clean checkout; a bundle-less binary serves the API and reports the missing shell per request.
+- Vite empties `dist/` and takes `.gitkeep` with it, so `pnpm build` ends with `scripts/write-dist-gitkeep.mjs`. Verified: `go build` succeeds against a `dist/` holding only that file.
+- `tests/integration/static_test.go`: root and deep link return the shell, unknown asset falls through, hashed asset vs. `index.html` cache headers, `/api` miss stays JSON. Skips when no bundle is embedded.
+- `Makefile`: `build` (frontend then Go), `build-web`, `run` (exports `.env`), `preview` (exports `.env`), `test` (`go test`, `gofmt`, `go vet`), `fmt`, `lint`, `clean`.
+- Smoke-tested the built binary: `/`, `/rsvp`, a hashed asset and `/api/nope` all correct, security headers intact on the SPA response.
 
 Decisions:
 
@@ -28,10 +34,13 @@ Decisions:
 - `src/routeTree.gen.ts` is committed — `pnpm build` type checks before Vite generates it. Noted in `web/README.md`.
 - **oxlint + prettier, no eslint.** Rationale in `web/README.md` and `CLAUDE.md`; revisit only if a type-aware rule would have caught a real bug.
 - Versions stay as `^` ranges pinned by `pnpm-lock.yaml`; `E0-10` must install with `--frozen-lockfile`, and `pnpm audit` joins `govulncheck` in the pre-deploy check.
+- Embed lives in `web/embed.go`, not next to the handler: an embed directive cannot reach outside its package directory. Package named `frontend` to avoid colliding with `infrastructure/web`.
+- SPA fallback answers 200, and nothing outside `/api` ever 404s — the handler cannot tell a typo from a client-side route. Rationale in `static.go`.
+- Content types come from an explicit table, not `mime.TypeByExtension`, whose answers depend on the image's `/etc/mime.types`.
 - TanStack router and query devtools mounted from `src/components/Devtools.tsx` behind a dynamic `import()`, not a static import guarded by `import.meta.env.DEV` — a static import survives dead-code elimination and would ship the panels to guests. Verified absent from `dist/`.
 
-Time: <h>
-Cost: $<x>
+Time: 1.5h (tentative)
+Cost: $10.18 (tentative)
 
 ## 2026-08-27
 

@@ -86,9 +86,10 @@ Requires Go 1.26 and Node 24 with corepack. The frontend's package manager is pi
 cp .env.example .env                     # gitignored: it holds ADMIN_PASSWORD
 mkdir -p local/photos                    # matches the DB_PATH/PHOTO_DIR below
 
-set -a && . ./.env && set +a             # nothing in the app reads .env itself
-go run ./cmd/wedding
+make run                                 # exports .env, then go run ./cmd/wedding
 ```
+
+The `Makefile` is the command list: `make build` builds the frontend and *then* the binary that embeds it (that order is the point — a stale `web/dist` baked into a fresh binary is the skew the embed exists to rule out), `make test` runs tests, `gofmt` and `go vet`, `make lint` and `make fmt` cover both languages.
 
 For local runs set `DB_PATH=./local/wedding.db`, `PHOTO_DIR=./local/photos` and `SESSION_COOKIE_SECURE=false`. `/local/` is gitignored. The `Secure` flag has to come off because the browser refuses to send a `Secure` cookie over `http://localhost`, which makes login fail with no visible error.
 
@@ -102,7 +103,7 @@ cd web && pnpm install
 pnpm dev                                 # http://localhost:5173
 ```
 
-Open **5173**, not 8080. Vite serves the app and proxies `/api` through to the Go process on 8080, so the browser sees a single origin — which is not just convenience: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and, from `E0-09`, whatever was last built into `web/dist` — stale unless you just ran `pnpm build`.
+Open **5173**, not 8080. Vite serves the app and proxies `/api` through to the Go process on 8080, so the browser sees a single origin — which is not just convenience: the session cookie is `HttpOnly; SameSite=Lax`, and a two-origin dev setup would need CORS and a weaker cookie policy than production ever uses. Port 8080 on its own serves the API and whatever was last built into `web/dist`, embedded at compile time — stale unless you just ran `make build`.
 
 Frontend checks, run from `web/`:
 
@@ -129,9 +130,10 @@ Startup logs the whole config as JSON with `ADMIN_PASSWORD` redacted, so the fir
 Tests:
 
 ```bash
-go test ./...                            # unit + integration, no external services
-gofmt -l . && go vet ./...
+make test                                # go test ./..., gofmt, go vet
 ```
+
+The integration tests that assert the SPA fallback skip when the binary was built without a frontend bundle, so run `make build-web` (or `make build`) at least once to exercise them.
 
 
 ## Operating it
