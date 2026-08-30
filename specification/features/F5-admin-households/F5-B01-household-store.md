@@ -19,9 +19,9 @@ As an admin, I want to create, read, update and delete households, so that the r
 **Out:**
 
 - Members → `F5-B02`. Code generation and regeneration → `F5-B03`. Exports → `F5-B04`.
-- Editing the household's **answers** — `attending`, `meal_choice`, `portion`, `midnight_snack`, `rsvp_note`, `rsvp_submitted_at`. Those belong to `F3`, and duplicating the form here would mean two places where the field set has to stay in step.
+- Editing the household's **answers** — `attending`, `meal_choice`, `portion`, `midnight_snack`, `rsvp_note`, `rsvp_submitted_at`. Those are `F3-B06`, which reaches them through the *same* use case the guest form uses, addressed by household id instead of by session. Duplicating the form here would mean two places where the field set has to stay in step, which is the one thing Gate 1 exists to prevent.
 
-The line this epic draws: an admin may edit anything **we** record, and nothing the household **answered**. Transport seat counts, `has_stroller`, `seating_need` and `dietary_note` fall on our side despite looking like RSVP fields — they are logistics somebody tells us on the phone in March and we have to be able to write down. Whether the answers proper should also be admin-editable, for a guest who phones in their RSVP, is an open question in `TODO.md`.
+The line this epic draws: an admin may edit anything **we** record, and nothing the household **answered**. Transport seat counts, `has_stroller`, `seating_need` and `dietary_note` fall on our side despite looking like RSVP fields — they are logistics somebody tells us on the phone in March and we have to be able to write down.
 
 ## Instructions
 

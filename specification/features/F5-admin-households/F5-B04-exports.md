@@ -29,8 +29,10 @@ As an admin, I want the guest list as CSV, so that the print shop can do variabl
 3. Quote every field. Cheap, and it removes the class of bug where a name containing a semicolon splits a row.
 4. `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment; filename="codes.csv"`. A CSV that renders in the browser instead of downloading is a CSV somebody copies out of the page by hand.
 5. `codes.csv` columns: `haushalt;code`. The code goes in the **printed** form (`ABC-234`) — that is the string that must appear on the card, and asking the print shop to insert a dash is asking for the one they forget. German column headers here, uniquely, because a print shop reads them.
-6. `guests.csv` columns, one row per living guest, joined to the household: household id, household name, code, first name, last name, kind, age, origin, attending, meal choice, portion, midnight snack, seating need, dietary note, household transport seats needed/offered, has stroller, household RSVP note, last login, RSVP submitted at. English headers matching the column names, because this one is read by us against the schema.
-7. Soft-deleted guests are excluded. A household with no members still gets no row — `guests.csv` is a list of people.
+6. `guests.csv` is a **database output**: every column of `guest`, plus every column of the household that owns it, one row per guest. Not a curated subset — this file is the release valve, and the point of a release valve is that it does not require anyone to have guessed correctly in advance which field would be wanted.
+   Headers are the column names verbatim, English, prefixed `household_` where they come from the household — `guest_id`, `household_id`, `household_display_name`, `household_code`, `first_name`, … The prefix is what stops `created_at` from being ambiguous, and matching the schema exactly means a question about a value is answered by reading `03-data-model` rather than by guessing what a friendly header meant.
+7. Include **soft-deleted guests**, with `deleted_at` as the third column so it cannot be missed while scanning. Excluding them would make the file disagree with the database it claims to dump, and a removed plus-one is exactly the row somebody eventually wants to see.
+   The cost is real and must be stated in the file's own description (`F5-F03`) as well as here: **this file is a dump, not a headcount.** Anything counted from it has to filter `deleted_at` first. `F6-B05`'s caterer export is the one that has already done that.
 8. The RSVP columns are empty until `F3` fills them. Emit them anyway: the file's shape should not change on the day the answers start arriving, or every spreadsheet built on it breaks at once.
 9. Stream the rows to the response writer rather than building the file in memory. Not for the sixty rows here — for the habit, and because the alternative silently sets a precedent for the photo ZIP in `F10-B03`.
 10. Record each export as an **info log line** with the row count, not as an `audit_log` row. `codes.csv` is the whole key list leaving the server and deserves a trace, but `audit_log.action` has no `read` value, and adding one is a migration that would also invite every future read to be logged there — the `CHECK` constraint is what keeps that table a record of *changes* rather than a general event log. Reconsider if a read ever needs to be correlated with a change; today nothing does.
@@ -64,7 +66,9 @@ Errors: `unauthenticated` → 401
 - [ ] Integration: a household name containing a semicolon and a quote round-trips through a CSV reader unmangled.
 - [ ] Integration: umlauts survive — assert the bytes, not just the string, since this is exactly what the BOM is for.
 - [ ] Integration: `Content-Disposition` is `attachment` with the expected filename.
-- [ ] Integration: `guests.csv` excludes soft-deleted guests and includes the RSVP columns as empty strings.
+- [ ] Integration: `guests.csv` carries every column of `guest` and of `household` — assert against the column list, so a migration that adds a field and forgets this file fails here.
+- [ ] Integration: soft-deleted guests are present, with `deleted_at` populated and third in the row.
+- [ ] Integration: the RSVP columns are present and empty before `F3`.
 - [ ] Integration: household-session and anonymous requests to both routes → 401. These two files are the largest disclosure in the product.
 - [ ] Integration: an export writes a log line naming the row count.
 

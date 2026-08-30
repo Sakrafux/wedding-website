@@ -19,7 +19,10 @@ Decisions:
 - CSV exports are UTF-8-with-BOM, semicolon-delimited, quoted throughout — a decision about German Excel rather than about correctness, recorded as such in `F5-B04`.
 - Exports are logged, not audited: `audit_log.action` has no `read` value, and adding one would turn that table from a record of changes into a general event log.
 - `validator/v10` arrives with `F5-B01`, not `F3-B03`. The comment in `httpio/respond.go` names the wrong story and must be updated when F5-B01 ships.
-- Only F5 written, per the just-in-time rule in `CLAUDE.md`. Whether to draft F3 early anyway — it carries Gate 1 — is one of the open questions.
+- Only F5 written, per the just-in-time rule in `CLAUDE.md`. F3 is drafted after F5 is built.
+- **Admin RSVP is the guest page addressed by household id**, not a second admin form — `F3-B06` / `F3-F06`, appended to the index. One form component, one use case, parameterised by *which* household rather than by *how you authenticated*. Four consequences for the unwritten F3 stories are recorded in `TODO.md` under "Carried into F3": the form takes data and save as props, the deadline becomes an argument rather than an internal rule, an admin edit audits as `admin`, and it sets `rsvp_submitted_at`.
+- `guests.csv` is a full table dump — every guest and household column, soft-deleted rows included with `deleted_at` third. It is therefore not a headcount, and the story and the download label both say so; `F6-B05` is the counted one.
+- Remaining F5 assumptions confirmed unchanged: session revocation on regeneration, CSV encoding, `codes.csv` layout, hard-delete for households, German admin URLs.
 
 Time: <h>
 Cost: <$x>

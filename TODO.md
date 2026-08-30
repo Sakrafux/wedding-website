@@ -38,18 +38,16 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [ ] Draft the German "Datenschutz" page text, alongside the F2 content pages.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
 
-### Open against the written F5 stories
+### Answered against the F5 stories — 2026-08-31
 
-Written 2026-08-31, all answerable in one sitting. Each names the default the story already assumes, so F5 is buildable without an answer — but every one of these is cheaper to change now than after the list is entered.
-
-- [ ] **Admin-entered RSVP answers.** Should an admin be able to fill in `attending` / `meal_choice` / `portion` / `midnight_snack` for a household that phones theirs in? Very likely yes for this audience. *Assumed: not in F5.* If yes, it becomes an F3 story (same field set, one form definition) rather than a second form in `F5-F02`.
-- [ ] **Regenerating a code revokes that household's sessions.** *Assumed: yes* — the only reason to regenerate is that the old code should stop working, and a year-long session issued from it would otherwise outlive the code by months. Say so if you would rather a reissued code left logged-in phones alone.
-- [ ] **CSV encoding: UTF-8 BOM, semicolon-delimited.** *Assumed: yes*, because German Excel splits on `;` and reads a BOM-less UTF-8 file as Latin-1 — `Müller` becomes `MÃ¼ller`, silently, on the file the print shop receives. Cost: the file is not RFC 4180. Worth confirming you will open these in Excel and not in something else.
-- [ ] **Does the print shop require a specific `codes.csv` layout?** Column names, column order, one file or one row per card, code with or without the dash. *Assumed: `haushalt;code` with the code as `ABC-234`.* Ask them before `E-OPS-06`; a format mismatch is discovered at the worst moment.
-- [ ] **Deleting a household is a hard delete** (guests and seat assignments cascade; the audit trail survives). *Assumed: yes.* Guests are soft-deleted, households are not — the asymmetry is deliberate but worth a second opinion.
-- [ ] **`guests.csv` column set.** Listed in `F5-B04`. It is the release valve if `F6` never ships, so it should carry everything you would otherwise want a dashboard for.
-- [ ] **Admin URLs in German** (`/admin/haushalte`). *Assumed: yes*, matching the guest routes. Trivial to change now, annoying once bookmarked.
-- [ ] **Write the F3 stories now, or after F5 is built?** The convention in `CLAUDE.md` is just-in-time, and F3 is the epic most likely to be reshaped by actually entering the guest list. *Assumed: after.* But F3 carries Gate 1 — the field-set freeze — so there is an argument for drafting it early and sitting with it.
+- [x] **Admin-entered RSVP answers: yes, and as the same page.** Rather than a second form in admin, the admin gets the guest RSVP page addressed by household id. One form component and one use case, parameterised by *which* household instead of by *how you authenticated*. Recorded as `F3-B06` / `F3-F06`; the constraints it puts on the rest of F3 are under "Carried into F3" below.
+- [x] **Regenerating a code revokes that household's sessions.**
+- [x] **CSV encoding: UTF-8 BOM, semicolon-delimited, quoted.**
+- [x] **`codes.csv` stays `haushalt;code` with the code as `ABC-234`.** Still worth confirming with the print shop before `E-OPS-06`.
+- [x] **Households hard-delete, guests soft-delete.** The asymmetry has a reason: only we delete a household, whereas a household removes its own plus-ones, and a person who was once counted has to stay explicable.
+- [x] **`guests.csv` is a full dump** — every column of `guest` and of its household, soft-deleted rows included with `deleted_at` visible. It is therefore not a headcount, and both the story and the download label say so.
+- [x] **German admin URLs.**
+- [x] **F3 stories are written after F5 is built.**
 
 ### Seating detail (for the F7 story)
 
@@ -88,4 +86,10 @@ Small things I know are loose, worth a pass before implementation:
 - [x] `06-privacy-security.md` is referenced from `03-data-model.md` and `04-architecture.md` — now exists.
 - [x] German UI label mapping for every English enum value — now in [05-design](specification/05-design.md), to be implemented as `web/src/lib/labels.ts`.
 - [ ] The API sketch in [04-architecture](specification/04-architecture.md) predates the attendance-scope and transport fields; the RSVP payload shape needs a refresh once the F3 stories are written. `F1-B04` already defines the real `/api/me` shape, so the sketch is drifting.
+- [ ] **Carried into F3, decided 2026-08-31 when `F3-B06` was agreed.** Write these into the F3 stories rather than rediscovering them:
+  - The RSVP form component takes its data and its save mutation as **props** and never fetches for itself, so the guest route and the admin route can hand it different sources. This constrains `F3-F01`–`F3-F04`.
+  - One `application` use case takes a household id. The guest handler passes the session's household; the admin handler passes the path parameter. Ownership is checked in exactly one place either way.
+  - **Deadline enforcement is an argument to that use case, not a rule inside it** (`F3-B04`). The admin path exists for the call that comes in late, so it must be able to write after `rsvp_deadline`.
+  - **An admin edit is audited as `actor_type = 'admin'`** (`F3-B05`). The audit log settles "but I said we were coming", and recording our own edit as the household's answer would mislead at the one moment it matters.
+  - An admin edit sets `rsvp_submitted_at`, so the household drops off the nudge list. If we took it down on the phone, they have answered.
 - [ ] No decision recorded on what a guest sees between "RSVP deadline passed" and "seating published" — a period where the site has little to say. Roughly five weeks in late spring 2027; [07-roadmap](specification/07-roadmap.md) wants this decided during M5.

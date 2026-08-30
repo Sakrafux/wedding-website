@@ -86,6 +86,8 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [ ] `F3-F03` Transport seats and household note
 - [ ] `F3-F04` Save, confirmation, and summary
 - [ ] `F3-F05` Read-only rendering after the deadline
+- [ ] `F3-B06` `GET|PUT /api/admin/households/{id}/rsvp` — the same use case, addressed by id
+- [ ] `F3-F06` Admin RSVP page at `/admin/haushalte/{id}/rsvp`, reusing the guest form
 
 ## F4 — Plus-ones & children · M2 · P0
 

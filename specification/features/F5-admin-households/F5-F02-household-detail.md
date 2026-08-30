@@ -18,7 +18,7 @@ As an admin, I want one page per household where I can fix the name, add and cor
 
 **Out:**
 
-- RSVP answers, which are read-only here and empty until `F3` — see the open question in `TODO.md` about entering them on a household's behalf.
+- Entering the household's RSVP answers → `F3-F06`, which renders the *same* form component as the guest page against `/api/admin/households/{id}/rsvp`. This page links to it once it exists and shows a read-only summary of the answers before then.
 - Seating → `F7`.
 
 ## Instructions
@@ -33,7 +33,8 @@ As an admin, I want one page per household where I can fix the name, add and cor
 8. Regenerating is behind a confirmation naming the consequence in plain German: the old code stops working, any printed card carrying it is dead, and logged-in devices are signed out. Show `revoked_sessions` from the response afterwards, so the admin sees what happened rather than inferring it.
 9. Deleting the household is behind a confirmation that states the member count being deleted with it, and requires more than one click. Its audit trail survives, and the dialog says so — the fear when deleting is losing the record, not losing the row.
 10. Removing a member says "entfernen", not "löschen": it is a soft delete, the person stays in the record, and the German should not promise otherwise.
-11. Optimistic updates are not worth it here. This is an admin on a laptop on a good connection, and a member list that reorders itself and then snaps back is worse than a spinner.
+11. Where the RSVP answers would go, show a read-only summary and — once `F3-F06` exists — a link to it. Do not build a second RSVP form here: the whole point of `F3-F06` is that there is one form component, and a second one is a second field set to keep in step.
+12. Optimistic updates are not worth it here. This is an admin on a laptop on a good connection, and a member list that reorders itself and then snaps back is worse than a spinner.
 
 ## Test plan
 
