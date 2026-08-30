@@ -145,6 +145,26 @@ func TestAdminSessionReachesTheAdminSubtree(t *testing.T) {
 	}
 }
 
+// The probe the admin frontend's guard is built on: it must say yes for an admin
+// session and 401 for everything else, since that is the only thing that tells a
+// returning admin their cookie is still good.
+func TestAdminMeIdentifiesAnAdminSession(t *testing.T) {
+	t.Parallel()
+
+	app := newTestApp(t)
+	require.Equal(t, http.StatusOK, app.logInAsAdmin().Status)
+
+	response := app.get("/api/admin/me")
+	require.Equal(t, http.StatusOK, response.Status)
+
+	var body struct {
+		SubjectType string `json:"subject_type"`
+	}
+	response.decodeJSON(&body)
+	assert.Equal(t, "admin", body.SubjectType)
+	response.assertNoLeak(testAdminUser, testAdminPassword)
+}
+
 // One cookie, one subject: an admin logging in on a device that still holds a
 // household session must not end up with both, or subject_type stops being the
 // whole answer to "who is this".

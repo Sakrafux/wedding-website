@@ -76,6 +76,13 @@ func NewRouter(logger *httplog.Logger, config configuration.Config, database *co
 			// NotFound handler directly — middleware and all — so an empty guarded
 			// subtree answers 404 to everyone instead of 401 to strangers. Keep at
 			// least one route here.
+			admin.Get("/me", authHandler.AdminMe)
+
+			// Kept even now that a real route exists, and removing it would be
+			// silent: chi builds a sub-router's middleware chain only when a route
+			// is registered on it, so a subtree that lost its last route would
+			// serve its NotFound handler directly — middleware and all — and answer
+			// 404 to everyone instead of 401 to strangers.
 			admin.Handle("/*", http.HandlerFunc(system.APINotFound))
 		})
 

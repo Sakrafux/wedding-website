@@ -13,6 +13,7 @@ This is the one hard security boundary in the product. Everything else is calibr
 **In:**
 
 - `POST /api/auth/admin/login`.
+- `GET /api/admin/me` — confirms an existing admin session. Pulled in here because `F1-F04`'s admin guard cannot be written without it: `/api/me` answers 401 for an admin, so nothing else reports that the cookie in hand is still an admin session, and a client-side flag would put "am I the admin" in a second place.
 - The `/api/admin` subtree gate.
 - Constant-time credential comparison.
 

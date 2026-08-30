@@ -12,7 +12,7 @@ As an admin, I want login attempts limited per IP without ever locking anyone ou
 
 - Trusted-proxy client IP resolution.
 - Per-IP limiting on the guest and admin login endpoints.
-- A global failure counter for visibility.
+- Visibility when the limit bites.
 
 **Out:**
 
@@ -29,6 +29,7 @@ As an admin, I want login attempts limited per IP without ever locking anyone ou
 7. **Never lock out.** The limit produces a 429 with a "try again in a few minutes" message, and it always expires on its own. Per the threat model, locking out a 75-year-old is a worse outcome than the attack being prevented.
 8. Set `Retry-After`.
 9. Rate-limit responses are 429 with the standard envelope, so the frontend renders them like any other error.
+10. Visibility is one **log line per refusal**, not a counter: refusals are rare, a burst of them is a run of guessing and a single one is a guest who has mislaid their card, and a log line carries the address and the endpoint with nothing to scrape and no endpoint to expose. Refusals are deliberately **not** written to `audit_log` — nothing was attempted and no credential was checked, and recording them there would let anyone grow that table by hammering the endpoint. The attempts that did reach the handler are already in it.
 
 ## Contract
 

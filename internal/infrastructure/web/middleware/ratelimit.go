@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-chi/httplog/v2"
+
 	"github.com/Sakrafux/wedding-website/internal/domain"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/httpio"
 )
@@ -153,6 +155,18 @@ func (limiter *RateLimiter) LimitLoginFailures(next http.Handler) http.Handler {
 		key := ClientIPFromContext(r.Context())
 
 		if retryAfter, isLimited := limiter.RetryAfter(key, time.Now()); isLimited {
+			// The visibility this story asks for. A refusal is rare enough that one
+			// log line each is a usable signal — a burst of them is a run of
+			// guessing, a single one is a guest who has mislaid their card — and it
+			// needs no counter, no endpoint and nothing to scrape.
+			//
+			// Not written to audit_log: nothing was attempted, no credential was
+			// checked, and recording refusals there would let anyone grow that
+			// table by hammering the endpoint. The ten attempts that did reach the
+			// handler are already in it.
+			httplog.LogEntry(r.Context()).Warn("login rate limit reached",
+				"client_ip", key, "path", r.URL.Path, "retry_after_seconds", int(retryAfter.Seconds()))
+
 			w.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds())))
 			httpio.RespondError(w, r, domain.NewError(domain.CodeRateLimited))
 			return

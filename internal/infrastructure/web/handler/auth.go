@@ -71,6 +71,29 @@ func (handler *Auth) AdminLogIn(w http.ResponseWriter, r *http.Request) {
 	httpio.WriteJSON(w, r, http.StatusOK, dto.AdminLoginResponse{SubjectType: string(login.Session.SubjectType)})
 }
 
+// AdminMe confirms that the caller holds an admin session.
+//
+// It carries no data, and that is the whole design: the admin frontend needs to
+// know whether the cookie it already has is still an admin session, and there is
+// nothing else to tell it — /api/me answers 401 for an admin, since an admin is
+// not a household. Mounted behind RequireAdmin, so reaching the body at all is the
+// answer.
+//
+// It exists because the admin frontend's route guard would otherwise have nothing
+// to ask, and a client-side "I logged in earlier" flag would have put "am I the
+// admin" in a second place — the one that goes stale.
+func (handler *Auth) AdminMe(w http.ResponseWriter, r *http.Request) {
+	session, isAuthenticated := middleware.SessionFromContext(r.Context())
+	if !isAuthenticated {
+		// Unreachable behind the gate; fails closed if a future registration
+		// forgets it.
+		httpio.RespondError(w, r, httpio.ErrNotFound)
+		return
+	}
+
+	httpio.WriteJSON(w, r, http.StatusOK, dto.AdminLoginResponse{SubjectType: string(session.SubjectType)})
+}
+
 // LogOut revokes the current session and clears the cookie.
 //
 // Idempotent, and 204 either way: an anonymous caller asking to be logged out has
