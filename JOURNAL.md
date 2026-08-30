@@ -30,6 +30,32 @@ Decisions:
 Time: <h>
 Cost: <$x>
 
+## 2026-08-31
+
+Done:
+
+- `F1-B05` — `middleware/clientip.go` resolves the caller against `TRUSTED_PROXY_CIDRS`, rightmost untrusted hop, IPv4-mapped proxies unmapped first; `middleware/ratelimit.go` is an in-memory sliding window, 10 guest / 5 admin failures per hour per address, one limiter per endpoint. Failure is read off the response status, so an endpoint cannot forget to report one.
+- `main` warns at startup when `TRUSTED_PROXY_CIDRS` is empty — the misconfiguration that silently makes the limiter key on the proxy.
+- `F1-B06` — `domain/audit.go` (entry constructors) and `persistence/audit.go`. Login, admin login and failed attempts recorded; audit failures are logged and never fail the request.
+- `F1-B07` — `security/credentials.go` (`subtle.ConstantTimeCompare`, both halves, no early return), `POST /api/auth/admin/login`, and `GET /api/admin/me`.
+- `F1-F01`–`F1-F04` — `lib/api.ts` (one fetch wrapper, `ApiError` vs `NetworkError`), `lib/session.ts` (`me` and the admin session as the only session state), `lib/code.ts`, `CodeInput`, the login screen, the confirmation screen, the guest and admin layouts with their guards, and the admin shell with disabled placeholders.
+- German screen copy moved into `labels.ts` alongside the enum maps; the file is now the whole of what a guest can read.
+- Frontend test setup: vitest, jsdom, Testing Library. 34 component tests driving the real router and real guards against a stubbed `fetch`. `make check` runs both halves.
+- Verified against the built binary: SPA deep links, guest login, admin login, the admin gate refusing a household session, 10 failures then 429, and an audit log with no code or password in it.
+
+Decisions:
+
+- `entity`/`entity_id` for auth events are the household (or `admin`, id 0), not `session` as `F1-B06` said: session ids are a token hash and cannot go in an INTEGER column. Story corrected.
+- Rate-limit visibility is one log line per refusal, not a counter, and refusals are not audited — nothing was attempted, and recording them would let anyone grow `audit_log` by hammering. `F1-B05` updated.
+- `GET /api/admin/me` added to `F1-B07`'s scope: the admin route guard has nothing else to ask, since `/api/me` answers 401 for an admin.
+- `CodeInput` carries no `maxLength` — the attribute counts raw characters and truncated a pasted `ABC-234` to `ABC-23`. The cap lives in `normalizeCode`, after the dash is stripped. Caught by a component test.
+- No auto-formatted dash in the code field: it would move the caret on every keystroke, and backspace jumping to the end is unrecoverable for this audience. The hint text carries the printed form.
+- Sessions expiring mid-visit are handled in the layout components as well as in `beforeLoad`: a guard only re-runs on navigation, and a revoked session arrives as a 401 on whatever query was running.
+- Redirect targets from the URL are validated as single-slash internal paths, so `?redirect=https://…` cannot bounce a guest off the site straight after login.
+
+Time: <h>
+Cost: <$x>
+
 ## 2026-08-29
 
 Done:

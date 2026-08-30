@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-08-22 · Planning phase, no code written yet.
+Status: as of 2026-08-30 · Building. E0 (setup) and F1 (login) are done; see [specification/features/README.md](specification/features/README.md).
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -34,6 +34,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [ ] Track invitation send-out date per household, to time reminder nudges?
 - [ ] Photo retention: how long does the gallery stay online after the wedding, and what happens to the files afterwards? Blocks the end-of-life procedure in [06-privacy-security](specification/06-privacy-security.md).
 - [ ] Can the caterer export be name-free (counts + allergies keyed by table) instead of a full guest list? Would remove the largest planned data disclosure.
+- [ ] **Contact phone number for the login fallback.** After two failed attempts the login screen offers "Klappt es nicht? Ruf uns an: …". `web/src/lib/labels.ts` carries a placeholder (`contactPhoneNumber`). Needed before send-out: it is the only escape hatch a guest has, and a placeholder reaching the print run strands exactly the people it exists for.
 - [ ] Draft the German "Datenschutz" page text, alongside the F2 content pages.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
 

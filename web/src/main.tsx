@@ -3,6 +3,9 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { RouteError, RoutePending } from "@/components/RouteStates";
+import { watchForSessionExpiry } from "@/lib/session";
+
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 
@@ -20,7 +23,19 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createRouter({ routeTree });
+// Never unsubscribed: it lives as long as the page does.
+watchForSessionExpiry(queryClient);
+
+const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  defaultPendingComponent: RoutePending,
+  defaultErrorComponent: RouteError,
+  // Shown from the first millisecond rather than after a delay: the guards await
+  // the session query, and an unstyled gap before the skeleton reads as a broken
+  // page on a slow connection.
+  defaultPendingMs: 0,
+});
 
 // Gives useNavigate, Link and the rest their typed route paths. Without it every
 // route string is just a string.

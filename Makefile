@@ -16,7 +16,7 @@ TAG ?= latest
 # paths. Plain `gofmt -l .` would walk web/node_modules.
 GO_DIRS = $(shell go list -f '{{.Dir}}' ./...)
 
-.PHONY: all build build-web run preview test fmt lint clean docker-build docker-push
+.PHONY: all build build-web run preview test test-web check fmt lint clean docker-build docker-push
 
 all: build
 
@@ -41,10 +41,19 @@ preview:
 	set -a; . ./.env; set +a; ./$(BINARY)
 
 ## test — the full gate: tests, formatting, vet.
+# Go only, so it stays fast enough to run on every save. `make check` adds the
+# frontend, which needs node_modules and takes an order of magnitude longer.
 test:
 	go test ./...
 	@test -z "$$(gofmt -l $(GO_DIRS))" || { echo "gofmt needed:"; gofmt -l $(GO_DIRS); exit 1; }
 	go vet ./...
+
+## test-web — the frontend component tests.
+test-web:
+	cd $(WEB_DIR) && pnpm test
+
+## check — everything, both halves. What runs before a commit worth keeping.
+check: test test-web lint
 
 fmt:
 	gofmt -w $(GO_DIRS)

@@ -56,11 +56,11 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F1-B04` `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`
 - [x] `F1-B05` Rate limiting and trusted-proxy client IP resolution
 - [x] `F1-B06` Audit logging for `login` and `login_failed`
-- [ ] `F1-F01` Login screen and `CodeInput`
-- [ ] `F1-F02` Household confirmation screen
-- [ ] `F1-F03` App shell, route guards, TanStack Query setup
+- [x] `F1-F01` Login screen and `CodeInput`
+- [x] `F1-F02` Household confirmation screen
+- [x] `F1-F03` App shell, route guards, TanStack Query setup
 - [x] `F1-B07` Admin login and `/api/admin` gate
-- [ ] `F1-F04` Admin login screen and admin shell
+- [x] `F1-F04` Admin login screen and admin shell
 
 ## F5 — Admin: households & guests · M1 · P0
 
