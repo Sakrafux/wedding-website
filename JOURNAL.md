@@ -4,29 +4,6 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
-## 2026-08-31
-
-Done:
-
-- Wrote the seven `F5` story files in `specification/features/F5-admin-households/`: household CRUD, guest CRUD, code assignment and regeneration, the two CSV exports, and the three frontend stories.
-- Collected eight open questions against them in `TODO.md`, each with the default the story already assumes, so F5 is buildable unanswered.
-
-Decisions:
-
-- The line F5 draws: an admin edits anything **we** record, nothing the household **answered**. Transport seats, `has_stroller`, `seating_need` and `dietary_note` are on our side — they get told to us on the phone. `attending`, `meal_choice`, `portion`, `midnight_snack` and `rsvp_note` stay with F3, so the field set has one definition.
-- Guests are soft-deleted, households are not. A guest was counted and may hold a seat; a household that never existed leaves nothing behind but its audit trail.
-- Code collisions are handled by retrying a failed insert against the `UNIQUE` index, capped at 5. Checking first is redundant when the database already enforces it, and an unbounded retry hides a broken generator behind a hung request.
-- CSV exports are UTF-8-with-BOM, semicolon-delimited, quoted throughout — a decision about German Excel rather than about correctness, recorded as such in `F5-B04`.
-- Exports are logged, not audited: `audit_log.action` has no `read` value, and adding one would turn that table from a record of changes into a general event log.
-- `validator/v10` arrives with `F5-B01`, not `F3-B03`. The comment in `httpio/respond.go` names the wrong story and must be updated when F5-B01 ships.
-- Only F5 written, per the just-in-time rule in `CLAUDE.md`. F3 is drafted after F5 is built.
-- **Admin RSVP is the guest page addressed by household id**, not a second admin form — `F3-B06` / `F3-F06`, appended to the index. One form component, one use case, parameterised by *which* household rather than by *how you authenticated*. Four consequences for the unwritten F3 stories are recorded in `TODO.md` under "Carried into F3": the form takes data and save as props, the deadline becomes an argument rather than an internal rule, an admin edit audits as `admin`, and it sets `rsvp_submitted_at`.
-- `guests.csv` is a full table dump — every guest and household column, soft-deleted rows included with `deleted_at` third. It is therefore not a headcount, and the story and the download label both say so; `F6-B05` is the counted one.
-- Remaining F5 assumptions confirmed unchanged: session revocation on regeneration, CSV encoding, `codes.csv` layout, hard-delete for households, German admin URLs.
-
-Time: <h>
-Cost: <$x>
-
 ## 2026-08-30
 
 Done:
@@ -40,6 +17,16 @@ Done:
 - Integration tests: session store round trip, hashing, expiry, purge; the gates against real routes; login normalisation variants, cookie attributes both ways on `SESSION_COOKIE_SECURE`, `last_login_at`, re-login replacing a session, logout idempotence, and `assertNoLeak` on both bootstrap bodies.
 - Harness: `newTestApp` takes options (`withExtraRoutes`, `withSecureCookies`), plus `logIn`, `putSessionCookie`, `countSessions`, `setCookie`. Fixed `withGuests` numbering, and the default display name no longer embeds the household's own code.
 - Verified end to end against the built binary: `abc-234` logs in, `/api/me` matches, `/api/admin/*` is 401 for a household session, a form-encoded login is 400, logout is 204 and revokes.
+- `F1-B05` — `middleware/clientip.go` resolves the caller against `TRUSTED_PROXY_CIDRS`, rightmost untrusted hop, IPv4-mapped proxies unmapped first; `middleware/ratelimit.go` is an in-memory sliding window, 10 guest / 5 admin failures per hour per address, one limiter per endpoint. Failure is read off the response status, so an endpoint cannot forget to report one.
+- `main` warns at startup when `TRUSTED_PROXY_CIDRS` is empty — the misconfiguration that silently makes the limiter key on the proxy.
+- `F1-B06` — `domain/audit.go` (entry constructors) and `persistence/audit.go`. Login, admin login and failed attempts recorded; audit failures are logged and never fail the request.
+- `F1-B07` — `security/credentials.go` (`subtle.ConstantTimeCompare`, both halves, no early return), `POST /api/auth/admin/login`, and `GET /api/admin/me`.
+- `F1-F01`–`F1-F04` — `lib/api.ts` (one fetch wrapper, `ApiError` vs `NetworkError`), `lib/session.ts` (`me` and the admin session as the only session state), `lib/code.ts`, `CodeInput`, the login screen, the confirmation screen, the guest and admin layouts with their guards, and the admin shell with disabled placeholders.
+- German screen copy moved into `labels.ts` alongside the enum maps; the file is now the whole of what a guest can read.
+- Frontend test setup: vitest, jsdom, Testing Library. 34 component tests driving the real router and real guards against a stubbed `fetch`. `make check` runs both halves.
+- Verified against the built binary: SPA deep links, guest login, admin login, the admin gate refusing a household session, 10 failures then 429, and an audit log with no code or password in it.
+- Wrote the seven `F5` story files in `specification/features/F5-admin-households/`: household CRUD, guest CRUD, code assignment and regeneration, the two CSV exports, and the three frontend stories.
+- Collected eight open questions against them in `TODO.md`, each with the default the story already assumes, so F5 is buildable unanswered.
 
 Decisions:
 
@@ -49,25 +36,6 @@ Decisions:
 - `Content-Type: application/json` is enforced in `httpio.DecodeJSON` rather than in a router middleware — the CSRF control from `06-privacy-security` lands where handlers already parse, and leaves bodyless `POST`s alone.
 - Client IP for the audit trail is the direct peer until `F1-B05`; `X-Forwarded-For` is deliberately not read yet.
 - Session `last_seen_at` means "when the session was last extended", accurate to a day. The cost of not writing on every read.
-
-Time: <h>
-Cost: <$x>
-
-## 2026-08-31
-
-Done:
-
-- `F1-B05` — `middleware/clientip.go` resolves the caller against `TRUSTED_PROXY_CIDRS`, rightmost untrusted hop, IPv4-mapped proxies unmapped first; `middleware/ratelimit.go` is an in-memory sliding window, 10 guest / 5 admin failures per hour per address, one limiter per endpoint. Failure is read off the response status, so an endpoint cannot forget to report one.
-- `main` warns at startup when `TRUSTED_PROXY_CIDRS` is empty — the misconfiguration that silently makes the limiter key on the proxy.
-- `F1-B06` — `domain/audit.go` (entry constructors) and `persistence/audit.go`. Login, admin login and failed attempts recorded; audit failures are logged and never fail the request.
-- `F1-B07` — `security/credentials.go` (`subtle.ConstantTimeCompare`, both halves, no early return), `POST /api/auth/admin/login`, and `GET /api/admin/me`.
-- `F1-F01`–`F1-F04` — `lib/api.ts` (one fetch wrapper, `ApiError` vs `NetworkError`), `lib/session.ts` (`me` and the admin session as the only session state), `lib/code.ts`, `CodeInput`, the login screen, the confirmation screen, the guest and admin layouts with their guards, and the admin shell with disabled placeholders.
-- German screen copy moved into `labels.ts` alongside the enum maps; the file is now the whole of what a guest can read.
-- Frontend test setup: vitest, jsdom, Testing Library. 34 component tests driving the real router and real guards against a stubbed `fetch`. `make check` runs both halves.
-- Verified against the built binary: SPA deep links, guest login, admin login, the admin gate refusing a household session, 10 failures then 429, and an audit log with no code or password in it.
-
-Decisions:
-
 - `entity`/`entity_id` for auth events are the household (or `admin`, id 0), not `session` as `F1-B06` said: session ids are a token hash and cannot go in an INTEGER column. Story corrected.
 - Rate-limit visibility is one log line per refusal, not a counter, and refusals are not audited — nothing was attempted, and recording them would let anyone grow `audit_log` by hammering. `F1-B05` updated.
 - `GET /api/admin/me` added to `F1-B07`'s scope: the admin route guard has nothing else to ask, since `/api/me` answers 401 for an admin.
@@ -75,9 +43,19 @@ Decisions:
 - No auto-formatted dash in the code field: it would move the caret on every keystroke, and backspace jumping to the end is unrecoverable for this audience. The hint text carries the printed form.
 - Sessions expiring mid-visit are handled in the layout components as well as in `beforeLoad`: a guard only re-runs on navigation, and a revoked session arrives as a 401 on whatever query was running.
 - Redirect targets from the URL are validated as single-slash internal paths, so `?redirect=https://…` cannot bounce a guest off the site straight after login.
+- The line F5 draws: an admin edits anything **we** record, nothing the household **answered**. Transport seats, `has_stroller`, `seating_need` and `dietary_note` are on our side — they get told to us on the phone. `attending`, `meal_choice`, `portion`, `midnight_snack` and `rsvp_note` stay with F3, so the field set has one definition.
+- Guests are soft-deleted, households are not. A guest was counted and may hold a seat; a household that never existed leaves nothing behind but its audit trail.
+- Code collisions are handled by retrying a failed insert against the `UNIQUE` index, capped at 5. Checking first is redundant when the database already enforces it, and an unbounded retry hides a broken generator behind a hung request.
+- CSV exports are UTF-8-with-BOM, semicolon-delimited, quoted throughout — a decision about German Excel rather than about correctness, recorded as such in `F5-B04`.
+- Exports are logged, not audited: `audit_log.action` has no `read` value, and adding one would turn that table from a record of changes into a general event log.
+- `validator/v10` arrives with `F5-B01`, not `F3-B03`. The comment in `httpio/respond.go` names the wrong story and must be updated when F5-B01 ships.
+- Only F5 written, per the just-in-time rule in `CLAUDE.md`. F3 is drafted after F5 is built.
+- **Admin RSVP is the guest page addressed by household id**, not a second admin form — `F3-B06` / `F3-F06`, appended to the index. One form component, one use case, parameterised by *which* household rather than by *how you authenticated*. Four consequences for the unwritten F3 stories are recorded in `TODO.md` under "Carried into F3": the form takes data and save as props, the deadline becomes an argument rather than an internal rule, an admin edit audits as `admin`, and it sets `rsvp_submitted_at`.
+- `guests.csv` is a full table dump — every guest and household column, soft-deleted rows included with `deleted_at` third. It is therefore not a headcount, and the story and the download label both say so; `F6-B05` is the counted one.
+- Remaining F5 assumptions confirmed unchanged: session revocation on regeneration, CSV encoding, `codes.csv` layout, hard-delete for households, German admin URLs.
 
-Time: <h>
-Cost: <$x>
+Time: 4h
+Cost: 37.72
 
 ## 2026-08-29
 
@@ -215,8 +193,7 @@ Decisions:
 - Makefile (`run`, `test`, frontend-then-Go `build`) deferred to `E0-09` — one command list, not two. Recorded as instruction 6 there.
 
 Time: 1.5h
-
-Cost: Opus 5 — $9.45
+Cost: $9.45
 
 ## 2026-08-25
 
@@ -234,8 +211,7 @@ Decisions:
 - Kept the root layout over a `backend/` + `frontend/` split — `go:embed` cannot cross the module root.
 
 Time: 1h
-
-Cost: Opus 5 — $4.11
+Cost: $4.11
 
 ## 2026-08-22
 
@@ -254,8 +230,7 @@ Decisions:
 - This journal is where effort and AI spend get tracked.
 
 Time: 4.5h
-
-Cost: Opus 5 (1M context) — $11.31
+Cost: $11.31
 
 ## 2026-08-21
 
@@ -268,5 +243,4 @@ Decisions:
 - Go single binary with an embedded React/Vite frontend, SQLite, trimmed hexagonal layout.
 
 Time: 3h
-
-Cost: Opus 5 (1M context) — $6.57
+Cost: $6.57
