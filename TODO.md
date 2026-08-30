@@ -38,6 +38,19 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [ ] Draft the German "Datenschutz" page text, alongside the F2 content pages.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
 
+### Open against the written F5 stories
+
+Written 2026-08-31, all answerable in one sitting. Each names the default the story already assumes, so F5 is buildable without an answer — but every one of these is cheaper to change now than after the list is entered.
+
+- [ ] **Admin-entered RSVP answers.** Should an admin be able to fill in `attending` / `meal_choice` / `portion` / `midnight_snack` for a household that phones theirs in? Very likely yes for this audience. *Assumed: not in F5.* If yes, it becomes an F3 story (same field set, one form definition) rather than a second form in `F5-F02`.
+- [ ] **Regenerating a code revokes that household's sessions.** *Assumed: yes* — the only reason to regenerate is that the old code should stop working, and a year-long session issued from it would otherwise outlive the code by months. Say so if you would rather a reissued code left logged-in phones alone.
+- [ ] **CSV encoding: UTF-8 BOM, semicolon-delimited.** *Assumed: yes*, because German Excel splits on `;` and reads a BOM-less UTF-8 file as Latin-1 — `Müller` becomes `MÃ¼ller`, silently, on the file the print shop receives. Cost: the file is not RFC 4180. Worth confirming you will open these in Excel and not in something else.
+- [ ] **Does the print shop require a specific `codes.csv` layout?** Column names, column order, one file or one row per card, code with or without the dash. *Assumed: `haushalt;code` with the code as `ABC-234`.* Ask them before `E-OPS-06`; a format mismatch is discovered at the worst moment.
+- [ ] **Deleting a household is a hard delete** (guests and seat assignments cascade; the audit trail survives). *Assumed: yes.* Guests are soft-deleted, households are not — the asymmetry is deliberate but worth a second opinion.
+- [ ] **`guests.csv` column set.** Listed in `F5-B04`. It is the release valve if `F6` never ships, so it should carry everything you would otherwise want a dashboard for.
+- [ ] **Admin URLs in German** (`/admin/haushalte`). *Assumed: yes*, matching the guest routes. Trivial to change now, annoying once bookmarked.
+- [ ] **Write the F3 stories now, or after F5 is built?** The convention in `CLAUDE.md` is just-in-time, and F3 is the epic most likely to be reshaped by actually entering the guest list. *Assumed: after.* But F3 carries Gate 1 — the field-set freeze — so there is an argument for drafting it early and sitting with it.
+
 ### Seating detail (for the F7 story)
 
 - [ ] Who draws the floor-plan SVG, and in what tool? It needs stable `id` attributes per table shape — that constraint has to survive re-exports from the drawing tool.

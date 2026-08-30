@@ -4,6 +4,26 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-08-31
+
+Done:
+
+- Wrote the seven `F5` story files in `specification/features/F5-admin-households/`: household CRUD, guest CRUD, code assignment and regeneration, the two CSV exports, and the three frontend stories.
+- Collected eight open questions against them in `TODO.md`, each with the default the story already assumes, so F5 is buildable unanswered.
+
+Decisions:
+
+- The line F5 draws: an admin edits anything **we** record, nothing the household **answered**. Transport seats, `has_stroller`, `seating_need` and `dietary_note` are on our side — they get told to us on the phone. `attending`, `meal_choice`, `portion`, `midnight_snack` and `rsvp_note` stay with F3, so the field set has one definition.
+- Guests are soft-deleted, households are not. A guest was counted and may hold a seat; a household that never existed leaves nothing behind but its audit trail.
+- Code collisions are handled by retrying a failed insert against the `UNIQUE` index, capped at 5. Checking first is redundant when the database already enforces it, and an unbounded retry hides a broken generator behind a hung request.
+- CSV exports are UTF-8-with-BOM, semicolon-delimited, quoted throughout — a decision about German Excel rather than about correctness, recorded as such in `F5-B04`.
+- Exports are logged, not audited: `audit_log.action` has no `read` value, and adding one would turn that table from a record of changes into a general event log.
+- `validator/v10` arrives with `F5-B01`, not `F3-B03`. The comment in `httpio/respond.go` names the wrong story and must be updated when F5-B01 ships.
+- Only F5 written, per the just-in-time rule in `CLAUDE.md`. Whether to draft F3 early anyway — it carries Gate 1 — is one of the open questions.
+
+Time: <h>
+Cost: <$x>
+
 ## 2026-08-30
 
 Done:
