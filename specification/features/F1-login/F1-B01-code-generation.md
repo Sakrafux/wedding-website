@@ -20,7 +20,7 @@ As an admin, I want household codes generated from an unambiguous alphabet and n
 
 ## Instructions
 
-1. Alphabet: `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` — 32 characters, no `0`/`O`, no `1`/`I`/`L`. Declare it as a named constant with a comment explaining the exclusions, because the omissions look like typos to a future reader.
+1. Alphabet: `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` — 32 characters. Exactly four are missing: `0`, `O`, `1`, `I`. Both members of each confusable pair are dropped, never one of them, since keeping either still leaves the guest choosing between two glyphs. `L`, `U` and `V` stay — dropping them would take the alphabet below 32 and cost the modulo property in point 3. Declare it as a named constant with a comment explaining the exclusions, because the omissions look like typos to a future reader.
 2. Length 6. Generate with `crypto/rand`, never `math/rand`.
 3. Take bytes modulo 32 — with a 32-character alphabet this is exact, so there is no modulo bias. Note that in a comment: it is only true because 32 divides 256, and it would silently stop being true if the alphabet ever changed length.
 4. `NormalizeCode`: uppercase, strip whitespace (including non-breaking spaces, which is what a paste from a PDF produces) and dashes. Return the canonical stored form.
@@ -31,7 +31,7 @@ As an admin, I want household codes generated from an unambiguous alphabet and n
 ## Test plan
 
 - [ ] Unit: generated codes are 6 chars, all from the alphabet, over many iterations.
-- [ ] Unit: no generated code ever contains `0`, `O`, `1`, `I`, `L`.
+- [ ] Unit: no generated code ever contains `0`, `O`, `1` or `I`.
 - [ ] Unit: 10,000 generated codes show no obvious skew across the alphabet.
 - [ ] Unit: normalisation table — `abc-234`, `ABC 234`, ` abc234 `, `ABC–234` (en dash), `abc 234` all → `ABC234`.
 - [ ] Unit: `FormatCode(NormalizeCode(x)) == "ABC-234"` for each of the above.

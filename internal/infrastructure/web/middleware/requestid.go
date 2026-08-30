@@ -14,9 +14,10 @@ import (
 const RequestIDHeader = "X-Request-Id"
 
 // requestIDAlphabet is base32 without the glyphs that are misread when spoken or
-// hand-copied: no 0/O, 1/I/L, U/V. Identical in purpose to the login-code alphabet
-// (F1-B01), which defines its own — a shared constant would couple the printed
-// invite format to a logging detail, and either may change alone.
+// hand-copied: no 0, O, 1 or I. Identical in purpose to the login-code alphabet in
+// package domain, which defines its own copy on purpose — a shared constant would
+// couple the printed invite format to a logging detail, and either may change
+// alone.
 const requestIDAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
 // requestIDLength of 7 gives 32^7 ≈ 3.4e10 values. Collisions do not matter: the

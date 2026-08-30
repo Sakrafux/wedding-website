@@ -50,7 +50,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 
 ## F1 — Household login · M1 · P0
 
-- [ ] `F1-B01` Code generation and normalisation (domain)
+- [x] `F1-B01` Code generation and normalisation (domain)
 - [ ] `F1-B02` Session store: create, hash, validate, refresh, revoke, purge
 - [ ] `F1-B03` Session middleware and request auth context
 - [ ] `F1-B04` `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`

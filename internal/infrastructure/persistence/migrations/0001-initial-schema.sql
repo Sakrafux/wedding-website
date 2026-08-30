@@ -25,8 +25,9 @@ CREATE TABLE household (
     -- The printed login code, normalized (uppercase, no dashes). Stored in plaintext
     -- because a guest who loses their card must be told their code again; see
     -- 03-data-model.md for the accepted risk. UNIQUE is what makes a generation
-    -- collision impossible rather than merely unlikely — F1-B01 relies on the insert
-    -- failing, not on having checked first.
+    -- collision impossible rather than merely unlikely — code generation retries on
+    -- a failed insert (F5-B03) rather than asking first and racing between the
+    -- question and the answer.
     code                    TEXT    NOT NULL UNIQUE,
     -- Church → reception only. Not derived from household size: some members drive
     -- themselves. Feeds the shuttle capacity gap, nothing else.
