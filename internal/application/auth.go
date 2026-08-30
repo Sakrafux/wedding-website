@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Sakrafux/wedding-website/internal/domain"
@@ -22,10 +23,33 @@ type Auth struct {
 	sessions   *persistence.SessionStore
 	households *persistence.HouseholdStore
 	settings   *persistence.SettingStore
+	audit      *persistence.AuditStore
+
+	adminCredentials security.AdminCredentials
+
+	// logger records audit writes that failed. Its own logger rather than the
+	// request-scoped one from httplog, which would mean this package importing a
+	// web concern to log a database problem. The cost is that an audit failure is
+	// not correlated to a request id; it is also the only line here that logs.
+	logger *slog.Logger
 }
 
-func NewAuth(sessions *persistence.SessionStore, households *persistence.HouseholdStore, settings *persistence.SettingStore) *Auth {
-	return &Auth{sessions: sessions, households: households, settings: settings}
+func NewAuth(
+	sessions *persistence.SessionStore,
+	households *persistence.HouseholdStore,
+	settings *persistence.SettingStore,
+	audit *persistence.AuditStore,
+	adminCredentials security.AdminCredentials,
+	logger *slog.Logger,
+) *Auth {
+	return &Auth{
+		sessions:         sessions,
+		households:       households,
+		settings:         settings,
+		audit:            audit,
+		adminCredentials: adminCredentials,
+		logger:           logger,
+	}
 }
 
 // Bootstrap is everything the frontend needs on the first render: who it is
@@ -73,13 +97,13 @@ func (auth *Auth) LogInHousehold(ctx context.Context, submittedCode, userAgent, 
 	// looking at what they typed, unlike a timing gap between "no such code" and
 	// "that code exists" — which the single lookup below does not have.
 	if err := domain.ValidateCode(code); err != nil {
-		return HouseholdLogin{}, domain.NewError(domain.CodeUnknownLoginCode)
+		return HouseholdLogin{}, auth.rejectLogin(ctx, domain.AuditEntityHousehold, domain.CodeUnknownLoginCode, userAgent, ip)
 	}
 
 	household, err := auth.households.FindByCode(ctx, code)
 	if err != nil {
 		if errors.Is(err, persistence.ErrNotFound) {
-			return HouseholdLogin{}, domain.NewError(domain.CodeUnknownLoginCode)
+			return HouseholdLogin{}, auth.rejectLogin(ctx, domain.AuditEntityHousehold, domain.CodeUnknownLoginCode, userAgent, ip)
 		}
 		return HouseholdLogin{}, fmt.Errorf("looking up household: %w", err)
 	}
@@ -108,7 +132,76 @@ func (auth *Auth) LogInHousehold(ctx context.Context, submittedCode, userAgent, 
 	if err != nil {
 		return HouseholdLogin{}, err
 	}
+
+	auth.recordAudit(ctx, domain.NewHouseholdLoginEntry(household.ID, now, userAgent, ip))
+
 	return HouseholdLogin{Token: token, Session: session, Bootstrap: bootstrap}, nil
+}
+
+// AdminLogin is the outcome of a successful admin login. There is no bootstrap
+// body: the admin has no household, no members and no flags to be told about, and
+// the admin UI loads what it needs from its own endpoints.
+type AdminLogin struct {
+	Token   string
+	Session domain.Session
+}
+
+// LogInAdmin checks the configured credentials and issues a short-lived admin
+// session.
+//
+// Wrong username and wrong password are the same failure, reported the same way.
+// Distinguishing them would confirm a valid username to someone guessing, and the
+// one person who knows the real username does not need the hint.
+//
+// previousSessionID is revoked exactly as it is on a household login: one cookie,
+// one subject. An admin logging in on a device that still holds a household session
+// must not end up with both, or the subject type in the session table stops being
+// the whole answer to "who is this".
+func (auth *Auth) LogInAdmin(ctx context.Context, user, password, userAgent, ip, previousSessionID string) (AdminLogin, error) {
+	if !auth.adminCredentials.Matches(user, password) {
+		return AdminLogin{}, auth.rejectLogin(ctx, domain.AuditEntityAdmin, domain.CodeInvalidCredentials, userAgent, ip)
+	}
+
+	now := time.Now()
+
+	// Subject id 0: the admin has no row anywhere, and the store writes NULL for
+	// any session that is not a household's.
+	token, session, err := auth.issueSession(ctx, domain.SubjectTypeAdmin, 0, now, userAgent, ip)
+	if err != nil {
+		return AdminLogin{}, err
+	}
+
+	if previousSessionID != "" {
+		if err := auth.sessions.Delete(ctx, previousSessionID); err != nil {
+			return AdminLogin{}, err
+		}
+	}
+
+	auth.recordAudit(ctx, domain.NewAdminLoginEntry(now, userAgent, ip))
+
+	return AdminLogin{Token: token, Session: session}, nil
+}
+
+// rejectLogin records a failed attempt and returns the error to report.
+//
+// One place for both halves, so that a future login path cannot report a failure
+// without recording it — which is the failure mode that leaves the audit log
+// quietly incomplete precisely when it is being consulted.
+func (auth *Auth) rejectLogin(ctx context.Context, entity string, code domain.ErrorCode, userAgent, ip string) error {
+	auth.recordAudit(ctx, domain.NewLoginFailureEntry(entity, time.Now(), userAgent, ip))
+
+	return domain.NewError(code)
+}
+
+// recordAudit appends an entry, and logs rather than propagates a failure.
+//
+// A broken audit table must not stop a guest from logging in. The log is what makes
+// the silence noticeable: an audit write that failed and said nothing would leave a
+// gap that reads, later, exactly like an event that never happened.
+func (auth *Auth) recordAudit(ctx context.Context, entry domain.AuditEntry) {
+	if err := auth.audit.Write(ctx, entry); err != nil {
+		auth.logger.Error("audit write failed", "action", entry.Action, "entity", entry.Entity, "error", err)
+	}
 }
 
 // issueSession creates a session and returns the raw token for the cookie. The

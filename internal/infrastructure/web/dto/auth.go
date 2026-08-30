@@ -11,6 +11,21 @@ type LoginRequest struct {
 	Code string `json:"code"`
 }
 
+// AdminLoginRequest is the body of POST /api/auth/admin/login.
+type AdminLoginRequest struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+}
+
+// AdminLoginResponse confirms which kind of session was issued.
+//
+// Deliberately almost empty: the admin UI loads what it needs from the admin
+// endpoints, and echoing the username back would put a credential half into a
+// response body for no reason at all.
+type AdminLoginResponse struct {
+	SubjectType string `json:"subject_type"`
+}
+
 // BootstrapResponse is the body of both POST /api/auth/login and GET /api/me.
 //
 // One shape for both, because the frontend must not learn different things from

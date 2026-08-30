@@ -17,6 +17,7 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
 )
 
@@ -80,6 +81,14 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 	}()
 	logger.Info("database opened", "path", config.DatabasePath)
 
+	// Warned about loudly and once, because it fails open in the direction that is
+	// hardest to notice: with no trusted proxy the login limiter keys every request
+	// on the proxy's own address, so all guests share one budget and the per-IP
+	// limit stops being per-IP. Nothing later in the system complains.
+	if len(config.TrustedProxyCIDRs) == 0 {
+		logger.Warn("TRUSTED_PROXY_CIDRS is empty: X-Forwarded-For will be ignored and rate limiting keys on the direct peer")
+	}
+
 	// Migrations run before the listener starts: serving requests against a
 	// half-migrated schema is worse than a container that refuses to come up.
 	if err := persistence.Migrate(context.Background(), database.Write, logger.Logger); err != nil {
@@ -89,7 +98,14 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 	// Stores and use cases are wired here rather than inside NewRouter, because the
 	// session purge below needs the same store the request path uses.
 	sessions := persistence.NewSessionStore(database)
-	auth := application.NewAuth(sessions, persistence.NewHouseholdStore(database), persistence.NewSettingStore(database))
+	auth := application.NewAuth(
+		sessions,
+		persistence.NewHouseholdStore(database),
+		persistence.NewSettingStore(database),
+		persistence.NewAuditStore(database),
+		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
+		logger.Logger,
+	)
 
 	listenAddr := config.ListenAddr()
 

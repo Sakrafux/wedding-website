@@ -3,12 +3,14 @@ package integration
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/netip"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -21,6 +23,7 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
 )
@@ -36,6 +39,11 @@ type testApp struct {
 	URL string
 
 	Database *configuration.Database
+
+	// Router is the real mux. Exposed so a test can enumerate the registered
+	// routes rather than restate them — which is what makes the admin-gate suite
+	// fail when somebody adds a route and forgets the guard.
+	Router *chi.Mux
 
 	// DatabasePath is exposed so a test can assert on the file itself — that it is
 	// a real file rather than :memory:, and that it is gone after the run.
@@ -55,7 +63,16 @@ type testAppOption func(*testAppSpec)
 type testAppSpec struct {
 	registerExtraRoutes func(chi.Router)
 	cookieSecure        bool
+	trustedProxies      []netip.Prefix
 }
+
+// The admin credentials every test app is configured with. Constants rather than
+// fixture options: there is exactly one admin, and a test that wants to fail the
+// login can simply send something else.
+const (
+	testAdminUser     = "test-admin"
+	testAdminPassword = "test-admin-password"
+)
 
 // withExtraRoutes appends routes to the production router, for a test that needs a
 // handler no real endpoint provides — one that panics, say.
@@ -77,6 +94,17 @@ func withSecureCookies() testAppOption {
 	return func(spec *testAppSpec) { spec.cookieSecure = true }
 }
 
+// withTrustedProxies configures TRUSTED_PROXY_CIDRS. Empty by default, which is
+// what a test that does not care should get: with no trusted proxy the client
+// address is the direct peer, and X-Forwarded-For is ignored entirely.
+func withTrustedProxies(cidrs ...string) testAppOption {
+	return func(spec *testAppSpec) {
+		for _, cidr := range cidrs {
+			spec.trustedProxies = append(spec.trustedProxies, netip.MustParsePrefix(cidr))
+		}
+	}
+}
+
 // newTestApp starts an application on its own database.
 //
 // Every call gets a fresh temp directory, so tests share nothing and may run in
@@ -95,7 +123,13 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	// to each other and hide exactly the bugs these tests exist to catch.
 	databasePath := filepath.Join(t.TempDir(), "wedding-test.db")
 
-	config := configuration.Config{DatabasePath: databasePath, SessionCookieSecure: spec.cookieSecure}
+	config := configuration.Config{
+		DatabasePath:        databasePath,
+		SessionCookieSecure: spec.cookieSecure,
+		TrustedProxyCIDRs:   spec.trustedProxies,
+		AdminUser:           testAdminUser,
+		AdminPassword:       testAdminPassword,
+	}
 
 	database, err := configuration.OpenDatabase(config)
 	require.NoError(t, err)
@@ -109,7 +143,14 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	// Wired exactly as main wires it, so the tests exercise the real chain of
 	// handler, use case and store rather than a shorter one assembled for them.
 	sessions := persistence.NewSessionStore(database)
-	auth := application.NewAuth(sessions, persistence.NewHouseholdStore(database), persistence.NewSettingStore(database))
+	auth := application.NewAuth(
+		sessions,
+		persistence.NewHouseholdStore(database),
+		persistence.NewSettingStore(database),
+		persistence.NewAuditStore(database),
+		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
+		discardingLogger().Logger,
+	)
 
 	router := web.NewRouter(discardingLogger(), config, database, auth)
 	if spec.registerExtraRoutes != nil {
@@ -126,6 +167,7 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 		t:            t,
 		URL:          server.URL,
 		Database:     database,
+		Router:       router,
 		DatabasePath: databasePath,
 		Client:       &http.Client{Jar: jar},
 	}
@@ -176,6 +218,14 @@ func (app *testApp) post(path string) *testResponse {
 func (app *testApp) request(method, path string, payload any) *testResponse {
 	app.t.Helper()
 
+	return app.requestWith(method, path, payload, nil)
+}
+
+// requestWith adds request headers. Its one caller today is the rate-limit suite,
+// which needs several client addresses against one server.
+func (app *testApp) requestWith(method, path string, payload any, headers map[string]string) *testResponse {
+	app.t.Helper()
+
 	var body io.Reader
 	if payload != nil {
 		body = bytes.NewReader(encodePayload(app.t, payload))
@@ -185,6 +235,9 @@ func (app *testApp) request(method, path string, payload any) *testResponse {
 	require.NoError(app.t, err)
 	if payload != nil {
 		request.Header.Set("Content-Type", "application/json")
+	}
+	for name, value := range headers {
+		request.Header.Set(name, value)
 	}
 
 	response, err := app.Client.Do(request)
@@ -229,17 +282,34 @@ func (app *testApp) logIn(code string) *testResponse {
 	return app.postJSON("/api/auth/login", map[string]string{"code": code})
 }
 
+// logInFrom attempts a household login as if it came from clientIP.
+//
+// Only effective on an app configured with withTrustedProxies covering the
+// loopback address the test server is reached on — which is exactly the property
+// the trusted-proxy rule is there to enforce.
+func (app *testApp) logInFrom(code, clientIP string) *testResponse {
+	app.t.Helper()
+
+	return app.requestWith(http.MethodPost, "/api/auth/login",
+		map[string]string{"code": code}, map[string]string{"X-Forwarded-For": clientIP})
+}
+
+// logInAsAdmin redeems the configured admin credentials through the real endpoint.
+func (app *testApp) logInAsAdmin() *testResponse {
+	app.t.Helper()
+
+	return app.postJSON("/api/auth/admin/login", map[string]string{"user": testAdminUser, "password": testAdminPassword})
+}
+
 // sessionStore is the production store over the test database, for the tests that
 // are about the store itself and for seeding a session no endpoint can create yet.
 func (app *testApp) sessionStore() *persistence.SessionStore {
 	return persistence.NewSessionStore(app.Database)
 }
 
-// putSessionCookie places a raw token in the cookie jar by hand.
-//
-// Needed for the admin, whose login endpoint arrives with F1-B07: the session is
-// created through the store, and this is what makes the client present it the way
-// a browser would.
+// putSessionCookie places a raw token in the cookie jar by hand, for a test that
+// needs the client to present a cookie no endpoint would ever issue — a leftover
+// value, or a session seeded straight into the store with a chosen expiry.
 func (app *testApp) putSessionCookie(token string) {
 	app.t.Helper()
 
@@ -251,6 +321,31 @@ func (app *testApp) putSessionCookie(token string) {
 		Value: token,
 		Path:  "/",
 	}})
+}
+
+// auditRows returns the audit log as it stands, newest last. Tests assert against
+// the table itself, because the whole value of an append-only log is that it says
+// what happened rather than what an endpoint reports having happened.
+func (app *testApp) auditRows() []auditRow {
+	app.t.Helper()
+
+	var rows []auditRow
+	require.NoError(app.t, app.Database.Read.Select(&rows,
+		`SELECT at, actor_type, actor_id, entity, entity_id, action, before, after FROM audit_log ORDER BY id`))
+	return rows
+}
+
+// auditRow mirrors the audit_log columns. Kept in the test package rather than
+// imported, so a column rename shows up here as a failure.
+type auditRow struct {
+	At        string         `db:"at"`
+	ActorType string         `db:"actor_type"`
+	ActorID   sql.NullInt64  `db:"actor_id"`
+	Entity    string         `db:"entity"`
+	EntityID  int64          `db:"entity_id"`
+	Action    string         `db:"action"`
+	Before    sql.NullString `db:"before"`
+	After     sql.NullString `db:"after"`
 }
 
 // countSessions is how the revocation and purge tests assert on the table rather

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"net"
 	"net/http"
 	"time"
 
@@ -36,15 +35,8 @@ func (handler *Auth) LogIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A session already on the request is the one being replaced. Reading it from
-	// the context rather than from the cookie means only a *valid* session is
-	// deleted here — a stale cookie names nothing, and there is nothing to revoke.
-	var previousSessionID string
-	if session, isAuthenticated := middleware.SessionFromContext(r.Context()); isAuthenticated {
-		previousSessionID = session.ID
-	}
-
-	login, err := handler.auth.LogInHousehold(r.Context(), request.Code, r.UserAgent(), clientIP(r), previousSessionID)
+	login, err := handler.auth.LogInHousehold(r.Context(), request.Code, r.UserAgent(),
+		middleware.ClientIPFromContext(r.Context()), currentSessionID(r))
 	if err != nil {
 		httpio.RespondError(w, r, err)
 		return
@@ -53,6 +45,30 @@ func (handler *Auth) LogIn(w http.ResponseWriter, r *http.Request) {
 	middleware.WriteSessionCookie(w, login.Token, time.Until(login.Session.ExpiresAt), handler.cookieSecure)
 
 	httpio.WriteJSON(w, r, http.StatusOK, bootstrapResponse(login.Bootstrap))
+}
+
+// AdminLogIn checks the configured credentials and sets an admin session cookie.
+//
+// Same cookie name and attributes as a household session — the subject type in the
+// session table is what distinguishes them. Two cookie names would double the ways
+// to get this wrong, and would let a browser hold both at once.
+func (handler *Auth) AdminLogIn(w http.ResponseWriter, r *http.Request) {
+	var request dto.AdminLoginRequest
+	if err := httpio.DecodeJSON(w, r, &request); err != nil {
+		httpio.RespondError(w, r, err)
+		return
+	}
+
+	login, err := handler.auth.LogInAdmin(r.Context(), request.User, request.Password,
+		r.UserAgent(), middleware.ClientIPFromContext(r.Context()), currentSessionID(r))
+	if err != nil {
+		httpio.RespondError(w, r, err)
+		return
+	}
+
+	middleware.WriteSessionCookie(w, login.Token, time.Until(login.Session.ExpiresAt), handler.cookieSecure)
+
+	httpio.WriteJSON(w, r, http.StatusOK, dto.AdminLoginResponse{SubjectType: string(login.Session.SubjectType)})
 }
 
 // LogOut revokes the current session and clears the cookie.
@@ -97,6 +113,18 @@ func (handler *Auth) Me(w http.ResponseWriter, r *http.Request) {
 	httpio.WriteJSON(w, r, http.StatusOK, bootstrapResponse(bootstrap))
 }
 
+// currentSessionID is the session the request already carried, or empty.
+//
+// Read from the context rather than from the cookie, so only a *valid* session is
+// named: a stale cookie points at nothing, and there is nothing to revoke.
+func currentSessionID(r *http.Request) string {
+	session, isAuthenticated := middleware.SessionFromContext(r.Context())
+	if !isAuthenticated {
+		return ""
+	}
+	return session.ID
+}
+
 // bootstrapResponse maps the use case result onto the wire shape.
 //
 // Field by field on purpose: this is the boundary the privacy rule lives on, and
@@ -128,19 +156,4 @@ func bootstrapResponse(bootstrap application.Bootstrap) dto.BootstrapResponse {
 		},
 		RSVPDeadline: bootstrap.Settings.RSVPDeadline,
 	}
-}
-
-// clientIP is the address recorded on a session for the audit trail.
-//
-// F1-B05 replaces this with resolution against TRUSTED_PROXY_CIDRS. Until then it
-// is the direct peer, which behind the reverse proxy is the proxy itself — wrong
-// for the audit trail, and deliberately not guessed at from X-Forwarded-For, since
-// believing that header from an untrusted source is exactly the bug F1-B05 exists
-// to avoid.
-func clientIP(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
 }

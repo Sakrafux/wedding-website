@@ -18,6 +18,13 @@ const (
 	// three are one code, because the caller's next step is the same in each case
 	// and distinguishing them only tells an unauthenticated client what exists.
 	CodeUnauthenticated ErrorCode = "unauthenticated"
+	// CodeRateLimited is a login endpoint refusing a caller who has spent their
+	// failure budget. Always temporary: there is no lockout in this application.
+	CodeRateLimited ErrorCode = "rate_limited"
+	// CodeInvalidCredentials is a failed admin login. One code for a wrong
+	// username and a wrong password alike — the distinction would confirm a valid
+	// username to whoever is guessing.
+	CodeInvalidCredentials ErrorCode = "invalid_credentials"
 )
 
 // Error is a failure a caller is expected to handle, identified by its code.

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Sakrafux/wedding-website/internal/domain"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
 )
@@ -116,14 +115,15 @@ func TestAnonymousRequestIsRefusedByTheAdminGate(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, app.get("/api/admin/budget").Status)
 }
 
-// The admin passes the gate and then meets an ordinary 404, because no route is
-// mounted behind it yet (F1-B07). The distinction is the assertion: 404 proves the
-// gate let them through, where 401 would prove it did not.
+// The admin passes the gate and then meets an ordinary 404, because no feature
+// route is mounted behind it yet — F5, F6 and F8 add those. The distinction is the
+// assertion: 404 proves the gate let them through, where 401 would prove it did
+// not.
 func TestAdminSessionPassesTheAdminGate(t *testing.T) {
 	t.Parallel()
 
 	app := newTestApp(t)
-	app.putSessionCookie(app.createAdminSession(t))
+	require.Equal(t, http.StatusOK, app.logInAsAdmin().Status)
 
 	response := app.get("/api/admin/budget")
 
@@ -137,7 +137,7 @@ func TestAdminSessionIsRefusedByTheHouseholdGate(t *testing.T) {
 	t.Parallel()
 
 	app := newTestApp(t)
-	app.putSessionCookie(app.createAdminSession(t))
+	require.Equal(t, http.StatusOK, app.logInAsAdmin().Status)
 
 	response := app.get("/api/me")
 
@@ -215,7 +215,7 @@ func TestAdminSessionDoesNotRoll(t *testing.T) {
 	t.Parallel()
 
 	app := newTestApp(t)
-	app.putSessionCookie(app.createAdminSession(t))
+	require.Equal(t, http.StatusOK, app.logInAsAdmin().Status)
 
 	app.ageSession(t, "-7 hours")
 	aged := app.sessionExpiry(t)
@@ -223,17 +223,4 @@ func TestAdminSessionDoesNotRoll(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, app.get("/api/admin/budget").Status)
 
 	assert.Equal(t, aged, app.sessionExpiry(t), "an admin session that rolled would never end")
-}
-
-// createAdminSession writes an admin session straight through the store and
-// returns its token. The admin login endpoint is F1-B07; until it exists this is
-// how a test gets an admin cookie.
-func (app *testApp) createAdminSession(t *testing.T) string {
-	t.Helper()
-
-	token := security.NewSessionToken()
-	session := domain.NewSession(security.HashSessionToken(token), domain.SubjectTypeAdmin, 0, time.Now(), "Mozilla/5.0 (Test)", "10.0.0.1")
-	require.NoError(t, app.sessionStore().Create(context.Background(), session))
-
-	return token
 }

@@ -110,6 +110,20 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// the rate limit for nothing.
 		"Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte — Groß- und Kleinschreibung ist egal.",
 	},
+	domain.CodeInvalidCredentials: {
+		http.StatusUnauthorized,
+		// Says nothing about which half was wrong, and nothing about whether the
+		// username exists. The only person who sees this is the one who set the
+		// password, so there is no usability cost to being terse.
+		"Anmeldung fehlgeschlagen.",
+	},
+	domain.CodeRateLimited: {
+		http.StatusTooManyRequests,
+		// Ends with a way out that does not involve the website. The person most
+		// likely to see this sentence is a guest who has mistyped the same code ten
+		// times, not an attacker, and they need to know the evening is not lost.
+		"Zu viele Versuche. Bitte warte ein paar Minuten und probier es dann noch einmal. Wenn es weiter nicht klappt, ruf uns einfach an.",
+	},
 	domain.CodeUnauthenticated: {
 		http.StatusUnauthorized,
 		// One sentence for "no session", "expired session" and "wrong kind of

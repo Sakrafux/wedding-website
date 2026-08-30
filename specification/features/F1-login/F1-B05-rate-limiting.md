@@ -44,7 +44,8 @@ Error: `rate_limited` → 429 → "Zu viele Versuche. Bitte warte ein paar Minut
 - [ ] Integration: successful logins are not counted.
 - [ ] Integration: a different IP is unaffected by the first IP's failures.
 - [ ] Integration: admin endpoint limits at 5.
-- [ ] Integration: the window expires — after it, requests succeed again. Proves it is a limit and not a lockout.
+- [ ] Unit: the window expires — after it, requests succeed again. Proves it is a limit and not a lockout. Covered at unit level rather than through HTTP: the limiter takes `now` as a parameter, so the assertion is exact and instant, where an integration test would have to sleep out a real hour or take an injected clock through the router purely to be tested.
+- [ ] Unit: retrying while over budget does not push the window forward — otherwise a client hammering the endpoint is locked out indefinitely, which is the outcome this story forbids, arrived at by accident.
 
 ## Done when
 

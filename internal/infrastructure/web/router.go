@@ -24,12 +24,23 @@ func NewRouter(logger *httplog.Logger, config configuration.Config, database *co
 	authHandler := handler.NewAuth(auth, config.SessionCookieSecure)
 	sessions := middleware.NewSessionGate(auth, config.SessionCookieSecure)
 
+	// One limiter per endpoint, not one shared: a guest fumbling their code must
+	// never consume the admin's budget, or the other way round.
+	guestLoginLimiter := middleware.NewGuestLoginLimiter()
+	adminLoginLimiter := middleware.NewAdminLoginLimiter()
+
 	router := chi.NewRouter()
 	registerMiddleware(router, logger)
 
 	router.Get("/robots.txt", system.Robots)
 
 	router.Route("/api", func(api chi.Router) {
+		// Before anything that wants to know who is calling: the client address is
+		// the rate limiter's key and the audit trail's record, and resolving it in
+		// one place is what keeps the trusted-proxy rule from being bypassed by a
+		// handler that reads the header itself.
+		api.Use(middleware.ClientIP(config.TrustedProxyCIDRs))
+
 		// Resolving the session for the whole tree, including the probes and the
 		// login endpoints, is what lets an unauthenticated request be a normal
 		// request rather than a special case. Nothing here refuses anybody; the
@@ -39,7 +50,8 @@ func NewRouter(logger *httplog.Logger, config configuration.Config, database *co
 		api.Get("/health", system.Health)
 		api.Get("/ready", system.Ready)
 
-		api.Post("/auth/login", authHandler.LogIn)
+		api.With(guestLoginLimiter.LimitLoginFailures).Post("/auth/login", authHandler.LogIn)
+		api.With(adminLoginLimiter.LimitLoginFailures).Post("/auth/admin/login", authHandler.AdminLogIn)
 		api.Post("/auth/logout", authHandler.LogOut)
 
 		// Everything a logged-in household may reach.
@@ -54,8 +66,7 @@ func NewRouter(logger *httplog.Logger, config configuration.Config, database *co
 		// application rests, budget above all, and a subtree that is created at the
 		// same moment as the first endpoint under it is a subtree somebody can
 		// create without one. Anything under /api/admin is therefore refused to a
-		// household session already. F1-B07 adds the login that can pass it, and
-		// F5, F6 and F8 the routes behind it.
+		// household session already; F5, F6 and F8 add the routes behind it.
 		api.Route("/admin", func(admin chi.Router) {
 			admin.Use(middleware.RequireAdmin)
 
@@ -91,7 +102,8 @@ func registerMiddleware(router *chi.Mux, logger *httplog.Logger) {
 
 	// chi's middleware.RealIP is deliberately not used: it believes X-Forwarded-For
 	// from any source, which would make the login rate limit trivially bypassable.
-	// F1-B05 resolves the client IP against TRUSTED_PROXY_CIDRS instead.
+	// middleware.ClientIP, mounted on the /api tree, resolves the address against
+	// TRUSTED_PROXY_CIDRS instead.
 
 	// httplog.Handler, not httplog.RequestLogger: the latter is a chain that bundles
 	// chi's own RequestID and Recoverer, and both are replaced here — chi's RequestID
