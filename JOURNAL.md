@@ -4,6 +4,32 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-08-30
+
+Done:
+
+- `F1-B01` — `internal/domain/code.go`: `GenerateCode` (crypto/rand, unbiased because 32 divides 256), `NormalizeCode` (case, whitespace incl. NBSP, dashes incl. en/em), `ValidateCode` (shape only, `ErrMalformedCode`), `FormatCode` (`ABC234` → `ABC-234`). Unit tests cover the normalisation table, the rejected shapes and the generator's distribution.
+- `F1-B02` — `domain/session.go` holds the lifetime and refresh policy (household 365d, admin 8h, roll at most daily); `security/session.go` the 32-byte base64url token and its SHA-256 id; `persistence/session.go` the store, plus `PurgeExpiredPeriodically` wired into `main` on the signal context.
+- `persistence/timestamp.go` and `persistence/errors.go`: the one RFC3339-UTC storage format, and `ErrNotFound` so callers need not import `database/sql`.
+- `F1-B03` — `middleware/session.go`: `SessionGate.Resolve` on the whole `/api` tree, `RequireHousehold`, `RequireAdmin`, typed context accessors, and the session cookie's issue/clear helpers in one place.
+- `F1-B04` — `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me` over `application/auth.go`; `dto.BootstrapResponse` shared by login and `/api/me`. `httpio.DecodeJSON` added: JSON content type required, unknown fields rejected, 1 MiB cap.
+- `persistence/household.go` and `persistence/setting.go`: the read side F1 needs; `F5-B01`/`F5-B02` widen the first into the full CRUD.
+- Integration tests: session store round trip, hashing, expiry, purge; the gates against real routes; login normalisation variants, cookie attributes both ways on `SESSION_COOKIE_SECURE`, `last_login_at`, re-login replacing a session, logout idempotence, and `assertNoLeak` on both bootstrap bodies.
+- Harness: `newTestApp` takes options (`withExtraRoutes`, `withSecureCookies`), plus `logIn`, `putSessionCookie`, `countSessions`, `setCookie`. Fixed `withGuests` numbering, and the default display name no longer embeds the household's own code.
+- Verified end to end against the built binary: `abc-234` logs in, `/api/me` matches, `/api/admin/*` is 401 for a household session, a form-encoded login is 400, logout is 204 and revokes.
+
+Decisions:
+
+- The login-code alphabet excludes exactly `0`, `O`, `1`, `I` — not `L`/`U`/`V`, which `F1-B01` and `requestid.go` both claimed. Both corrected; reasoning in `domain/code.go`.
+- Malformed codes are a plain sentinel (`domain.ErrMalformedCode`), not an `ErrorCode`: no response may ever distinguish them from unknown ones. Login collapses both to `unknown_login_code`, which replaces the story's `invalid_code`.
+- `/api/admin` is mounted with `RequireAdmin` and a catch-all before it has any routes. chi builds a sub-router's middleware chain only once a route exists, so an empty guarded subtree silently answers 404 to everyone — the catch-all is what makes the gate real. `F1-B07` adds the login behind it.
+- `Content-Type: application/json` is enforced in `httpio.DecodeJSON` rather than in a router middleware — the CSRF control from `06-privacy-security` lands where handlers already parse, and leaves bodyless `POST`s alone.
+- Client IP for the audit trail is the direct peer until `F1-B05`; `X-Forwarded-For` is deliberately not read yet.
+- Session `last_seen_at` means "when the session was last extended", accurate to a day. The cost of not writing on every read.
+
+Time: <h>
+Cost: <$x>
+
 ## 2026-08-29
 
 Done:

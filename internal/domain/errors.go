@@ -10,8 +10,14 @@ type ErrorCode string
 // be read against the message table in httpio to see every failure a guest can
 // meet, and a duplicate code is visible instead of hiding in another file.
 const (
-	// CodeUnknownLoginCode is a login attempt with a code no household has.
+	// CodeUnknownLoginCode is a login attempt with a code no household has. A
+	// malformed code reports the same value on purpose; see ErrMalformedCode.
 	CodeUnknownLoginCode ErrorCode = "unknown_login_code"
+	// CodeUnauthenticated is a request to a guarded route with no usable session:
+	// no cookie, an expired one, or — on an admin route — a household session. All
+	// three are one code, because the caller's next step is the same in each case
+	// and distinguishing them only tells an unauthenticated client what exists.
+	CodeUnauthenticated ErrorCode = "unauthenticated"
 )
 
 // Error is a failure a caller is expected to handle, identified by its code.

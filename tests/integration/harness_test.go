@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -17,9 +18,11 @@ import (
 	"github.com/go-chi/httplog/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
+	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
 )
 
 // testApp is a running instance of the whole application: a migrated database on a
@@ -39,9 +42,39 @@ type testApp struct {
 	DatabasePath string
 
 	// Client carries a cookie jar, so a request made after a login keeps the
-	// session cookie exactly as a browser would. F1-B04 adds the login helper that
-	// makes use of it; until then nothing sets a cookie.
+	// session cookie exactly as a browser would — which is what makes logIn below
+	// enough to authenticate every later request in a test.
 	Client *http.Client
+}
+
+// testAppOption tweaks how the application under test is built. Defaults are what
+// a test that does not care should get, so an option is only ever present in the
+// tests that are actually about that setting.
+type testAppOption func(*testAppSpec)
+
+type testAppSpec struct {
+	registerExtraRoutes func(chi.Router)
+	cookieSecure        bool
+}
+
+// withExtraRoutes appends routes to the production router, for a test that needs a
+// handler no real endpoint provides — one that panics, say.
+//
+// The routes are added to the real mux, so they run behind the real middleware
+// chain; that is the point, since the middleware is what is under test.
+func withExtraRoutes(register func(chi.Router)) testAppOption {
+	return func(spec *testAppSpec) { spec.registerExtraRoutes = register }
+}
+
+// withSecureCookies turns SESSION_COOKIE_SECURE on, as production has it.
+//
+// Off by default, and that default is not laziness: the test server speaks plain
+// HTTP, and Go's cookie jar — correctly — refuses to send a Secure cookie back
+// over http. A secure-by-default harness would therefore make every authenticated
+// test fail for a reason that has nothing to do with what it is testing. The one
+// test that cares asserts on the Set-Cookie header instead of on the round trip.
+func withSecureCookies() testAppOption {
+	return func(spec *testAppSpec) { spec.cookieSecure = true }
 }
 
 // newTestApp starts an application on its own database.
@@ -49,26 +82,20 @@ type testApp struct {
 // Every call gets a fresh temp directory, so tests share nothing and may run in
 // parallel. Cleanup is registered here rather than returned: a teardown a test can
 // forget is a teardown a test will forget.
-func newTestApp(t *testing.T) *testApp {
+func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	t.Helper()
 
-	return newTestAppWithRoutes(t, nil)
-}
-
-// newTestAppWithRoutes appends extra routes to the production router, for a test
-// that needs a handler no real endpoint provides yet — one that panics, say.
-//
-// The routes are added to the real mux, so they run behind the real middleware
-// chain; that is the point, since the middleware is what is under test.
-func newTestAppWithRoutes(t *testing.T, register func(chi.Router)) *testApp {
-	t.Helper()
+	var spec testAppSpec
+	for _, option := range options {
+		option(&spec)
+	}
 
 	// A real file rather than :memory: — an in-memory database gives every
 	// connection its own private schema, which would make the two pools invisible
 	// to each other and hide exactly the bugs these tests exist to catch.
 	databasePath := filepath.Join(t.TempDir(), "wedding-test.db")
 
-	config := configuration.Config{DatabasePath: databasePath}
+	config := configuration.Config{DatabasePath: databasePath, SessionCookieSecure: spec.cookieSecure}
 
 	database, err := configuration.OpenDatabase(config)
 	require.NoError(t, err)
@@ -79,9 +106,14 @@ func newTestAppWithRoutes(t *testing.T, register func(chi.Router)) *testApp {
 	// Same order as main: migrate before anything serves a request.
 	require.NoError(t, persistence.Migrate(context.Background(), database.Write, discardingLogger().Logger))
 
-	router := web.NewRouter(discardingLogger(), database)
-	if register != nil {
-		register(router)
+	// Wired exactly as main wires it, so the tests exercise the real chain of
+	// handler, use case and store rather than a shorter one assembled for them.
+	sessions := persistence.NewSessionStore(database)
+	auth := application.NewAuth(sessions, persistence.NewHouseholdStore(database), persistence.NewSettingStore(database))
+
+	router := web.NewRouter(discardingLogger(), config, database, auth)
+	if spec.registerExtraRoutes != nil {
+		spec.registerExtraRoutes(router)
 	}
 
 	server := httptest.NewServer(router)
@@ -134,6 +166,13 @@ func (app *testApp) postJSON(path string, payload any) *testResponse {
 	return app.request(http.MethodPost, path, payload)
 }
 
+// post sends a POST with no body, for the endpoints that take none.
+func (app *testApp) post(path string) *testResponse {
+	app.t.Helper()
+
+	return app.request(http.MethodPost, path, nil)
+}
+
 func (app *testApp) request(method, path string, payload any) *testResponse {
 	app.t.Helper()
 
@@ -177,6 +216,64 @@ func encodePayload(t *testing.T, payload any) []byte {
 		require.NoError(t, err)
 		return encoded
 	}
+}
+
+// logIn redeems a household code through the real endpoint, leaving the session
+// cookie in the jar so every later request in the test is authenticated.
+//
+// It goes through HTTP rather than creating a session in the database, so that a
+// test about anything downstream of login still fails if login itself breaks.
+func (app *testApp) logIn(code string) *testResponse {
+	app.t.Helper()
+
+	return app.postJSON("/api/auth/login", map[string]string{"code": code})
+}
+
+// sessionStore is the production store over the test database, for the tests that
+// are about the store itself and for seeding a session no endpoint can create yet.
+func (app *testApp) sessionStore() *persistence.SessionStore {
+	return persistence.NewSessionStore(app.Database)
+}
+
+// putSessionCookie places a raw token in the cookie jar by hand.
+//
+// Needed for the admin, whose login endpoint arrives with F1-B07: the session is
+// created through the store, and this is what makes the client present it the way
+// a browser would.
+func (app *testApp) putSessionCookie(token string) {
+	app.t.Helper()
+
+	serverURL, err := url.Parse(app.URL)
+	require.NoError(app.t, err)
+
+	app.Client.Jar.SetCookies(serverURL, []*http.Cookie{{
+		Name:  middleware.SessionCookieName,
+		Value: token,
+		Path:  "/",
+	}})
+}
+
+// countSessions is how the revocation and purge tests assert on the table rather
+// than on the API's opinion of it.
+func (app *testApp) countSessions() int {
+	app.t.Helper()
+
+	var count int
+	require.NoError(app.t, app.Database.Read.Get(&count, `SELECT COUNT(*) FROM session`))
+	return count
+}
+
+// setCookie returns the cookie the response set, or nil. Used to assert on the
+// attributes — HttpOnly, SameSite, Max-Age — that the jar itself does not expose.
+func (response *testResponse) setCookie(name string) *http.Cookie {
+	response.t.Helper()
+
+	for _, cookie := range (&http.Response{Header: response.Header}).Cookies() {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	return nil
 }
 
 // decodeJSON unmarshals the body into target, failing the test if it is not JSON.

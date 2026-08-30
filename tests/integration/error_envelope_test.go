@@ -42,11 +42,11 @@ func TestSuccessResponseCarriesRequestIDHeader(t *testing.T) {
 // TestPanicReturnsCleanEnvelope is the guard that matters most here: a panic must
 // reach the guest as a German sentence, never as a stack trace or a Go type name.
 func TestPanicReturnsCleanEnvelope(t *testing.T) {
-	app := newTestAppWithRoutes(t, func(router chi.Router) {
+	app := newTestApp(t, withExtraRoutes(func(router chi.Router) {
 		router.Get("/api/panic", func(http.ResponseWriter, *http.Request) {
 			panic("deliberate test panic")
 		})
-	})
+	}))
 
 	response := app.get("/api/panic")
 	body := response.errorEnvelope()
@@ -61,12 +61,15 @@ func TestPanicReturnsCleanEnvelope(t *testing.T) {
 }
 
 func TestValidationErrorReturnsFieldsKeyedByInputName(t *testing.T) {
-	app := newTestAppWithRoutes(t, func(router chi.Router) {
-		// Stands in for a real endpoint until F1-B04 has one that validates a body.
+	app := newTestApp(t, withExtraRoutes(func(router chi.Router) {
+		// A stand-in endpoint rather than a real one: the endpoints that exist today
+		// report a body they cannot use without naming a field (see DecodeJSON), and
+		// the first per-field rules arrive with F3-B03. What is under test here is
+		// the envelope, not any particular rule.
 		router.Get("/api/invalid", func(w http.ResponseWriter, r *http.Request) {
 			httpio.RespondError(w, r, httpio.ValidationError{Fields: map[string]string{"code": "Der Code ist zu kurz."}})
 		})
-	})
+	}))
 
 	response := app.get("/api/invalid")
 	body := response.errorEnvelope()

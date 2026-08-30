@@ -1,9 +1,12 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog/v2"
 
+	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/handler"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
@@ -16,8 +19,10 @@ import (
 // Later stories widen the parameter list with handler dependencies. main and the
 // integration tests both construct the router through this one function, so the
 // tests exercise the real middleware chain rather than an approximation of it.
-func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mux {
+func NewRouter(logger *httplog.Logger, config configuration.Config, database *configuration.Database, auth *application.Auth) *chi.Mux {
 	system := handler.NewSystem(database)
+	authHandler := handler.NewAuth(auth, config.SessionCookieSecure)
+	sessions := middleware.NewSessionGate(auth, config.SessionCookieSecure)
 
 	router := chi.NewRouter()
 	registerMiddleware(router, logger)
@@ -25,8 +30,43 @@ func NewRouter(logger *httplog.Logger, database *configuration.Database) *chi.Mu
 	router.Get("/robots.txt", system.Robots)
 
 	router.Route("/api", func(api chi.Router) {
+		// Resolving the session for the whole tree, including the probes and the
+		// login endpoints, is what lets an unauthenticated request be a normal
+		// request rather than a special case. Nothing here refuses anybody; the
+		// Require gates below do that.
+		api.Use(sessions.Resolve)
+
 		api.Get("/health", system.Health)
 		api.Get("/ready", system.Ready)
+
+		api.Post("/auth/login", authHandler.LogIn)
+		api.Post("/auth/logout", authHandler.LogOut)
+
+		// Everything a logged-in household may reach.
+		api.Group(func(household chi.Router) {
+			household.Use(middleware.RequireHousehold)
+
+			household.Get("/me", authHandler.Me)
+		})
+
+		// The admin subtree is mounted with its gate before it has a single route,
+		// and deliberately so: this is where every admin-only rule in the
+		// application rests, budget above all, and a subtree that is created at the
+		// same moment as the first endpoint under it is a subtree somebody can
+		// create without one. Anything under /api/admin is therefore refused to a
+		// household session already. F1-B07 adds the login that can pass it, and
+		// F5, F6 and F8 the routes behind it.
+		api.Route("/admin", func(admin chi.Router) {
+			admin.Use(middleware.RequireAdmin)
+
+			// The catch-all is what makes the gate above real, and removing it
+			// would be silent: chi builds a sub-router's middleware chain only when
+			// a route is registered on it, and a sub-router with none serves its
+			// NotFound handler directly — middleware and all — so an empty guarded
+			// subtree answers 404 to everyone instead of 401 to strangers. Keep at
+			// least one route here.
+			admin.Handle("/*", http.HandlerFunc(system.APINotFound))
+		})
 
 		api.NotFound(system.APINotFound)
 		api.MethodNotAllowed(system.APIMethodNotAllowed)

@@ -66,9 +66,11 @@ func withAdminNote(note string) householdOption {
 // how many people are in a household rather than who they are.
 func withGuests(count int) householdOption {
 	return func(spec *householdSpec) {
-		for index := range count {
+		for range count {
 			spec.guests = append(spec.guests, guestSpec{
-				firstName: fmt.Sprintf("Gast%d", len(spec.guests)+index+1),
+				// Numbered from the current length, so repeated options and the
+				// named builders below keep producing Gast1, Gast2, Gast3.
+				firstName: fmt.Sprintf("Gast%d", len(spec.guests)+1),
 				lastName:  "Muster",
 				kind:      "adult",
 			})
@@ -100,7 +102,12 @@ func seedHousehold(t *testing.T, pool *sqlx.DB, options ...householdOption) seed
 		option(&spec)
 	}
 	if spec.displayName == "" {
-		spec.displayName = "Familie " + spec.code
+		// Deliberately not derived from the code. A default that embedded the
+		// login code in a *displayed* field would make every household's secret
+		// appear legitimately in guest-facing JSON, and assertNoLeak — which
+		// searches the body for the code as a value — would fire on every test
+		// that did not override it.
+		spec.displayName = fmt.Sprintf("Familie Muster %d", testHouseholdCounter.Add(1))
 	}
 
 	result, err := pool.Exec(
@@ -134,12 +141,16 @@ func seedHousehold(t *testing.T, pool *sqlx.DB, options ...householdOption) seed
 	return household
 }
 
-// codeAlphabet is the printed alphabet from F1-B01: no ambiguous glyphs. Fixtures use
-// it so a seeded code is shaped like a real one — a test that accidentally depends on
-// the shape then fails here rather than in production.
+// codeAlphabet duplicates the login-code alphabet from package domain, which keeps
+// its own copy unexported. Fixtures use it so a seeded code is shaped like a real
+// one — a test that accidentally depends on the shape then fails here rather than
+// in production.
 const codeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
-var testCodeCounter atomic.Int64
+var (
+	testCodeCounter      atomic.Int64
+	testHouseholdCounter atomic.Int64
+)
 
 // nextTestCode returns a unique six-character code. Counted rather than random: the
 // column is UNIQUE, and a random generator would make a rare collision into a rare

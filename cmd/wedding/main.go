@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/httplog/v2"
 
+	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
@@ -85,11 +86,16 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 		return err
 	}
 
+	// Stores and use cases are wired here rather than inside NewRouter, because the
+	// session purge below needs the same store the request path uses.
+	sessions := persistence.NewSessionStore(database)
+	auth := application.NewAuth(sessions, persistence.NewHouseholdStore(database), persistence.NewSettingStore(database))
+
 	listenAddr := config.ListenAddr()
 
 	server := &http.Server{
 		Addr:              listenAddr,
-		Handler:           web.NewRouter(logger, database),
+		Handler:           web.NewRouter(logger, config, database, auth),
 		ReadHeaderTimeout: readHeaderTimeout,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
@@ -99,6 +105,11 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 	// SIGTERM is what `docker stop` sends; SIGINT is Ctrl-C in development.
 	signalCtx, stopListeningForSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopListeningForSignals()
+
+	// Sweeps once now and daily after that, and stops when the signal context is
+	// cancelled. Not waited on at shutdown: a purge has no state worth finishing,
+	// and expiry is enforced on every lookup regardless of whether it ran.
+	go sessions.PurgeExpiredPeriodically(signalCtx, logger.Logger)
 
 	listenFailed := make(chan error, 1)
 	go func() {

@@ -22,7 +22,7 @@ func TestRespondErrorMapsDomainCodeToStatusAndGermanMessage(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, response.Code)
 	assert.Equal(t, string(domain.CodeUnknownLoginCode), body.Error.Code)
-	assert.Contains(t, body.Error.Message, "Einladung")
+	assert.Contains(t, body.Error.Message, "Karte")
 }
 
 // TestRespondErrorFindsWrappedDomainError covers the application layer adding

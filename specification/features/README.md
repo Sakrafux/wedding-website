@@ -52,8 +52,8 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 
 - [x] `F1-B01` Code generation and normalisation (domain)
 - [x] `F1-B02` Session store: create, hash, validate, refresh, revoke, purge
-- [ ] `F1-B03` Session middleware and request auth context
-- [ ] `F1-B04` `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`
+- [x] `F1-B03` Session middleware and request auth context
+- [x] `F1-B04` `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/me`
 - [ ] `F1-B05` Rate limiting and trusted-proxy client IP resolution
 - [ ] `F1-B06` Audit logging for `login` and `login_failed`
 - [ ] `F1-F01` Login screen and `CodeInput`

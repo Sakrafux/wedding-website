@@ -44,9 +44,10 @@ var (
 // request body so the frontend can render each message next to its own control.
 //
 // It is a web type, not a domain one: the field names it carries are the shape of a
-// request body, which the domain neither knows nor should. Mapping validator/v10
-// failures into it arrives with the first endpoint that validates a body (F1-B04);
-// the rules themselves belong to each endpoint's own story.
+// request body, which the domain neither knows nor should. DecodeJSON already
+// reports a body that is not usable JSON through it; mapping validator/v10's
+// per-field failures into it arrives with the first endpoint whose fields have
+// rules of their own (F3-B03).
 type ValidationError struct {
 	Fields map[string]string
 }
@@ -103,9 +104,18 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 	domain.CodeUnknownLoginCode: {
 		http.StatusUnauthorized,
 		// Phrased as a typo rather than a rejection: the overwhelmingly likely cause
-		// is a mistyped character, not someone without an invitation. F1-B04 reviews
-		// this wording against the login screen.
-		"Diesen Code kennen wir nicht. Schau bitte nochmal auf deine Einladung.",
+		// is a mistyped character, not someone without an invitation. The sentence
+		// about capitalisation is there because it is the first thing a guest
+		// retries, and retrying the same code in capitals wastes an attempt against
+		// the rate limit for nothing.
+		"Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte — Groß- und Kleinschreibung ist egal.",
+	},
+	domain.CodeUnauthenticated: {
+		http.StatusUnauthorized,
+		// One sentence for "no session", "expired session" and "wrong kind of
+		// session" alike. The frontend knows which login screen to send the caller
+		// to from the route; the message only has to say that they need one.
+		"Bitte melde dich an.",
 	},
 }
 

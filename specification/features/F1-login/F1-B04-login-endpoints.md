@@ -56,7 +56,7 @@ Response `200`:
 
 Errors:
 
-- `invalid_code` → 401 → "Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte — Groß- und Kleinschreibung ist egal."
+- `unknown_login_code` → 401 → "Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte — Groß- und Kleinschreibung ist egal."
 - `rate_limited` → 429 → (see `F1-B05`)
 
 ```http
@@ -75,7 +75,7 @@ Response `204`.
 
 - [ ] Integration: valid code → 200, cookie set with `HttpOnly`, `SameSite=Lax`, correct `Max-Age`.
 - [ ] Integration: lowercase, spaced and dashed variants of the same code all succeed.
-- [ ] Integration: unknown code → 401 `invalid_code`.
+- [ ] Integration: unknown code → 401 `unknown_login_code`.
 - [ ] Integration: malformed code → the same 401, not a distinguishable error.
 - [ ] Integration: `last_login_at` is updated.
 - [ ] Integration: `/api/me` anonymous → 401; with cookie → the household.

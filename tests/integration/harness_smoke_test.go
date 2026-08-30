@@ -75,7 +75,8 @@ func TestSeedHouseholdDefaultsAreUsable(t *testing.T) {
 
 	assert.Len(t, first.Code, 6)
 	assert.NotEqual(t, first.Code, second.Code, "generated codes must not collide")
-	assert.Equal(t, "Familie "+first.Code, first.DisplayName)
+	assert.NotContains(t, first.DisplayName, first.Code, "the default name must not carry the household's secret")
+	assert.NotEqual(t, first.DisplayName, second.DisplayName)
 	assert.Empty(t, first.Guests)
 }
 
