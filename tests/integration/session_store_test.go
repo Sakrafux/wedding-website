@@ -205,7 +205,7 @@ func TestSessionStorePurgePeriodicallySweepsOnceAtStartupAndStops(t *testing.T) 
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
-		store.PurgeExpiredPeriodically(ctx, discardingLogger().Logger)
+		store.PurgeExpiredPeriodically(ctx, testLogger(app.Logs).Logger)
 	}()
 
 	// The sweep runs immediately rather than waiting out the first tick, so a

@@ -23,6 +23,7 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 	system := handler.NewSystem(dependencies.Database)
 	authHandler := handler.NewAuth(dependencies.Auth, config.SessionCookieSecure)
 	adminHouseholds := handler.NewAdminHouseholds(dependencies.Households)
+	adminExport := handler.NewAdminExport(dependencies.Exports)
 	sessions := middleware.NewSessionGate(dependencies.Auth, config.SessionCookieSecure)
 
 	// One limiter per endpoint, not one shared: a guest fumbling their code must
@@ -82,6 +83,11 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 				households.Post("/{id}/code", adminHouseholds.ReissueCode)
 				households.Post("/{id}/guests", adminHouseholds.AddGuest)
 			})
+
+			// The two largest disclosures in the product, both behind the admin gate
+			// like everything else here.
+			admin.Get("/export/codes.csv", adminExport.Codes)
+			admin.Get("/export/guests.csv", adminExport.Guests)
 
 			// Guests are addressed by their own id rather than under their household:
 			// the admin owns every guest, and a household id in the path would be a

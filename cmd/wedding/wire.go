@@ -51,11 +51,13 @@ func wire(config configuration.Config, database *configuration.Database, logger 
 	)
 
 	households := application.NewHouseholds(householdStore, guestStore, sessions, auditStore, logger)
+	exports := application.NewExports(householdStore, persistence.NewExportStore(database))
 
 	return web.Dependencies{
 		Config:     config,
 		Database:   database,
 		Auth:       auth,
 		Households: households,
+		Exports:    exports,
 	}, sessions
 }

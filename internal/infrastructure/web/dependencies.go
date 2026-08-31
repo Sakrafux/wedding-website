@@ -27,4 +27,7 @@ type Dependencies struct {
 	// Households is the admin guest list: households, their members, and login code
 	// reissue. Admin-only, and mounted only under /api/admin.
 	Households *application.Households
+	// Exports serves the two admin CSV downloads. Admin-only: codes.csv is the whole
+	// login-code list.
+	Exports *application.Exports
 }

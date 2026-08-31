@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -48,6 +49,12 @@ type testApp struct {
 	// DatabasePath is exposed so a test can assert on the file itself — that it is
 	// a real file rather than :memory:, and that it is gone after the run.
 	DatabasePath string
+
+	// Logs is everything the application logged during the test — request lines and
+	// the application's own entries alike. Assertable, because a couple of decisions
+	// in this app are recorded *only* as a log line: a CSV export, for instance, is
+	// deliberately not an audit row.
+	Logs *testLog
 
 	// Client carries a cookie jar, so a request made after a login keeps the
 	// session cookie exactly as a browser would — which is what makes logIn below
@@ -132,6 +139,9 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	// to each other and hide exactly the bugs these tests exist to catch.
 	databasePath := filepath.Join(t.TempDir(), "wedding-test.db")
 
+	logs := &testLog{}
+	logger := testLogger(logs)
+
 	config := configuration.Config{
 		DatabasePath:        databasePath,
 		SessionCookieSecure: spec.cookieSecure,
@@ -147,7 +157,7 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	})
 
 	// Same order as main: migrate before anything serves a request.
-	require.NoError(t, persistence.Migrate(context.Background(), database.Write, discardingLogger().Logger))
+	require.NoError(t, persistence.Migrate(context.Background(), database.Write, logger.Logger))
 
 	// Wired exactly as main wires it, so the tests exercise the real chain of
 	// handler, use case and store rather than a shorter one assembled for them.
@@ -165,14 +175,15 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 		persistence.NewSettingStore(database),
 		auditStore,
 		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
-		discardingLogger().Logger,
+		logger.Logger,
 	)
 
-	router := web.NewRouter(discardingLogger(), web.Dependencies{
+	router := web.NewRouter(logger, web.Dependencies{
 		Config:     config,
 		Database:   database,
 		Auth:       auth,
-		Households: application.NewHouseholds(householdStore, guestStore, sessions, auditStore, discardingLogger().Logger),
+		Households: application.NewHouseholds(householdStore, guestStore, sessions, auditStore, logger.Logger),
+		Exports:    application.NewExports(householdStore, persistence.NewExportStore(database)),
 	})
 	if spec.registerExtraRoutes != nil {
 		spec.registerExtraRoutes(router)
@@ -190,6 +201,7 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 		Database:     database,
 		Router:       router,
 		DatabasePath: databasePath,
+		Logs:         logs,
 		Client:       &http.Client{Jar: jar},
 	}
 }
@@ -222,14 +234,40 @@ func (app *testApp) countHouseholdSessions(householdID int64) int {
 	return count
 }
 
-// discardingLogger keeps a passing run readable. A failing assertion says more than a
-// request log line would, and the panic-recovery test would otherwise print a stack
-// trace that reads like a failure.
-func discardingLogger() *httplog.Logger {
+// testLogger sends the application's logs to a buffer instead of to stdout.
+//
+// A buffer rather than io.Discard so a test can assert on a line the application
+// records nowhere else, and rather than the test's own output because a passing run
+// should be readable — the panic-recovery test would otherwise print a stack trace
+// that looks exactly like a failure.
+func testLogger(out io.Writer) *httplog.Logger {
 	return &httplog.Logger{
-		Logger:  slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError})),
+		Logger:  slog.New(slog.NewJSONHandler(out, &slog.HandlerOptions{Level: slog.LevelInfo})),
 		Options: httplog.Options{Concise: true},
 	}
+}
+
+// testLog is a buffer safe to read while the server is still writing to it: the
+// handlers run in the httptest server's own goroutines, so an unguarded bytes.Buffer
+// would be a data race the race detector finds sooner or later.
+type testLog struct {
+	mutex   sync.Mutex
+	entries bytes.Buffer
+}
+
+func (log *testLog) Write(entry []byte) (int, error) {
+	log.mutex.Lock()
+	defer log.mutex.Unlock()
+
+	return log.entries.Write(entry)
+}
+
+// String is everything logged so far, as one blob of JSON lines.
+func (log *testLog) String() string {
+	log.mutex.Lock()
+	defer log.mutex.Unlock()
+
+	return log.entries.String()
 }
 
 // testResponse is a response already read into memory, so a test can assert on the
