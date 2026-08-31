@@ -61,6 +61,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F1-F03` App shell, route guards, TanStack Query setup
 - [x] `F1-B07` Admin login and `/api/admin` gate
 - [x] `F1-F04` Admin login screen and admin shell
+- [x] `F1-B08` `cmd/seed`: local development households
 
 ## F5 — Admin: households & guests · M1 · P0
 

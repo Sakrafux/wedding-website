@@ -164,6 +164,21 @@ For local runs set `DB_PATH=./local/wedding.db`, `PHOTO_DIR=./local/photos` and 
 
 Nothing loads `.env` automatically — there is no dotenv dependency, on purpose, since the deployed container gets its environment from Compose. Export it yourself as above, or pass the variables inline.
 
+### Test data
+
+A fresh database has no households, so the login screen has nothing to let you in with. `make seed` inserts some:
+
+```bash
+make seed                                # one household, two members
+make seed SEED_ARGS='-households 5 -guests 3'
+```
+
+It prints each household's id, name and login code in display form (`ABC-234`) — type one into the login screen. Codes are freshly generated, never fixed, so what you test with is shaped exactly like what gets printed on an invite.
+
+**`cmd/seed` is a development tool only.** It writes obviously synthetic households to whatever `DB_PATH` points at and prints login codes — the app's only secret — in plain text. It is not in the image: the `Dockerfile` builds `./cmd/wedding` alone, and that absence is the whole guard. Real households come from the admin UI (`F5-B01`, `F5-B03`).
+
+To start over, delete the file: `rm local/wedding.db*`. The command has no reset flag on purpose — one that read `DB_PATH` from the environment would be one shell mistake away from the deployed volume.
+
 The frontend runs as a second server, not as part of the Go build:
 
 ```bash

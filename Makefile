@@ -16,7 +16,7 @@ TAG ?= latest
 # paths. Plain `gofmt -l .` would walk web/node_modules.
 GO_DIRS = $(shell go list -f '{{.Dir}}' ./...)
 
-.PHONY: all build build-web run preview test test-web check fmt lint clean docker-build docker-push
+.PHONY: all build build-web run seed preview test test-web check fmt lint clean docker-build docker-push
 
 all: build
 
@@ -35,6 +35,15 @@ build-web:
 # /api here.
 run:
 	set -a; . ./.env; set +a; go run ./cmd/wedding
+
+## seed — insert local development households and print their login codes.
+# DEVELOPMENT ONLY. It writes to whatever DB_PATH in .env points at and prints the
+# household codes in plain text; see cmd/seed for why there is no guard beyond the
+# binary being absent from the image.
+#   make seed
+#   make seed SEED_ARGS='-households 5 -guests 3'
+seed:
+	set -a; . ./.env; set +a; go run ./cmd/seed $(SEED_ARGS)
 
 ## preview — execute the built binary
 preview:

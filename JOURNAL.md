@@ -4,6 +4,25 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-08-31
+
+Done:
+
+- `F1-B08` — new story: `cmd/seed`, the local dev tool that inserts households with real generated codes. Spec in `specification/features/F1-login/F1-B08-dev-seed.md`.
+- `cmd/seed/main.go`: `-households` (default 1) and `-guests` (default 2), loads the app's own environment, migrates a fresh file, one transaction per household, retries a colliding code against the UNIQUE index, prints id/name/`FormatCode` code to stdout behind a `DEVELOPMENT ONLY` banner.
+- `cmd/seed/main_test.go`: counts, append-on-second-run, non-positive counts rejected before the file is created, members are seeded adults with NULL `attending`, fresh-database migration, and printed codes resolving through `HouseholdStore.FindByCode`.
+- `make seed` (with `SEED_ARGS`) and a "Test data" subsection in `README.md`'s local development chapter.
+- Verified end to end: `make seed` then a login with the printed `2BC-96G` against the running binary returns the bootstrap body.
+
+Decisions:
+
+- Codes are generated, never fixed — reasons in the story's Scope.
+- No reset flag and no runtime production guard; the guard is that the `Dockerfile` builds `./cmd/wedding` alone. See `cmd/seed`'s package comment.
+- The insert SQL stays in `cmd/seed` until `F5-B01` gives `HouseholdStore` a create method; forward reference noted at `insertHousehold`.
+
+Time: <h>
+Cost: Opus 5 — $<x>
+
 ## 2026-08-30
 
 Done:
