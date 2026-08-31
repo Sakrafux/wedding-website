@@ -137,6 +137,21 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// that and does not pretend the answer was saved.
 		"Die Liste der Personen hat sich geändert. Bitte lade die Seite neu.",
 	},
+	domain.CodePlusOneNotAllowed: {
+		http.StatusConflict,
+		// Reads as an offer rather than a refusal, because the answer is yes: we will
+		// enter anybody, we just want to hear the headcount. Says nothing about which
+		// rule was hit — the guest's next step is the same either way, and naming the
+		// rule would describe a household this caller cannot see. 409 rather than 403:
+		// nothing is wrong with who they are.
+		"Weitere Personen tragen wir gern für euch ein — ruf uns bitte kurz an: +43 650 9408100.",
+	},
+	domain.CodeCannotRemoveMember: {
+		http.StatusConflict,
+		// Names the actual remedy: the guest's goal is to say somebody is not coming,
+		// and the form can do exactly that.
+		"Diese Person haben wir eingetragen. Wenn sie nicht kommt, wähl bitte «Kommt nicht» aus.",
+	},
 	domain.CodeUnauthenticated: {
 		http.StatusUnauthorized,
 		// One sentence for "no session", "expired session" and "wrong kind of

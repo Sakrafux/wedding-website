@@ -56,6 +56,60 @@ func (handler *RSVP) Save(w http.ResponseWriter, r *http.Request) {
 	handler.save(w, r, householdID, rsvp.GuestOptions())
 }
 
+// AddMember answers POST /api/rsvp/members with the created companion.
+//
+// The household comes from the session and the name from the body; nothing else is
+// read, because nothing else is an input (F4-B02).
+func (handler *RSVP) AddMember(w http.ResponseWriter, r *http.Request) {
+	householdID, isHousehold := middleware.HouseholdFromContext(r.Context())
+	if !isHousehold {
+		httpio.RespondError(w, r, domain.NewError(domain.CodeUnauthenticated))
+		return
+	}
+
+	var request dto.RSVPAddMemberRequest
+	if err := decodeAndValidate(w, r, &request); err != nil {
+		respondRSVPError(w, r, err)
+		return
+	}
+
+	addition, err := handler.rsvp.AddPlusOne(r.Context(), householdID, request.Name, rsvp.GuestOptions())
+	if err != nil {
+		respondRSVPError(w, r, err)
+		return
+	}
+
+	httpio.WriteJSON(w, r, http.StatusCreated, dto.RSVPAddMemberResponse{
+		Member:        rsvpMember(addition.Member),
+		CanAddPlusOne: addition.CanAddPlusOne,
+	})
+}
+
+// RemoveMember answers DELETE /api/rsvp/members/{id} with 204.
+//
+// No body: the frontend already knows which row it removed, and refetching the whole
+// form to learn it is gone is a round trip for nothing (F4-B03).
+func (handler *RSVP) RemoveMember(w http.ResponseWriter, r *http.Request) {
+	householdID, isHousehold := middleware.HouseholdFromContext(r.Context())
+	if !isHousehold {
+		httpio.RespondError(w, r, domain.NewError(domain.CodeUnauthenticated))
+		return
+	}
+
+	memberID, err := pathID(r)
+	if err != nil {
+		httpio.RespondError(w, r, err)
+		return
+	}
+
+	if err := handler.rsvp.RemoveMember(r.Context(), householdID, memberID, rsvp.GuestOptions()); err != nil {
+		respondRSVPError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // AdminShow answers GET /api/admin/households/{id}/rsvp.
 //
 // The same body as the guest route, byte for byte, so that the shared form component
@@ -190,19 +244,7 @@ func submissionFrom(request dto.RSVPSaveRequest) rsvp.Submission {
 func rsvpResponse(answer rsvp.Answer) dto.RSVPResponse {
 	members := make([]dto.RSVPMember, 0, len(answer.Members))
 	for _, member := range answer.Members {
-		members = append(members, dto.RSVPMember{
-			ID:            member.ID,
-			Name:          member.Name,
-			Kind:          string(member.Kind),
-			Age:           member.Age,
-			Origin:        string(member.Origin),
-			Attending:     enumString(member.Attending),
-			MealChoice:    enumString(member.MealChoice),
-			Portion:       string(member.Portion),
-			MidnightSnack: member.MidnightSnack,
-			SeatingNeed:   string(member.SeatingNeed),
-			DietaryNote:   member.DietaryNote,
-		})
+		members = append(members, rsvpMember(member))
 	}
 
 	return dto.RSVPResponse{
@@ -216,9 +258,29 @@ func rsvpResponse(answer rsvp.Answer) dto.RSVPResponse {
 			RSVPSubmittedAt:       answer.Household.RSVPSubmittedAt,
 			RSVPUpdatedAt:         answer.Household.RSVPUpdatedAt,
 		},
-		Members:  members,
-		Deadline: answer.Deadline,
-		Editable: answer.Editable,
+		Members:       members,
+		Deadline:      answer.Deadline,
+		Editable:      answer.Editable,
+		CanAddPlusOne: answer.CanAddPlusOne,
+	}
+}
+
+// rsvpMember maps one guest onto the wire shape. Shared by the form response and by
+// the addition response, so a plus-one is rendered as the card the form already knows
+// how to draw rather than as a second, nearly identical shape.
+func rsvpMember(member domain.Guest) dto.RSVPMember {
+	return dto.RSVPMember{
+		ID:            member.ID,
+		Name:          member.Name,
+		Kind:          string(member.Kind),
+		Age:           member.Age,
+		Origin:        string(member.Origin),
+		Attending:     enumString(member.Attending),
+		MealChoice:    enumString(member.MealChoice),
+		Portion:       string(member.Portion),
+		MidnightSnack: member.MidnightSnack,
+		SeatingNeed:   string(member.SeatingNeed),
+		DietaryNote:   member.DietaryNote,
 	}
 }
 

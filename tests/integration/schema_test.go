@@ -196,6 +196,9 @@ func TestHouseholdLogisticsDefaultsAreEmpty(t *testing.T) {
 	assert.False(t, household.HasStroller)
 }
 
+// The settings table is asserted whole rather than key by key, so a row that arrives
+// or leaves is visible here: default_addition_limit is absent because migration 0003
+// deletes it (F4-B01), and an exact map is what makes that removal a test.
 func TestAppSettingsAreSeeded(t *testing.T) {
 	database := newTestApp(t).Database
 
@@ -211,11 +214,10 @@ func TestAppSettingsAreSeeded(t *testing.T) {
 	require.NoError(t, rows.Err())
 
 	assert.Equal(t, map[string]string{
-		"rsvp_deadline":          "2027-05-17T21:59:59Z",
-		"default_addition_limit": "2",
-		"seating_published":      "false",
-		"uploads_open":           "false",
-		"gallery_visible":        "false",
+		"rsvp_deadline":     "2027-05-17T21:59:59Z",
+		"seating_published": "false",
+		"uploads_open":      "false",
+		"gallery_visible":   "false",
 	}, settings)
 }
 

@@ -234,22 +234,11 @@ func (store *HouseholdStore) withGeneratedCode(write func(code string) error) er
 // household last saw them. Sorting by name would reshuffle the form under people
 // as they fill it in.
 func (store *HouseholdStore) ListMembers(ctx context.Context, householdID int64) ([]domain.Guest, error) {
-	selectMembers := `
-		SELECT ` + guestColumns + `
-		FROM guest
-		WHERE household_id = ? AND deleted_at IS NULL
-		ORDER BY id`
-
 	var rows []guestRow
-	if err := store.database.Read.SelectContext(ctx, &rows, selectMembers, householdID); err != nil {
+	if err := store.database.Read.SelectContext(ctx, &rows, selectLivingMembers, householdID); err != nil {
 		return nil, fmt.Errorf("reading household members: %w", err)
 	}
-
-	members := make([]domain.Guest, 0, len(rows))
-	for _, row := range rows {
-		members = append(members, row.toDomain())
-	}
-	return members, nil
+	return guestsFrom(rows), nil
 }
 
 // TouchLastLogin records that this household redeemed its code.

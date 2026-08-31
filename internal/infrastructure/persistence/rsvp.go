@@ -48,7 +48,7 @@ func (store *RSVPStore) SaveAnswer(ctx context.Context, household domain.Househo
 		    seating_need = ?, dietary_note = ?, age = ?
 		WHERE id = ? AND household_id = ? AND deleted_at IS NULL`
 
-	return store.inTransaction(ctx, func(transaction *sqlx.Tx) error {
+	return inTransaction(ctx, store.database, func(transaction *sqlx.Tx) error {
 		result, err := transaction.ExecContext(ctx, updateHousehold,
 			household.TransportSeatsNeeded, household.TransportSeatsOffered, household.HasStroller,
 			household.RSVPNote, nullableTimestamp(household.RSVPSubmittedAt), nullableTimestamp(household.RSVPUpdatedAt),
@@ -75,36 +75,6 @@ func (store *RSVPStore) SaveAnswer(ctx context.Context, household domain.Househo
 		}
 		return nil
 	})
-}
-
-// inTransaction runs work inside one write transaction, committing on success and
-// rolling back on any failure.
-//
-// On the write pool, which is capped at a single connection: concurrent saves queue in
-// Go rather than racing in SQLite. The DSN opens transactions as IMMEDIATE, so the
-// write lock is taken up front and a busy timeout can actually resolve it — see
-// configuration.writeDataSourceName.
-//
-// A rollback failure is joined onto the original error rather than replacing it: what
-// went wrong is the interesting half, and losing it to "rollback failed" is how a
-// broken save becomes unexplainable.
-func (store *RSVPStore) inTransaction(ctx context.Context, work func(transaction *sqlx.Tx) error) error {
-	transaction, err := store.database.Write.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
-	}
-
-	if err := work(transaction); err != nil {
-		if rollbackErr := transaction.Rollback(); rollbackErr != nil {
-			return fmt.Errorf("%w (rollback failed: %w)", err, rollbackErr)
-		}
-		return err
-	}
-
-	if err := transaction.Commit(); err != nil {
-		return fmt.Errorf("committing transaction: %w", err)
-	}
-	return nil
 }
 
 // nullableEnum renders a nullable enum pointer for storage: SQL NULL for nil.

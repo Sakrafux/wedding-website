@@ -9,14 +9,12 @@ type Settings struct {
 	// RSVPDeadline is the moment guest editing closes. Stored rather than
 	// hardcoded because it is the one date that has ever plausibly moved.
 	RSVPDeadline time.Time
-	// DefaultAdditionLimit is dead configuration and is removed by F4-B01, together
-	// with its app_setting row, in migration 0003. What a household may add stopped
-	// being a number on 2026-08-31: one adult, and only if the household is a single
-	// person. Nothing reads this.
-	DefaultAdditionLimit int
-	SeatingPublished     bool
-	GalleryVisible       bool
-	UploadsOpen          bool
+	// What a household may add is deliberately not configured here. It stopped being
+	// a number on 2026-08-31 — one adult, and only for a household of one — and a
+	// structural rule has nothing to configure; see domain.CanHouseholdAddPlusOne.
+	SeatingPublished bool
+	GalleryVisible   bool
+	UploadsOpen      bool
 }
 
 // RSVPOpen reports whether households may still edit their answers.

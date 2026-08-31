@@ -67,6 +67,12 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 			// a household must be able to see what they answered (F3-F05).
 			household.Get("/rsvp", rsvpHandler.Show)
 			household.Put("/rsvp", rsvpHandler.Save)
+
+			// The plus-one path (F4). Both writes, so both are behind the deadline;
+			// there is deliberately no admin twin — every other addition is
+			// POST /api/admin/households/{id}/guests, which has no rule at all.
+			household.Post("/rsvp/members", rsvpHandler.AddMember)
+			household.Delete("/rsvp/members/{id}", rsvpHandler.RemoveMember)
 		})
 
 		// The admin subtree is mounted with its gate before it has a single route,

@@ -14,11 +14,10 @@ import (
 // 0001's seed insert, and a typo in one of them would read as "setting missing"
 // at startup rather than as a typo.
 const (
-	settingRSVPDeadline         = "rsvp_deadline"
-	settingDefaultAdditionLimit = "default_addition_limit"
-	settingSeatingPublished     = "seating_published"
-	settingGalleryVisible       = "gallery_visible"
-	settingUploadsOpen          = "uploads_open"
+	settingRSVPDeadline     = "rsvp_deadline"
+	settingSeatingPublished = "seating_published"
+	settingGalleryVisible   = "gallery_visible"
+	settingUploadsOpen      = "uploads_open"
 )
 
 // SettingStore reads the app_setting table.
@@ -36,7 +35,7 @@ func NewSettingStore(database *configuration.Database) *SettingStore {
 
 // Load reads every setting and parses it into domain.Settings.
 //
-// One query for the whole table rather than a lookup per key: there are five rows,
+// One query for the whole table rather than a lookup per key: there are four rows,
 // and reading them together is what lets a missing key be reported as a missing
 // key instead of as a zero value that silently opens a gate.
 //
@@ -76,9 +75,6 @@ func parseSettings(values map[string]string) (domain.Settings, error) {
 	if settings.RSVPDeadline, err = settingTimestamp(values, settingRSVPDeadline); err != nil {
 		return domain.Settings{}, err
 	}
-	if settings.DefaultAdditionLimit, err = settingInt(values, settingDefaultAdditionLimit); err != nil {
-		return domain.Settings{}, err
-	}
 	if settings.SeatingPublished, err = settingBool(values, settingSeatingPublished); err != nil {
 		return domain.Settings{}, err
 	}
@@ -110,19 +106,6 @@ func settingBool(values map[string]string, key string) (bool, error) {
 	parsed, err := strconv.ParseBool(raw)
 	if err != nil {
 		return false, fmt.Errorf("app_setting %q is not a boolean: %q", key, raw)
-	}
-	return parsed, nil
-}
-
-func settingInt(values map[string]string, key string) (int, error) {
-	raw, err := settingValue(values, key)
-	if err != nil {
-		return 0, err
-	}
-
-	parsed, err := strconv.Atoi(raw)
-	if err != nil {
-		return 0, fmt.Errorf("app_setting %q is not a number: %q", key, raw)
 	}
 	return parsed, nil
 }

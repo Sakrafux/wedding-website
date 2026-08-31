@@ -17,6 +17,9 @@ type rsvpBody struct {
 	Members   []rsvpMember  `json:"members"`
 	Deadline  string        `json:"deadline"`
 	Editable  bool          `json:"editable"`
+	// F4-B02: the one flag the form branches on to decide between the add trigger
+	// and the "ruf uns an" sentence.
+	CanAddPlusOne bool `json:"can_add_plus_one"`
 }
 
 type rsvpHousehold struct {

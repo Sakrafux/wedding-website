@@ -27,6 +27,35 @@ type RSVPResponse struct {
 	// statement about whether the caller may write: F3-B04 is what refuses a write,
 	// and the admin page renders inputs regardless (F3-F06).
 	Editable bool `json:"editable"`
+	// CanAddPlusOne is whether this household may add a companion, computed from the
+	// same domain function POST /api/rsvp/members enforces with (F4-B02). A boolean
+	// and not the member counts behind it: the form has one decision to make — the
+	// add trigger or the "ruf uns an" sentence — and handing it the counts would let
+	// it re-derive the rule and disagree with the server in front of a guest.
+	CanAddPlusOne bool `json:"can_add_plus_one"`
+}
+
+// RSVPAddMemberRequest is the body of POST /api/rsvp/members.
+//
+// One field, deliberately. A plus-one is an adult by construction (F4-B01), and the
+// answers come through the RSVP form like everybody else's — a body carrying `kind`
+// would be a body somebody eventually sets to `child`, and `origin` is what the admin
+// delta view rests on rather than an input. A body that carries either is refused as
+// validation_failed, because DecodeJSON rejects unknown fields for the whole API.
+type RSVPAddMemberRequest struct {
+	// The same bound as AdminGuestCreateRequest.Name: one rule set, two callers.
+	Name string `json:"name" validate:"required,max=160"`
+}
+
+// RSVPAddMemberResponse is the created companion plus the recomputed right to add.
+//
+// Both, so the form appends the card and re-renders the trigger from this one response
+// instead of refetching the answer to learn what it already knows. After a successful
+// addition the flag is always false — the household now has two members — but it is
+// sent rather than assumed, because the rule lives on the server.
+type RSVPAddMemberResponse struct {
+	Member        RSVPMember `json:"member"`
+	CanAddPlusOne bool       `json:"can_add_plus_one"`
 }
 
 // RSVPHousehold is the household's own half of the answer.

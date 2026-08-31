@@ -31,6 +31,14 @@ const (
 	// phone and still has the form open on a laptop — and refusing is the only
 	// answer that cannot silently write the older set back.
 	CodeMemberSetMismatch ErrorCode = "member_set_mismatch"
+	// CodePlusOneNotAllowed is a household trying to add somebody it may not add:
+	// it has more than one living member, or it has already used its plus-one. One
+	// code for every reason — see ErrPlusOneNotAllowed.
+	CodePlusOneNotAllowed ErrorCode = "plus_one_not_allowed"
+	// CodeCannotRemoveMember is a household trying to remove a member we seeded.
+	// There is no path for it: they answer `attending = 'no'` instead, and the
+	// German message names that remedy.
+	CodeCannotRemoveMember ErrorCode = "cannot_remove_member"
 	// CodeInvalidCredentials is a failed admin login. One code for a wrong
 	// username and a wrong password alike — the distinction would confirm a valid
 	// username to whoever is guessing.

@@ -188,7 +188,7 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 		Auth:       authUseCase,
 		Households: households.New(householdStore, guestStore, sessions, auditStore, logger.Logger),
 		Exports:    exports.New(householdStore, persistence.NewExportStore(database)),
-		RSVP:       rsvp.New(householdStore, persistence.NewRSVPStore(database), settingStore, auditStore, logger.Logger),
+		RSVP:       rsvp.New(householdStore, guestStore, persistence.NewRSVPStore(database), settingStore, auditStore, logger.Logger),
 	})
 	if spec.registerExtraRoutes != nil {
 		spec.registerExtraRoutes(router)

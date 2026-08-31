@@ -12,9 +12,9 @@ const (
 	GuestKindChild GuestKind = "child"
 )
 
-// GuestOrigin records who put this person on the list. Households may add
-// plus-ones and children themselves (F4), and the admin views show what was added
-// separately from what we seeded.
+// GuestOrigin records who put this person on the list. A household may add exactly one
+// adult plus-one to itself (F4-B01) and nobody else — everything further goes through
+// us — and the admin views show what was added separately from what we seeded.
 type GuestOrigin string
 
 const (

@@ -56,7 +56,7 @@ func wire(config configuration.Config, database *configuration.Database, logger 
 
 	householdsUseCase := households.New(householdStore, guestStore, sessions, auditStore, logger)
 	exportsUseCase := exports.New(householdStore, persistence.NewExportStore(database))
-	rsvpUseCase := rsvp.New(householdStore, persistence.NewRSVPStore(database), settingStore, auditStore, logger)
+	rsvpUseCase := rsvp.New(householdStore, guestStore, persistence.NewRSVPStore(database), settingStore, auditStore, logger)
 
 	return web.Dependencies{
 		Config:     config,

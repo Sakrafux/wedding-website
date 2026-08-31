@@ -23,6 +23,7 @@ import (
 // UseCase reads and writes RSVP answers.
 type UseCase struct {
 	households *persistence.HouseholdStore
+	guests     *persistence.GuestStore
 	answers    *persistence.RSVPStore
 	settings   *persistence.SettingStore
 	audit      *persistence.AuditStore
@@ -34,12 +35,20 @@ type UseCase struct {
 
 func New(
 	households *persistence.HouseholdStore,
+	guests *persistence.GuestStore,
 	answers *persistence.RSVPStore,
 	settings *persistence.SettingStore,
 	audit *persistence.AuditStore,
 	logger *slog.Logger,
 ) *UseCase {
-	return &UseCase{households: households, answers: answers, settings: settings, audit: audit, logger: logger}
+	return &UseCase{
+		households: households,
+		guests:     guests,
+		answers:    answers,
+		settings:   settings,
+		audit:      audit,
+		logger:     logger,
+	}
 }
 
 // Answer is a household's whole RSVP state: the household's own fields, its living
@@ -55,6 +64,11 @@ type Answer struct {
 	// the deadline, and not a statement about whether *this* caller may write. The
 	// admin writes after it turns false (F3-B06).
 	Editable bool
+	// CanAddPlusOne is domain.CanHouseholdAddPlusOne over these members. A boolean
+	// rather than the counts behind it, because the form has exactly one decision to
+	// make and two integers would invite it to re-derive the rule and get it wrong
+	// (F4-B02).
+	CanAddPlusOne bool
 }
 
 // Submission is a household's complete answer as a caller sends it.
@@ -236,6 +250,124 @@ func (useCase *UseCase) Save(ctx context.Context, householdID int64, submission 
 	return useCase.answerFor(ctx, saved, now)
 }
 
+// Addition is a plus-one as it was stored, with the household's right to add another
+// recomputed — which after a successful addition is always false.
+//
+// Returned together so the form can append the card and re-render the trigger from one
+// response, instead of refetching the whole answer to learn what it already knows.
+type Addition struct {
+	Member        domain.Guest
+	CanAddPlusOne bool
+}
+
+// AddPlusOne adds one adult companion to a household of one and returns them.
+//
+// The rule is domain.CanHouseholdAddPlusOne and it is checked inside the write
+// transaction, not here: see persistence.CreateIfHouseholdAllows. The deadline is
+// checked first, because a closed form is closed regardless of who is being added.
+//
+// Nothing but the name is taken. Kind, origin and every answer field come from
+// domain.NewPlusOne, so no request body can produce a child or a pre-answered guest.
+func (useCase *UseCase) AddPlusOne(ctx context.Context, householdID int64, name string, options SaveOptions) (Addition, error) {
+	now := time.Now()
+
+	if err := useCase.EnsureWritable(ctx, options); err != nil {
+		return Addition{}, err
+	}
+
+	// Checked before the insert so a household id that does not exist answers 404
+	// rather than surfacing a foreign-key error as a 500.
+	if _, err := useCase.households.FindByID(ctx, householdID); err != nil {
+		return Addition{}, application.TranslateNotFound(err)
+	}
+
+	created, err := useCase.guests.CreateIfHouseholdAllows(
+		ctx, domain.NewPlusOne(householdID, name), domain.CanHouseholdAddPlusOne)
+	if err != nil {
+		return Addition{}, err
+	}
+
+	// The row that later answers "where did this person come from", which is the
+	// question the admin delta view is built on.
+	useCase.recordAudit(ctx, useCase.creationEntry(options.ActorType, householdID, created, now))
+
+	members, err := useCase.households.ListMembers(ctx, householdID)
+	if err != nil {
+		return Addition{}, err
+	}
+
+	return Addition{Member: created, CanAddPlusOne: domain.CanHouseholdAddPlusOne(members) == nil}, nil
+}
+
+// RemoveMember soft-deletes a member a household added itself.
+//
+// A guest belonging to another household is reported as not found rather than as
+// forbidden: a household must not be able to learn which ids exist by reading the
+// difference between the two answers.
+func (useCase *UseCase) RemoveMember(ctx context.Context, householdID, guestID int64, options SaveOptions) error {
+	now := time.Now()
+
+	if err := useCase.EnsureWritable(ctx, options); err != nil {
+		return err
+	}
+
+	member, err := useCase.guests.FindByID(ctx, guestID)
+	if err != nil {
+		return application.TranslateNotFound(err)
+	}
+	if member.HouseholdID != householdID {
+		return application.ErrNotFound
+	}
+
+	if err := domain.CanHouseholdRemove(member); err != nil {
+		return err
+	}
+
+	if err := useCase.guests.SoftDelete(ctx, guestID, now); err != nil {
+		return application.TranslateNotFound(err)
+	}
+
+	// The row that explains a headcount that went down. The name is in the payload
+	// because the guest row itself stays and the audit trail is read by household.
+	useCase.recordAudit(ctx, useCase.deletionEntry(options.ActorType, householdID, member, now))
+
+	return nil
+}
+
+// creationEntry and deletionEntry build the audit entry for whoever acted, the same
+// way changeEntry does for a save: an admin entry carries no actor id, because there
+// is no admin row to point at.
+func (useCase *UseCase) creationEntry(
+	actorType domain.ActorType, householdID int64, member domain.Guest, at time.Time,
+) domain.AuditEntry {
+	changes := domain.CreatedChanges(map[string]any{
+		"household_id": member.HouseholdID,
+		"name":         member.Name,
+		"kind":         string(member.Kind),
+		"origin":       string(member.Origin),
+	})
+	if actorType == domain.ActorTypeAdmin {
+		return domain.NewAdminChangeEntry(domain.AuditEntityGuest, member.ID, domain.AuditActionCreate, at, changes)
+	}
+	return domain.NewHouseholdChangeEntry(
+		householdID, domain.AuditEntityGuest, member.ID, domain.AuditActionCreate, at, changes)
+}
+
+func (useCase *UseCase) deletionEntry(
+	actorType domain.ActorType, householdID int64, member domain.Guest, at time.Time,
+) domain.AuditEntry {
+	changes := domain.DeletedChanges(map[string]any{
+		"household_id": member.HouseholdID,
+		"name":         member.Name,
+		"origin":       string(member.Origin),
+	})
+	if actorType == domain.ActorTypeAdmin {
+		return domain.NewAdminChangeEntry(domain.AuditEntityGuest, member.ID, domain.AuditActionDelete, at, changes)
+	}
+	return domain.NewHouseholdChangeEntry(
+		householdID, domain.AuditEntityGuest, member.ID, domain.AuditActionDelete, at, changes)
+}
+
 // answerFor assembles the response value for a household that is already loaded.
 //
 // The members are re-read rather than reused from a caller's slice, so that what a
@@ -253,10 +385,11 @@ func (useCase *UseCase) answerFor(ctx context.Context, household domain.Househol
 	}
 
 	return Answer{
-		Household: household,
-		Members:   members,
-		Deadline:  settings.RSVPDeadline,
-		Editable:  settings.RSVPOpen(now),
+		Household:     household,
+		Members:       members,
+		Deadline:      settings.RSVPDeadline,
+		Editable:      settings.RSVPOpen(now),
+		CanAddPlusOne: domain.CanHouseholdAddPlusOne(members) == nil,
 	}, nil
 }
 
