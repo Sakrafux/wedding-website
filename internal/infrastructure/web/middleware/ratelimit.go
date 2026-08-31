@@ -12,26 +12,33 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/httpio"
 )
 
-// Login attempt budgets, per client IP per hour.
+// Login attempt budgets, per client IP.
 //
 // Only *failures* count. A household on a shared connection, or a family passing
 // one phone around, must not spend the budget by logging in successfully.
 //
-// The guest limit is generous because the thing it guards is already hopeless:
-// with 32^6 codes and ~60 in use, a blind guess hits with probability 5.6e-8, so
-// ten tries an hour is centuries per IP. It exists to bound the pointless, not to
-// stop a plausible attack. The admin limit is stricter because that door is the one
-// where guessing pays, and the person behind it knows their own password.
+// The two windows differ because the window means different things on the two
+// doors. For a guest it is the length of the punishment: the budget is generous and
+// the wait short, because what it guards is already hopeless — with 32^6 codes and
+// ~60 in use a blind guess hits with probability 5.6e-8, so even 40 tries an hour
+// is centuries per IP. It bounds the pointless rather than stopping a plausible
+// attack, and an hour-long wait for someone who mistyped their card twice is the
+// real cost. For the admin the window is the only thing making guessing expensive,
+// so it stays an hour: that door is where guessing pays, and the one person behind
+// it knows their own password.
 const (
-	guestLoginFailureLimit = 10
-	adminLoginFailureLimit = 5
-	loginFailureWindow     = time.Hour
+	guestLoginFailureLimit  = 10
+	guestLoginFailureWindow = 15 * time.Minute
+
+	adminLoginFailureLimit  = 5
+	adminLoginFailureWindow = time.Hour
 )
 
-// evictionInterval is how often idle keys are dropped. Tied to the window: a key
-// whose attempts have all expired carries no information, and sweeping more often
-// than the window would just be work.
-const evictionInterval = loginFailureWindow
+// evictionInterval is how often idle keys are dropped, and it is deliberately the
+// longer of the two windows: a key whose failures have all aged out carries no
+// information, so sweeping more often than the longest window can be relevant for
+// would just be work.
+const evictionInterval = adminLoginFailureWindow
 
 // RateLimiter counts recent failures per key in a sliding window.
 //
@@ -56,11 +63,11 @@ type RateLimiter struct {
 // reasoning in this file, so the router wires a named policy rather than a pair of
 // numbers whose justification lives somewhere else.
 func NewGuestLoginLimiter() *RateLimiter {
-	return NewRateLimiter(guestLoginFailureLimit, loginFailureWindow)
+	return NewRateLimiter(guestLoginFailureLimit, guestLoginFailureWindow)
 }
 
 func NewAdminLoginLimiter() *RateLimiter {
-	return NewRateLimiter(adminLoginFailureLimit, loginFailureWindow)
+	return NewRateLimiter(adminLoginFailureLimit, adminLoginFailureWindow)
 }
 
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {

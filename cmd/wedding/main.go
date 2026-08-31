@@ -110,8 +110,12 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 	listenAddr := config.ListenAddr()
 
 	server := &http.Server{
-		Addr:              listenAddr,
-		Handler:           web.NewRouter(logger, config, database, auth),
+		Addr: listenAddr,
+		Handler: web.NewRouter(logger, web.Dependencies{
+			Config:   config,
+			Database: database,
+			Auth:     auth,
+		}),
 		ReadHeaderTimeout: readHeaderTimeout,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,

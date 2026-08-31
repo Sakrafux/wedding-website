@@ -25,9 +25,13 @@ const (
 	AuditActionLoginFailed AuditAction = "login_failed"
 )
 
-// Audited entity names. They are table names, so that a hand-written
-// `WHERE entity = 'household' AND entity_id = 12` reads as what it is and uses the
-// index built for it.
+// Audited entity names — what an action was done to.
+//
+// Each value is spelled exactly like the SQLite table it names, so that a query
+// typed by hand months from now (`WHERE entity = 'household' AND entity_id = 12`)
+// needs no lookup table to read and hits the (entity, entity_id) index built for it.
+// The rule matters when F5 adds 'guest' and F6 'budget_item': the name of the table
+// is the name of the entity, always.
 const (
 	AuditEntityHousehold = "household"
 	AuditEntityAdmin     = "admin"
@@ -44,6 +48,21 @@ const (
 const AuditEntityNone int64 = 0
 
 // AuditEntry is one append-only record of something having happened.
+//
+// It answers two separate questions, which is why there are two pairs of columns
+// rather than one:
+//
+//   - the actor — *who did it*: ActorType plus ActorID.
+//   - the entity — *what it was done to*: Entity plus EntityID.
+//
+// They coincide for a household login and diverge everywhere else, which is the
+// whole reason for keeping both:
+//
+//	event                 actor             entity
+//	household logs in     household / 12    household / 12
+//	admin logs in         admin / nil       admin / 0
+//	failed login          system / nil      household or admin / 0   (which door was tried)
+//	admin edits a guest   admin / nil       guest / 47               (F5)
 //
 // Before and After hold the changed fields only, never whole rows: the log is a
 // history, not a second copy of the database, and a full snapshot of a guest row

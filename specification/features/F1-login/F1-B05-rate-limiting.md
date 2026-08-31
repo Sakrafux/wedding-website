@@ -22,8 +22,8 @@ As an admin, I want login attempts limited per IP without ever locking anyone ou
 
 1. Client IP: use `X-Forwarded-For`'s rightmost untrusted entry **only** if the direct peer is inside `TRUSTED_PROXY_CIDRS`. Otherwise use the peer address. An unconditionally trusted header makes the limiter bypassable by anyone who sets it — including anyone who has read this repository.
 2. If `TRUSTED_PROXY_CIDRS` is empty, never trust the header. Log a warning once at startup, since this is the misconfiguration that silently disables the whole mechanism.
-3. Limit: 10 **failures** per hour per IP on the guest endpoint. Successes do not consume budget — a household on a shared connection must not be punished for logging in.
-4. Stricter on admin login: 5 per hour. It is the only door where guessing pays.
+3. Limit: 10 **failures** per 15 minutes per IP on the guest endpoint. Successes do not consume budget — a household on a shared connection must not be punished for logging in. The window is short because for a guest it *is* the punishment: 40 guesses an hour is still centuries per IP against 32^6 codes, while an hour-long wait for someone who mistyped their card is a real cost.
+4. Stricter on admin login: 5 per **hour**. It is the only door where guessing pays, so there the window is the defence rather than the penalty.
 5. In-memory sliding window or token bucket, keyed by IP. No Redis, no table. State lost on restart is acceptable and even desirable here.
 6. Evict idle keys so the map cannot grow without bound.
 7. **Never lock out.** The limit produces a 429 with a "try again in a few minutes" message, and it always expires on its own. Per the threat model, locking out a 75-year-old is a worse outcome than the attack being prevented.
@@ -41,7 +41,7 @@ Error: `rate_limited` → 429 → "Zu viele Versuche. Bitte warte ein paar Minut
 - [ ] Unit: peer outside any trusted CIDR + `X-Forwarded-For` → peer used, header ignored.
 - [ ] Unit: empty `TRUSTED_PROXY_CIDRS` → header always ignored.
 - [ ] Unit: `X-Forwarded-For` with multiple hops → correct entry chosen.
-- [ ] Integration: 10 failures → 11th returns 429 with `Retry-After`.
+- [ ] Integration: 10 failures → 11th returns 429 with `Retry-After` inside the guest window.
 - [ ] Integration: successful logins are not counted.
 - [ ] Integration: a different IP is unaffected by the first IP's failures.
 - [ ] Integration: admin endpoint limits at 5.

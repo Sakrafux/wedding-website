@@ -97,7 +97,7 @@ Codes are generated with `crypto/rand`, never `math/rand`, and rejected on colli
 
 ### Rate limiting
 
-Per-IP limiting on both login endpoints, on the order of **10 failures per hour**, with a friendly German message and **never a lockout** — locking out a confused 75-year-old is a worse outcome than the attack it prevents. Successful logins do not consume budget.
+Per-IP limiting on both login endpoints — **10 failures per 15 minutes** for guests, **5 per hour** for the admin — with a friendly German message and **never a lockout**. The windows differ because the window means different things on the two doors: for a guest it is the length of the punishment, and 40 guesses an hour against 32^6 codes is still centuries per IP; for the admin the window is the only thing making guessing expensive — locking out a confused 75-year-old is a worse outcome than the attack it prevents. Successful logins do not consume budget.
 
 - Client IP comes from `X-Forwarded-For`, trusted **only** when the request arrives from a CIDR in `TRUSTED_PROXY_CIDRS`. Otherwise the header is attacker-controlled and the limit is bypassable by anyone who reads this document.
 - A second, global failure counter across all IPs bounds distributed guessing. Crossing it is a signal to look at the logs, not a reason to lock anyone out.

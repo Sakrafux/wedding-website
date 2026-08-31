@@ -151,7 +151,7 @@ GET    /api/admin/photos                            hide/delete, ZIP export
 
 **Authorization** is enforced in middleware by session subject type. Admin-only routes live under `/api/admin` and are rejected wholesale for household sessions. Budget endpoints exist only there. The frontend hiding a nav link is not a security control and is never treated as one.
 
-**Rate limiting.** Per-IP limiting on both login endpoints (order of 10 failures/hour) with a friendly German error, never a lockout — locking out a confused guest is worse than the attack we are preventing. Failed attempts are written to `audit_log` as `login_failed`.
+**Rate limiting.** Per-IP limiting on both login endpoints — 10 failures / 15 min for guests, 5 failures / hour for the admin — with a friendly German error, never a lockout — locking out a confused guest is worse than the attack we are preventing. Failed attempts are written to `audit_log` as `login_failed`.
 
 ## SQLite configuration
 

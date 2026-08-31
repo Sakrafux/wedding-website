@@ -6,8 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httplog/v2"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
-	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/handler"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
 	frontend "github.com/Sakrafux/wedding-website/web"
@@ -16,13 +14,15 @@ import (
 // NewRouter builds the application router: global middleware, robots.txt, the /api
 // tree with its JSON fallbacks, and the embedded SPA on everything else.
 //
-// Later stories widen the parameter list with handler dependencies. main and the
-// integration tests both construct the router through this one function, so the
+// Later stories add use cases to Dependencies rather than parameters here. main and
+// the integration tests both construct the router through this one function, so the
 // tests exercise the real middleware chain rather than an approximation of it.
-func NewRouter(logger *httplog.Logger, config configuration.Config, database *configuration.Database, auth *application.Auth) *chi.Mux {
-	system := handler.NewSystem(database)
-	authHandler := handler.NewAuth(auth, config.SessionCookieSecure)
-	sessions := middleware.NewSessionGate(auth, config.SessionCookieSecure)
+func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
+	config := dependencies.Config
+
+	system := handler.NewSystem(dependencies.Database)
+	authHandler := handler.NewAuth(dependencies.Auth, config.SessionCookieSecure)
+	sessions := middleware.NewSessionGate(dependencies.Auth, config.SessionCookieSecure)
 
 	// One limiter per endpoint, not one shared: a guest fumbling their code must
 	// never consume the admin's budget, or the other way round.
@@ -70,19 +70,14 @@ func NewRouter(logger *httplog.Logger, config configuration.Config, database *co
 		api.Route("/admin", func(admin chi.Router) {
 			admin.Use(middleware.RequireAdmin)
 
-			// The catch-all is what makes the gate above real, and removing it
-			// would be silent: chi builds a sub-router's middleware chain only when
-			// a route is registered on it, and a sub-router with none serves its
-			// NotFound handler directly — middleware and all — so an empty guarded
-			// subtree answers 404 to everyone instead of 401 to strangers. Keep at
-			// least one route here.
 			admin.Get("/me", authHandler.AdminMe)
 
-			// Kept even now that a real route exists, and removing it would be
-			// silent: chi builds a sub-router's middleware chain only when a route
-			// is registered on it, so a subtree that lost its last route would
-			// serve its NotFound handler directly — middleware and all — and answer
-			// 404 to everyone instead of 401 to strangers.
+			// The catch-all is load-bearing, and removing it would be silent: chi
+			// builds a sub-router's middleware chain only when a route is registered
+			// on it, so a subtree that lost its last route would serve its NotFound
+			// handler directly — middleware and all — and answer 404 to everyone
+			// instead of 401 to strangers. It also keeps an unknown /api/admin path
+			// from telling a stranger which admin endpoints exist.
 			admin.Handle("/*", http.HandlerFunc(system.APINotFound))
 		})
 

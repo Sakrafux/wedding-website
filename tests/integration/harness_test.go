@@ -152,7 +152,11 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 		discardingLogger().Logger,
 	)
 
-	router := web.NewRouter(discardingLogger(), config, database, auth)
+	router := web.NewRouter(discardingLogger(), web.Dependencies{
+		Config:   config,
+		Database: database,
+		Auth:     auth,
+	})
 	if spec.registerExtraRoutes != nil {
 		spec.registerExtraRoutes(router)
 	}
