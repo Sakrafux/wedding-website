@@ -34,8 +34,8 @@ Decisions:
 - No reset flag and no runtime production guard; the guard is that the `Dockerfile` builds `./cmd/wedding` alone. See `cmd/seed`'s package comment.
 - The insert SQL stays in `cmd/seed` until `F5-B01` gives `HouseholdStore` a create method; forward reference noted at `insertHousehold`.
 
-Time: <h>
-Cost: Opus 5 — $<x>
+Time: 4h (tentative)
+Cost: Opus 5 — $12.56 (tentative)
 
 ## 2026-08-30
 
@@ -88,7 +88,7 @@ Decisions:
 - Remaining F5 assumptions confirmed unchanged: session revocation on regeneration, CSV encoding, `codes.csv` layout, hard-delete for households, German admin URLs.
 
 Time: 4h
-Cost: 37.72
+Cost: Opus 5 — $37.72
 
 ## 2026-08-29
 
@@ -160,7 +160,7 @@ Decisions:
 - `web/src/lib/api.ts` deleted rather than kept returning `/api${path}`: with no prefix it wrapped nothing and had no callers.
 
 Time: 6h
-Cost: $38.17
+Cost: Opus 5 — $38.17
 
 ## 2026-08-27
 
@@ -192,7 +192,7 @@ Decisions:
 - `domain.ErrorCode` constants live in one block in `domain/errors.go`, not next to each rule — deliberate break with "keep it near the code", so the list can be read against the message table.
 
 Time: 2h
-Cost: $8.36
+Cost: Opus 5 — $8.36
 
 ## 2026-08-26
 
@@ -226,7 +226,7 @@ Decisions:
 - Makefile (`run`, `test`, frontend-then-Go `build`) deferred to `E0-09` — one command list, not two. Recorded as instruction 6 there.
 
 Time: 1.5h
-Cost: $9.45
+Cost: Opus 5 — $9.45
 
 ## 2026-08-25
 
@@ -244,7 +244,7 @@ Decisions:
 - Kept the root layout over a `backend/` + `frontend/` split — `go:embed` cannot cross the module root.
 
 Time: 1h
-Cost: $4.11
+Cost: Opus 5 — $4.11
 
 ## 2026-08-22
 
@@ -263,7 +263,7 @@ Decisions:
 - This journal is where effort and AI spend get tracked.
 
 Time: 4.5h
-Cost: $11.31
+Cost: Opus 5 — $11.31
 
 ## 2026-08-21
 
@@ -276,4 +276,4 @@ Decisions:
 - Go single binary with an embedded React/Vite frontend, SQLite, trimmed hexagonal layout.
 
 Time: 3h
-Cost: $6.57
+Cost: Opus 5 — $6.57
