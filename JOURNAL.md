@@ -23,7 +23,7 @@ Done:
   - Frontend: `lib/api/{client,dto,enums,session}.ts`, `lib/routing/navigation.ts`, tests moved into `__tests__/` directories. `lib/utils.ts` stays put (shadcn's `components.json` alias).
   - `CodeInput` keeps a dash the guest types and never inserts one; `sanitizeCodeInput` for display, `normalizeCode` on submit. Placeholder `ABC-234`, hint says the dash is optional.
   - New epic `F12 — Observability with Dynatrace`, explicitly below optional; open questions in `TODO.md`.
-- `wire` in `cmd/wedding`: one function builds every store and use case and returns `web.Dependencies` plus the session store the purge loop needs. `run` keeps the lifetimes.
+- `wire` in `cmd/wedding/wire.go`: one function builds every store and use case and returns `web.Dependencies` plus the session store the purge loop needs. `run` keeps the lifetimes. Own file so `main.go` stays the startup-order file; package `main` because `cmd` is the composition root — in package `web` it would drag `persistence` into the package that holds the handlers.
 - **Dash dropped entirely.** `domain.FormatCode` and `codeGroupLength` deleted, `cmd/seed` prints the stored code, `CodeInput` back to a single `normalizeCode` on keystroke, no placeholder (`F1-F01` had already rejected in-field placeholders). Input still strips dashes. Reason recorded in `02-features` and `CLAUDE.md`; touched `05-design`, `F1-B01`, `F1-F01`, `F5-B01`, `F5-B04`, `F5-F01`, `README.md`, `TODO.md`.
 - Verified: `make seed` prints `9L2LTA`, and both `9L2LTA` and `9l2-lta` log in against the running binary.
 

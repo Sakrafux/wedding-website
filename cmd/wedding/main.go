@@ -14,10 +14,8 @@ import (
 
 	"github.com/go-chi/httplog/v2"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
-	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web"
 )
 
@@ -140,35 +138,4 @@ func run(config configuration.Config, logger *httplog.Logger) error {
 	defer cancelShutdown()
 
 	return server.Shutdown(shutdownCtx)
-}
-
-// wire builds every store and use case, and returns them as the router's
-// dependencies.
-//
-// One function so that assembling the application is one thing to read and one
-// place to extend: a new use case is a store, a constructor call and a field, all
-// visible together. It deliberately does not open the database or start anything —
-// run owns those lifetimes, because it is the function with the defers.
-//
-// The session store is returned alongside, because main's purge loop must sweep the
-// same store the request path writes to. It is not a Dependencies field: the router
-// reaches sessions through Auth, and a second door onto them invites a handler to
-// use it.
-func wire(config configuration.Config, database *configuration.Database, logger *slog.Logger) (web.Dependencies, *persistence.SessionStore) {
-	sessions := persistence.NewSessionStore(database)
-
-	auth := application.NewAuth(
-		sessions,
-		persistence.NewHouseholdStore(database),
-		persistence.NewSettingStore(database),
-		persistence.NewAuditStore(database),
-		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
-		logger,
-	)
-
-	return web.Dependencies{
-		Config:   config,
-		Database: database,
-		Auth:     auth,
-	}, sessions
 }
