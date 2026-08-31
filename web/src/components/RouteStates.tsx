@@ -1,7 +1,7 @@
 import { type ErrorComponentProps, useRouter } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
 import { shellLabels } from "@/lib/labels";
 
 /**

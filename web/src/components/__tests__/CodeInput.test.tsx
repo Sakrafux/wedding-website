@@ -3,9 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 
-import { normalizeCode } from "@/lib/code";
+import { normalizeCode, sanitizeCodeInput } from "@/lib/code";
 
-import { CodeInput } from "./CodeInput";
+import { CodeInput } from "@/components/CodeInput";
 
 /** A harness with the state the real screen holds, so typing behaves as it does there. */
 function ControlledCodeInput({ error }: { error?: string }) {
@@ -34,8 +34,35 @@ describe("normalizeCode", () => {
   });
 });
 
+describe("sanitizeCodeInput", () => {
+  it("keeps a dash the guest typed, because the card shows one", () => {
+    expect(sanitizeCodeInput("abc-234")).toBe("ABC-234");
+    expect(sanitizeCodeInput("abc–234")).toBe("ABC-234");
+  });
+
+  it("never inserts one, so the caret is never moved under the guest", () => {
+    expect(sanitizeCodeInput("abc234")).toBe("ABC234");
+    expect(sanitizeCodeInput("abc")).toBe("ABC");
+  });
+
+  it("drops a dash where the printed form has none", () => {
+    expect(sanitizeCodeInput("-abc234")).toBe("ABC234");
+    expect(sanitizeCodeInput("a-b-c234")).toBe("A-BC234");
+    expect(sanitizeCodeInput("abc234-")).toBe("ABC234");
+  });
+
+  it("caps on code characters, so a dash costs no digit", () => {
+    expect(sanitizeCodeInput("abc-2345")).toBe("ABC-234");
+    expect(sanitizeCodeInput("abc2345")).toBe("ABC234");
+  });
+
+  it("drops whitespace, which is invisible and never part of a code", () => {
+    expect(sanitizeCodeInput(" abc 234 ")).toBe("ABC234");
+  });
+});
+
 describe("CodeInput", () => {
-  it("normalises as the guest types", async () => {
+  it("upper-cases as the guest types", async () => {
     const user = userEvent.setup();
     render(<ControlledCodeInput />);
 
@@ -44,14 +71,25 @@ describe("CodeInput", () => {
     expect(screen.getByTestId("submitted-value")).toHaveTextContent("ABC234");
   });
 
-  it("accepts a pasted printed code", async () => {
+  it("shows the dash of a typed printed code rather than swallowing it", async () => {
+    const user = userEvent.setup();
+    render(<ControlledCodeInput />);
+
+    await user.type(screen.getByLabelText(/Code/), "abc-234");
+
+    expect(screen.getByLabelText(/Code/)).toHaveValue("ABC-234");
+    // What travels to the API has no dash — see normalizeCode, applied on submit.
+    expect(normalizeCode("ABC-234")).toBe("ABC234");
+  });
+
+  it("accepts a pasted printed code without losing its last character", async () => {
     const user = userEvent.setup();
     render(<ControlledCodeInput />);
 
     await user.click(screen.getByLabelText(/Code/));
     await user.paste("abc-234");
 
-    expect(screen.getByTestId("submitted-value")).toHaveTextContent("ABC234");
+    expect(screen.getByTestId("submitted-value")).toHaveTextContent("ABC-234");
   });
 
   // Autocorrect mangling a six-character code is a real and infuriating failure,

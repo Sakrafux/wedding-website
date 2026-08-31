@@ -27,7 +27,7 @@ This is the screen with the highest failure cost in the whole product. If it doe
 1. Consume the `F1-B04` contract exactly. Invent no fields.
 2. `CodeInput`: one large field, generous height, `font-size` at least 24px. Not six separate boxes — segmented inputs break paste, confuse screen readers, and are a nightmare with an on-screen keyboard.
 3. Attributes: `autocapitalize="characters"`, `autocorrect="off"`, `autocomplete="off"`, `spellcheck="false"`, `inputmode="text"`. Autocorrect mangling a 6-character code is a real and infuriating failure.
-4. Normalise **as the user types**: uppercase, strip spaces and dashes. Optionally render a dash after the third character for readability, but keep the submitted value canonical.
+4. Normalise **as the user types**: uppercase, strip whitespace. Keep a dash the guest typed or pasted — the card prints `ABC-234`, and swallowing it reads as rejected input — but never insert one, because auto-formatting moves the caret on every keystroke and backspace then jumps to the end of the field. The submitted value is canonical: the dash is removed on submit, not on keystroke.
 5. Show `ABC-234` as a placeholder-style hint **outside** the field, as help text. A placeholder inside the field is not a label and disappears when typing.
 6. Real `<label>`: "Dein Code von der Einladungskarte".
 7. Submit button is large, full width on mobile, and says something concrete — "Anmelden" — never just an arrow icon.
@@ -40,7 +40,7 @@ This is the screen with the highest failure cost in the whole product. If it doe
 ## Test plan
 
 - [ ] Manual on a real phone: type a code with the on-screen keyboard, in lowercase, and log in.
-- [ ] Manual: paste `abc-234` from a message → normalised and accepted.
+- [ ] Manual: paste `abc-234` from a message → shown as `ABC-234`, submitted as `ABC234`, accepted.
 - [ ] Component: typing `abc 234` produces the submitted value `ABC234`.
 - [ ] Component: an API error renders under the field, with the German text.
 - [ ] Component: after two failures, the phone-number fallback is visible.

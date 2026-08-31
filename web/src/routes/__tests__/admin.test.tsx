@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { getJson } from "@/lib/api";
+import { getJson } from "@/lib/api/client";
 import { apiError, ok, stubApi, unauthenticated } from "@/test/api";
 import { adminSession, bootstrap } from "@/test/fixtures";
 import { currentPath, renderApp } from "@/test/render";

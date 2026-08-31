@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { normalizeCode } from "@/lib/code";
+import { sanitizeCodeInput } from "@/lib/code";
 import { loginLabels } from "@/lib/labels";
 
 interface CodeInputProps {
@@ -32,7 +32,11 @@ export function CodeInput({ value, onChange, error, disabled }: CodeInputProps) 
         id="code"
         name="code"
         value={value}
-        onChange={(event) => onChange(normalizeCode(event.target.value))}
+        onChange={(event) => onChange(sanitizeCodeInput(event.target.value))}
+        // The printed form, so the field shows what the card looks like before a
+        // single character is typed. The dash is the guest's to type or leave out;
+        // both reach the API as the same six characters.
+        placeholder={loginLabels.codePlaceholder}
         disabled={disabled}
         // A code is letters and digits, so the plain text keyboard is right:
         // inputmode="numeric" would hide the letters, and "email" or "url" bring
@@ -45,9 +49,9 @@ export function CodeInput({ value, onChange, error, disabled }: CodeInputProps) 
         // No autofocus: on a phone it opens the keyboard over the page before the
         // guest has read what is being asked of them.
         //
-        // No maxLength either, deliberately: the attribute counts raw characters
-        // and would truncate a pasted ABC-234 before the dash is stripped. See
-        // normalizeCode.
+        // No maxLength either, deliberately: the attribute counts raw characters,
+        // and a code with its dash is seven of them. See sanitizeCodeInput, which
+        // caps on code characters instead.
         aria-describedby={error ? `${hintId} ${errorId}` : hintId}
         aria-invalid={error ? true : undefined}
         // Larger than the body scale and widely spaced: this is the one field in

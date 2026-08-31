@@ -1,4 +1,4 @@
-import type { AdminSession, BootstrapResponse } from "@/lib/dto";
+import type { AdminSession, BootstrapResponse } from "@/lib/api/dto";
 
 /**
  * The bootstrap body, shaped exactly as the Go DTO sends it.

@@ -9,7 +9,7 @@
 
 import { type QueryClient, queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { ApiError, getJson, postJson } from "./api";
+import { ApiError, getJson, postJson } from "./client";
 import type { AdminSession, BootstrapResponse } from "./dto";
 
 export const meQueryKey = ["me"] as const;

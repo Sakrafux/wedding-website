@@ -4,7 +4,7 @@ import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { RouteError, RoutePending } from "@/components/RouteStates";
-import { watchForSessionExpiry } from "@/lib/session";
+import { watchForSessionExpiry } from "@/lib/api/session";
 import { routeTree } from "@/routeTree.gen";
 
 /**

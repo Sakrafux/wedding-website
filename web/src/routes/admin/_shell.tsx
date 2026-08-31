@@ -3,7 +3,7 @@ import { createFileRoute, Navigate, Outlet, redirect, useNavigate } from "@tanst
 
 import { Button } from "@/components/ui/button";
 import { adminLabels } from "@/lib/labels";
-import { adminSessionQueryOptions, useLogout } from "@/lib/session";
+import { adminSessionQueryOptions, useLogout } from "@/lib/api/session";
 
 /**
  * Everything behind the admin login.

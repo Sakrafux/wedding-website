@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { shellLabels } from "@/lib/labels";
-import { meQueryOptions, useLogout } from "@/lib/session";
+import { meQueryOptions, useLogout } from "@/lib/api/session";
 
 export const Route = createFileRoute("/_guest/start")({
   component: StartPage,

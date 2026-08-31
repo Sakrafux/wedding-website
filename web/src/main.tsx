@@ -4,7 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { RouteError, RoutePending } from "@/components/RouteStates";
-import { watchForSessionExpiry } from "@/lib/session";
+import { watchForSessionExpiry } from "@/lib/api/session";
 
 import "./index.css";
 import { routeTree } from "./routeTree.gen";

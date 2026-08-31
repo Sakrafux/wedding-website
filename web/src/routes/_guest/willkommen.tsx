@@ -3,7 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { confirmationLabels } from "@/lib/labels";
-import { meQueryOptions, rememberHouseholdConfirmed, useLogout } from "@/lib/session";
+import { meQueryOptions, rememberHouseholdConfirmed, useLogout } from "@/lib/api/session";
 
 export const Route = createFileRoute("/_guest/willkommen")({
   component: ConfirmationPage,

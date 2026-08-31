@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 
-import { isHouseholdConfirmed, meQueryOptions } from "@/lib/session";
+import { isHouseholdConfirmed, meQueryOptions } from "@/lib/api/session";
 
 /** The route that asks a freshly logged-in household whether the code was theirs. */
 export const confirmationPath = "/willkommen";

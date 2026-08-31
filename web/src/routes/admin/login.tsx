@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adminLabels } from "@/lib/labels";
-import { adminSessionQueryOptions, useAdminLogin } from "@/lib/session";
+import { adminSessionQueryOptions, useAdminLogin } from "@/lib/api/session";
 
 interface AdminLoginSearch {
   /** Set when a session ran out mid-visit, so the screen can say why. */
