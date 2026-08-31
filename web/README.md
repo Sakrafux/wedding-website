@@ -65,6 +65,8 @@ Markdown is excluded from prettier so the repo keeps one Markdown convention: no
 | `src/lib/api/` | Everything that knows the HTTP contract: `client.ts`, `dto.ts`, `enums.ts`, `session.ts`. Grouped rather than loose in `lib/`, which is not a dumping ground — a new file belongs in a named subdirectory or it does not belong in `lib/`. |
 | `src/lib/api/client.ts` | The single fetch wrapper. Every failure arrives as `ApiError` (the server said no) or `NetworkError` (it never answered); nothing else talks to `fetch`. |
 | `src/lib/api/dto.ts`, `src/lib/api/enums.ts` | The response shapes and the API's enum values as string unions. English, always. |
+| `src/lib/api/households.ts` | The admin guest list as queries and mutations. Admin-only endpoints; the responses carry login codes. |
+| `src/lib/dates.ts` | German date rendering. The only German strings not in `labels.ts`, because `Intl` produces them. |
 | `src/lib/api/session.ts` | `me` and the admin session as queries. The only place the app knows whether somebody is logged in. |
 | `src/lib/routing/` | Route helpers that are not routes — `navigation.ts` sanitises a `?redirect=` target. |
 | `src/lib/labels.ts` | The only place a German string is written — enum labels and screen copy alike. |

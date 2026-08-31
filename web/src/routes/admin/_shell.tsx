@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Navigate, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { adminLabels } from "@/lib/labels";
@@ -26,14 +26,13 @@ export const Route = createFileRoute("/admin/_shell")({
 });
 
 /**
- * Nav entries for the admin sections.
+ * Nav entries for the admin sections whose pages do not exist yet.
  *
- * Every one is a placeholder today. Rendering them as disabled rather than
- * omitting them is better than a 404 and keeps the remaining work visible; F5, F6,
- * F7, F8 and F9 replace them with links one at a time.
+ * Rendered as disabled rather than omitted: better than a 404, and it keeps the
+ * remaining work visible. F6, F7, F8 and F9 replace them with links one at a time —
+ * Haushalte is already a real link below.
  */
-const navItems = [
-  adminLabels.navHouseholds,
+const plannedNavItems = [
   adminLabels.navDashboard,
   adminLabels.navSeating,
   adminLabels.navBudget,
@@ -70,7 +69,17 @@ function AdminShell() {
 
       <nav aria-label={adminLabels.heading}>
         <ul className="flex flex-wrap gap-2">
-          {navItems.map((item) => (
+          <li>
+            <Link
+              to="/admin/haushalte"
+              className="text-small border-line inline-flex items-center rounded-lg border px-3 py-2"
+              activeProps={{ className: "bg-primary-soft text-primary-hover border-primary" }}
+            >
+              {adminLabels.navHouseholds}
+            </Link>
+          </li>
+
+          {plannedNavItems.map((item) => (
             <li key={item}>
               <span
                 className="text-small text-ink-muted border-line inline-flex items-center gap-2 rounded-lg border px-3 py-2"

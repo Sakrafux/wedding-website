@@ -111,3 +111,34 @@ export function postJson<T>(path: string, payload?: unknown): Promise<T> {
     body: JSON.stringify(payload ?? null),
   });
 }
+
+/**
+ * PATCH sends a partial update: only the fields in `payload` are touched.
+ *
+ * The server rejects an unknown field outright, so a typo in a payload key is an
+ * error rather than an answer silently dropped.
+ */
+export function patchJson<T>(path: string, payload: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PATCH",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+}
+
+/** DELETE answers 204 with no body, which `request` maps to undefined. */
+export function deleteRequest(path: string): Promise<void> {
+  return request<void>(path, { method: "DELETE" });
+}
+
+/**
+ * fieldError picks one field's message out of a failed request.
+ *
+ * The server reports rejected inputs keyed by the JSON field name, so a form renders
+ * each message next to its own control instead of one sentence at the top — which is
+ * the difference between "prüfe die markierten Felder" being useful and being noise.
+ * Anything that is not an ApiError has no fields, and answers undefined.
+ */
+export function fieldError(error: unknown, field: string): string | undefined {
+  return error instanceof ApiError ? error.fields[field] : undefined;
+}

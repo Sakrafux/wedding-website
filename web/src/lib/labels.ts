@@ -190,3 +190,100 @@ export const adminLabels = {
   navBudget: "Budget",
   navPhotos: "Fotos",
 } as const;
+
+/**
+ * The admin guest list: the household table and the detail page.
+ *
+ * Admin-facing, so the register is denser than the guest copy — but still "du" and
+ * still German, because there is exactly one admin and no reason to switch voice.
+ */
+export const householdLabels = {
+  heading: "Haushalte",
+  /** The table needs an accessible name; a caption is the one that also reads on
+      screen, so it doubles as the summary line under the table. */
+  tableCaption: "Alle Haushalte mit Code, Personenzahl und Anmeldestatus",
+  columnHousehold: "Haushalt",
+  columnCode: "Code",
+  columnMembers: "Personen",
+  columnLastLogin: "Letzte Anmeldung",
+  columnRSVP: "RSVP",
+  searchLabel: "Haushalt suchen",
+  onlyNeverLoggedIn: "Nur die, die sich nie angemeldet haben",
+  /** Not a stat tile: two numbers do not need a component, and the tiles are F6's. */
+  summary: (households: number, neverLoggedIn: number) =>
+    `${households} Haushalte, davon ${neverLoggedIn} nie angemeldet`,
+  /** Never a blank cell: a blank reads as "not loaded", and this column is the answer
+      to "haben sie es überhaupt gesehen?". */
+  neverLoggedIn: "Nie angemeldet",
+  rsvpAnswered: "Beantwortet",
+  rsvpOpen: "Offen",
+  empty: "Noch keine Haushalte angelegt.",
+  noMatches: "Kein Haushalt passt zur Suche.",
+  loading: "Haushalte werden geladen …",
+
+  createHeading: "Haushalt anlegen",
+  createNameLabel: "Name des Haushalts",
+  createNameHint: "Zum Beispiel „Familie Müller“ oder „Anna und Bernd“.",
+  createSubmit: "Anlegen",
+  createSubmitting: "Wird angelegt …",
+
+  detailBack: "Zurück zur Übersicht",
+  detailDataHeading: "Haushalt",
+  displayNameLabel: "Name",
+  adminNoteLabel: "Interne Notiz (nur für uns)",
+  adminNoteHint: "Der Haushalt sieht diese Notiz nie.",
+  transportNeededLabel: "Plätze gesucht (Kirche → Feier)",
+  transportOfferedLabel: "Plätze angeboten (Kirche → Feier)",
+  strollerLabel: "Bringt einen Kinderwagen",
+  save: "Speichern",
+  saving: "Wird gespeichert …",
+  saved: "Gespeichert.",
+
+  codeHeading: "Login-Code",
+  codeCopy: "Code kopieren",
+  codeCopied: "Code kopiert.",
+  codeReissue: "Neuen Code erzeugen",
+  codeReissueConfirmTitle: "Neuen Code erzeugen?",
+  codeReissueConfirmBody:
+    "Der alte Code funktioniert danach nicht mehr. Eine bereits gedruckte Karte mit diesem Code ist damit ungültig, und angemeldete Geräte werden abgemeldet.",
+  codeReissueConfirm: "Ja, neuen Code erzeugen",
+  codeReissued: (revokedSessions: number) =>
+    revokedSessions === 0
+      ? "Neuer Code erzeugt. Der alte Code funktioniert nicht mehr."
+      : `Neuer Code erzeugt. Der alte Code funktioniert nicht mehr, ${revokedSessions === 1 ? "ein Gerät wurde" : `${revokedSessions} Geräte wurden`} abgemeldet.`,
+
+  membersHeading: "Personen",
+  membersEmpty: "Noch niemand eingetragen.",
+  addMemberHeading: "Person hinzufügen",
+  firstNameLabel: "Vorname",
+  lastNameLabel: "Nachname",
+  kindLabel: "Erwachsen oder Kind",
+  ageLabel: "Alter am Hochzeitstag",
+  ageHint: "Nur bei Kindern, und gemeint ist das Alter am 17.07.2027.",
+  seatingNeedLabel: "Platz",
+  dietaryNoteLabel: "Allergien und Unverträglichkeiten",
+  addMember: "Hinzufügen",
+  addingMember: "Wird hinzugefügt …",
+  /** "entfernen", never "löschen": it is a soft delete, the person stays in the
+      record, and the German should not promise otherwise. */
+  removeMember: "Entfernen",
+  removeMemberConfirmTitle: (name: string) => `${name} entfernen?`,
+  removeMemberConfirmBody:
+    "Die Person wird aus der Liste entfernt. Im Datenbestand bleibt sie erhalten, damit frühere Zählungen nachvollziehbar bleiben.",
+  removeMemberConfirm: "Ja, entfernen",
+
+  rsvpHeading: "Rückmeldung",
+  /** Until F3-F06 exists there is no form to link to, and a read-only summary is the
+      honest thing to show. */
+  rsvpNotAnswered: "Dieser Haushalt hat noch nicht geantwortet.",
+  rsvpAnsweredAt: (date: string) => `Beantwortet am ${date}.`,
+  rsvpComingSoon: "Die Antworten selbst bearbeiten geht, sobald das RSVP-Formular gebaut ist.",
+
+  deleteHeading: "Haushalt löschen",
+  delete: "Haushalt löschen",
+  deleteConfirmTitle: "Haushalt löschen?",
+  deleteConfirmBody: (name: string, members: number) =>
+    `„${name}“ wird mit ${members === 1 ? "einer Person" : `${members} Personen`} gelöscht, dazu ihre Rückmeldungen und Sitzplätze. Der Eintrag im Änderungsprotokoll bleibt erhalten.`,
+  deleteConfirm: "Ja, endgültig löschen",
+  cancel: "Abbrechen",
+} as const;

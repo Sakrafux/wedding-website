@@ -85,16 +85,19 @@ describe("admin login and shell", () => {
     expect(api.calls.some((call) => call.path === "/api/auth/logout")).toBe(true);
   });
 
-  // Better than a 404, and it keeps the remaining work visible.
-  it("renders the not-yet-built sections as disabled placeholders", async () => {
+  // Better than a 404, and it keeps the remaining work visible. Haushalte is a real
+  // link since F5-F01; the rest become links one epic at a time.
+  it("links to Haushalte and renders the not-yet-built sections as placeholders", async () => {
     stubApi({ "GET /api/admin/me": ok(adminSession) });
 
     await renderApp("/admin");
 
-    for (const section of ["Haushalte", "Dashboard", "Sitzplan", "Budget", "Fotos"]) {
+    expect(screen.getByRole("link", { name: "Haushalte" })).toHaveAttribute("href", "/admin/haushalte");
+
+    for (const section of ["Dashboard", "Sitzplan", "Budget", "Fotos"]) {
       expect(screen.getByText(section)).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: section })).not.toBeInTheDocument();
     }
-    expect(screen.queryAllByRole("link", { name: /Haushalte/ })).toHaveLength(0);
   });
 
   it("sends an already-signed-in admin past the login screen", async () => {

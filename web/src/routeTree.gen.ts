@@ -16,6 +16,8 @@ import { Route as GuestWillkommenRouteImport } from './routes/_guest/willkommen'
 import { Route as AdminShellRouteImport } from './routes/admin/_shell'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
+import { Route as AdminShellHaushalteIndexRouteImport } from './routes/admin/_shell/haushalte/index'
+import { Route as AdminShellHaushalteHouseholdIdRouteImport } from './routes/admin/_shell/haushalte/$householdId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +53,18 @@ const AdminShellIndexRoute = AdminShellIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminShellRoute,
 } as any)
+const AdminShellHaushalteIndexRoute =
+  AdminShellHaushalteIndexRouteImport.update({
+    id: '/haushalte/',
+    path: '/haushalte/',
+    getParentRoute: () => AdminShellRoute,
+  } as any)
+const AdminShellHaushalteHouseholdIdRoute =
+  AdminShellHaushalteHouseholdIdRouteImport.update({
+    id: '/haushalte/$householdId',
+    path: '/haushalte/$householdId',
+    getParentRoute: () => AdminShellRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +73,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminShellRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminShellIndexRoute
+  '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
+  '/admin/haushalte/': typeof AdminShellHaushalteIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -66,6 +82,8 @@ export interface FileRoutesByTo {
   '/willkommen': typeof GuestWillkommenRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminShellIndexRoute
+  '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
+  '/admin/haushalte': typeof AdminShellHaushalteIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -76,13 +94,29 @@ export interface FileRoutesById {
   '/admin/_shell': typeof AdminShellRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/_shell/': typeof AdminShellIndexRoute
+  '/admin/_shell/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
+  '/admin/_shell/haushalte/': typeof AdminShellHaushalteIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/start' | '/willkommen' | '/admin' | '/admin/login' | '/admin/'
+    | '/'
+    | '/start'
+    | '/willkommen'
+    | '/admin'
+    | '/admin/login'
+    | '/admin/'
+    | '/admin/haushalte/$householdId'
+    | '/admin/haushalte/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/start' | '/willkommen' | '/admin/login' | '/admin'
+  to:
+    | '/'
+    | '/start'
+    | '/willkommen'
+    | '/admin/login'
+    | '/admin'
+    | '/admin/haushalte/$householdId'
+    | '/admin/haushalte'
   id:
     | '__root__'
     | '/'
@@ -92,6 +126,8 @@ export interface FileRouteTypes {
     | '/admin/_shell'
     | '/admin/login'
     | '/admin/_shell/'
+    | '/admin/_shell/haushalte/$householdId'
+    | '/admin/_shell/haushalte/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -152,6 +188,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminShellIndexRouteImport
       parentRoute: typeof AdminShellRoute
     }
+    '/admin/_shell/haushalte/': {
+      id: '/admin/_shell/haushalte/'
+      path: '/haushalte'
+      fullPath: '/admin/haushalte/'
+      preLoaderRoute: typeof AdminShellHaushalteIndexRouteImport
+      parentRoute: typeof AdminShellRoute
+    }
+    '/admin/_shell/haushalte/$householdId': {
+      id: '/admin/_shell/haushalte/$householdId'
+      path: '/haushalte/$householdId'
+      fullPath: '/admin/haushalte/$householdId'
+      preLoaderRoute: typeof AdminShellHaushalteHouseholdIdRouteImport
+      parentRoute: typeof AdminShellRoute
+    }
   }
 }
 
@@ -169,10 +219,14 @@ const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
 
 interface AdminShellRouteChildren {
   AdminShellIndexRoute: typeof AdminShellIndexRoute
+  AdminShellHaushalteHouseholdIdRoute: typeof AdminShellHaushalteHouseholdIdRoute
+  AdminShellHaushalteIndexRoute: typeof AdminShellHaushalteIndexRoute
 }
 
 const AdminShellRouteChildren: AdminShellRouteChildren = {
   AdminShellIndexRoute: AdminShellIndexRoute,
+  AdminShellHaushalteHouseholdIdRoute: AdminShellHaushalteHouseholdIdRoute,
+  AdminShellHaushalteIndexRoute: AdminShellHaushalteIndexRoute,
 }
 
 const AdminShellRouteWithChildren = AdminShellRoute._addFileChildren(
