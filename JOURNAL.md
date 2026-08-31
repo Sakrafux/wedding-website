@@ -69,8 +69,8 @@ Decisions:
 - `04-architecture`'s API sketch refreshed for the real F3/F4 surface, closing a spec-debt item in `TODO.md`.
 - Answered against the new stories, same session: soft cap stays 2 and the hint names a phone number; no error styling before the first save attempt; one countdown (wedding) with the deadline as a written-out date; hero is names + date only; IBAN is published on `/geschenke` with the semi-public consequence recorded; contact numbers set (`+43 650 9408100` in the login fallback, both on `/kontakt`); accessibility drops `axe-core` and screen readers, checklist stays inside `F11-01` — a separate `specification/08-accessibility.md` was considered and rejected, since `05-design` already holds the rules and a tick-mark table is progress.
 
-Time: 5h (tentative)
-Cost: Opus 5 — $30.23 (tentative)
+Time: 7h (tentative)
+Cost: Opus 5 — $44.38 (tentative)
 
 ## 2026-08-30
 
