@@ -134,7 +134,7 @@ func (useCase *Households) Update(ctx context.Context, id int64, patch domain.Ho
 // Delete removes a household, its guests and their seat assignments.
 //
 // Deleting a household with answered RSVPs is allowed. The frontend confirms it and
-// names what is lost (F5-F02); the API does not second-guess a decision it cannot
+// names what is lost; the API does not second-guess a decision it cannot
 // know the reason for. The audit row is what outlives the household, which is the
 // answer to the fear that makes deleting feel dangerous.
 func (useCase *Households) Delete(ctx context.Context, id int64) error {

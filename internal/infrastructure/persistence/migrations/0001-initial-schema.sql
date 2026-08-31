@@ -26,8 +26,8 @@ CREATE TABLE household (
     -- because a guest who loses their card must be told their code again; see
     -- 03-data-model.md for the accepted risk. UNIQUE is what makes a generation
     -- collision impossible rather than merely unlikely — code generation retries on
-    -- a failed insert (F5-B03) rather than asking first and racing between the
-    -- question and the answer.
+    -- a failed insert rather than asking first and racing between the question and
+    -- the answer.
     code                    TEXT    NOT NULL UNIQUE,
     -- Church → reception only. Not derived from household size: some members drive
     -- themselves. Feeds the shuttle capacity gap, nothing else.

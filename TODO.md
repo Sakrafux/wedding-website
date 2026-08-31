@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-08-31 · Building. E0 (setup) and F1 (login) are done; see [specification/features/README.md](specification/features/README.md).
+Status: as of 2026-08-31 · Building. E0 (setup), F1 (login) and F5 (admin households & guests) are done; see [specification/features/README.md](specification/features/README.md).
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -47,7 +47,8 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [x] **Households hard-delete, guests soft-delete.** The asymmetry has a reason: only we delete a household, whereas a household removes its own plus-ones, and a person who was once counted has to stay explicable.
 - [x] **`guests.csv` is a full dump** — every column of `guest` and of its household, soft-deleted rows included with `deleted_at` visible. It is therefore not a headcount, and both the story and the download label say so.
 - [x] **German admin URLs.**
-- [x] **F3 stories are written after F5 is built.**
+- [x] **F3 stories are written after F5 is built.** F5 is now built — F3's story files are the next planning work.
+- [x] **No `formatted_code` field.** The reissue response returns `code` alone: the dash is gone, so the stored form is the printed form, and a second field would be the same six characters under another name. `F5-B03` updated on 2026-08-31.
 
 ### Raised in the 2026-08-31 code review
 

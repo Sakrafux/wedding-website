@@ -27,12 +27,27 @@ Done:
 - **Dash dropped entirely.** `domain.FormatCode` and `codeGroupLength` deleted, `cmd/seed` prints the stored code, `CodeInput` back to a single `normalizeCode` on keystroke, no placeholder (`F1-F01` had already rejected in-field placeholders). Input still strips dashes. Reason recorded in `02-features` and `CLAUDE.md`; touched `05-design`, `F1-B01`, `F1-F01`, `F5-B01`, `F5-B04`, `F5-F01`, `README.md`, `TODO.md`.
 - Verified: `make seed` prints `9L2LTA`, and both `9L2LTA` and `9l2-lta` log in against the running binary.
 
+- **F5 — Admin: households & guests, built end to end.** All seven stories ticked in `specification/features/README.md`.
+  - `F5-B01`/`F5-B02`/`F5-B03` in one commit — creation assigns the code and the detail endpoint embeds the members, so the three share a contract. `HouseholdStore` gains `List`/`Create`/`Update`/`Delete`/`AssignNewCode`, new `GuestStore`, new `application/households.go`, `handler/admin_households.go`, admin DTOs, `SessionStore.DeleteForHousehold`.
+  - `domain/guest.go` and `domain/changes.go` are new: the guest struct and its age rules moved out of `household.go`, and `Changes` is the changed-fields pair every audit payload carries.
+  - `httpio/validate.go` — validator/v10 mapped into `ValidationError`, keyed by JSON field name, German messages in one switch. The comment in `respond.go` that pointed at `F3-B03` for this is resolved.
+  - `F5-B04` — new `web/csvio` package and `persistence/export.go`. `codes.csv` (`haushalt;code`) and `guests.csv` (full dump of `guest` joined onto `household`, soft-deleted rows included). Header asserted against `pragma_table_info` for both tables.
+  - `F5-F01`/`F5-F02` in one commit — `/admin/haushalte` and `/admin/haushalte/{id}`; new `lib/api/households.ts`, `lib/dates.ts`, and `ui/{table,alert-dialog,textarea,native-select}.tsx`. `F5-F03` adds the two download links to the list page.
+  - `cmd/seed` now creates households through the stores, which resolves the forward reference it carried.
+  - Test harness: `onANewDevice` (two sessions at once), `withCodeGenerator` (forces the code-collision retry), and the logger now writes to an assertable buffer — the CSV export's log line is recorded nowhere else. 21 new integration tests, 12 domain unit tests, 15 component tests.
+  - Verified against the built binary: admin login, create household (code `X9JS7T`), add a child, both CSVs (BOM plus `;` asserted on the bytes), a reissued code logging in as `c2n-7pp`, and a household session refused on every admin route including the exports. Two `csv export written` lines in the log.
+
 Decisions:
 
 - No group separator in the login code. Six characters need none, and the dash was paying for a display format, a formatting function and an input field that had to decide what to do with a typed one. Recorded in `specification/02-features.md`.
 - Codes are generated, never fixed — reasons in the story's Scope.
 - No reset flag and no runtime production guard; the guard is that the `Dockerfile` builds `./cmd/wedding` alone. See `cmd/seed`'s package comment.
 - The insert SQL stays in `cmd/seed` until `F5-B01` gives `HouseholdStore` a create method; forward reference noted at `insertHousehold`.
+- No `formatted_code` in the code-reissue response. The dash is gone, so the stored form is the printed form; `F5-B03`'s contract updated.
+- `guests.csv` column order: `deleted_at` third wins over keeping the identifying columns together, and `household_id` serves both `guest.household_id` and `household.id`. Recorded in `F5-B04` and at `persistence.GuestExportColumns`.
+- A PATCH that changes nothing writes no audit row — every row in that log should be a change, not a record of somebody pressing save.
+- Admin forms are grouped in fieldsets with legends: the detail page carries several controls called "Vorname" and several buttons called "Speichern", and the group name is the only thing that says whose.
+- Guest age stays a single domain rule (`domain.ResolveAge`) rather than a `validate` struct tag, so the kind/age pairing lives in one place; the field name and German wording are mapped in `httpio`.
 
 Time: 4h (tentative)
 Cost: Opus 5 — $12.56 (tentative)

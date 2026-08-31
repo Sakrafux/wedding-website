@@ -302,7 +302,7 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
   const [seatingNeed, setSeatingNeed] = useState<SeatingNeed>(member.seating_need);
   const [dietaryNote, setDietaryNote] = useState(member.dietary_note);
 
-  // The server clears the age when a child becomes an adult (F5-B02). The form clears
+  // The server clears the age when a child becomes an adult. The form clears
   // it visibly at the same moment, so the admin never builds a combination that will
   // be rejected and then reads about it.
   function changeKind(next: GuestKind) {

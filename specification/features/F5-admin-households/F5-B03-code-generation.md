@@ -26,7 +26,7 @@ As an admin, I want every household to get a unique code automatically, and to b
 3. Detect the collision specifically — a unique-constraint violation on `household.code` — and not "any insert error". Retrying a disk-full error five times helps nobody.
 4. Regeneration **revokes that household's sessions**: `DELETE FROM session WHERE subject_type = 'household' AND subject_id = ?`. The only reason to regenerate is that the old code should stop working, and a year-long session issued from it would outlive the code by months. Before send-out this deletes nothing, which is the harmless case.
 5. Regeneration is audited as `update` on the household. The payload records **that** the code changed and never either value — see `F1-B06`.
-6. The response returns the new code in both stored and formatted form, because the admin is about to read it to somebody or paste it into a document.
+6. The response returns the new code. **Built without a `formatted_code`**: the dash was dropped from the code entirely on 2026-08-31 (see `02-features`), so the stored form *is* the printed form and a second field would be the same six characters under a different name — which is exactly how a "formatted" form later drifts back into existing.
 7. Regenerating after the cards are printed invalidates a printed card. The API does not prevent it; `F5-F02` puts the warning in front of the human, which is where a warning belongs.
 
 ## Contract
@@ -40,7 +40,7 @@ Request: no body.
 Response `200`:
 
 ```json
-{ "code": "DEF567", "formatted_code": "DEF-567", "revoked_sessions": 1 }
+{ "code": "DEF567", "revoked_sessions": 1 }
 ```
 
 `revoked_sessions` is there so the frontend can say "der alte Code funktioniert jetzt nicht mehr, ein Gerät wurde abgemeldet" rather than leaving the admin guessing what they just did.

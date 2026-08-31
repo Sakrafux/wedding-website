@@ -116,7 +116,7 @@ var guestExportExpressions = []string{
 // Soft-deleted guests are included. Excluding them would make the file disagree with
 // the database it claims to dump, and a removed plus-one is exactly the row somebody
 // eventually wants to see. It is therefore a dump and not a headcount — see the
-// download label in F5-F03.
+// download label on the admin household list.
 func (store *ExportStore) StreamGuests(ctx context.Context, yield func(values []any) error) error {
 	if len(guestExportExpressions) != len(GuestExportColumns) {
 		return fmt.Errorf("guest export has %d columns and %d expressions",

@@ -39,8 +39,9 @@ var ErrMalformedCode = errors.New("login code is not six characters from the cod
 // GenerateCode returns a fresh household login code in stored form.
 //
 // It does not check the code against the database: uniqueness is the UNIQUE index
-// on household.code, so the caller retries on a failed insert rather than asking
-// first and racing between the question and the answer (F5-B03).
+// on household.code, so the caller retries on a rejected insert rather than asking
+// first and racing between the question and the answer — see
+// persistence.HouseholdStore.withGeneratedCode.
 //
 // No error return, because crypto/rand.Read cannot fail — since Go 1.24 it panics
 // if the system entropy source is broken, which is not a condition this app could

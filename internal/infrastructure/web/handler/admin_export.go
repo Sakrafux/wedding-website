@@ -15,7 +15,8 @@ import (
 // codes.csv is the most sensitive artefact this application produces: it is the whole
 // key list leaving the server. Nothing here can enforce that it is deleted again
 // after the cards are printed (E-OPS-07), so the warning lives at the point of
-// download in the UI (F5-F03) and the fact of the export lives in the log below.
+// download on the admin household list, and the fact of the export lives in the log
+// below.
 type AdminExport struct {
 	exports *application.Exports
 }

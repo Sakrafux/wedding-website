@@ -86,7 +86,7 @@ describe("admin login and shell", () => {
   });
 
   // Better than a 404, and it keeps the remaining work visible. Haushalte is a real
-  // link since F5-F01; the rest become links one epic at a time.
+  // link now; the rest become links one epic at a time.
   it("links to Haushalte and renders the not-yet-built sections as placeholders", async () => {
     stubApi({ "GET /api/admin/me": ok(adminSession) });
 
