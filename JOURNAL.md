@@ -45,6 +45,16 @@ Done:
 - Add-member form no longer prefills the surname from the household name: a household is any group sharing one invitation, so `display_name` is free text ("Luki & Paddi", a single person), and a name derived from it is wrong as often as right. Only `cmd/seed` derives one, because it invents the household names itself.
 - Verified the upgrade path against the previous run's database file: an existing `Emil` + `Müller` came back as `Emil Müller`, `pragma table_info(guest)` has `name` and neither old column, and `POST .../guests` with `{"name":"Oma Erika"}` works.
 
+- **F3 — RSVP, built end to end.** All twelve stories ticked in `specification/features/README.md`; Gate 1 (the RSVP field set) is closed.
+  - `internal/application` split into `application/{auth,households,exports,rsvp}`, one `UseCase` type each; the parent package keeps only `ErrNotFound` and the new exported `TranslateNotFound`. Closes the review item in `TODO.md`.
+  - `F3-B01` — new `domain/rsvp.go`: the `Attending`/`MealChoice`/`Portion` enums, the scope predicates, `NormalizeGuestAnswer`/`NormalizeHouseholdAnswer`, and `ApplyGuestAnswer`/`ApplyHouseholdAnswer` with their audit diffs. `Changes` gains a generic `compareOptional` for nullable enums; `domain.NewHouseholdChangeEntry` is the household-actor audit entry.
+  - `F3-B02`–`F3-B05` — `application/rsvp` with `Load`/`Save`, `SaveOptions{EnforceDeadline, ActorType}` and `EnsureWritable`; `persistence/rsvp.go` writes the household row and every member row in one transaction; `dto/rsvp.go` and `handler/rsvp.go`; `GET|PUT /api/rsvp`. The household and guest projections now carry the RSVP columns, one projection each rather than one per epic.
+  - New failure codes `rsvp_closed` and `member_set_mismatch`, both 409, with their German sentences in `httpio`'s table. `httpio.ValidatePaths` keys a nested body's field errors by path, which the handler rewrites to `members.<id>.<field>`.
+  - `F3-B06` — `GET|PUT /api/admin/households/{id}/rsvp`: same use case, same DTOs, deadline enforcement off, audited as `admin`. A test asserts the two GET bodies are byte-identical.
+  - `F3-F01`–`F3-F05` — `/zusagen`, with `components/rsvp/{RSVPForm,RSVPMemberCard,ScopeSelector,TransportFields,RSVPSummary,state}`; new shared `FormField`, `HelpPopover`, `Stepper`, and `ui/{popover,checkbox,radio-card-group,alert}`. `rsvpLabels` holds the copy including one help sentence per field.
+  - `F3-F06` — `/admin/haushalte/{id}/rsvp` renders the *same* `RSVPForm` with the admin query and mutation, `allowEditingAfterDeadline` and `dense`. The household detail page's read-only RSVP block is replaced by a link, resolving the `F3-F06` forward references in the route, `labels.ts` and its test.
+  - 21 domain unit tests, 30 integration tests (`rsvp_test.go`, `rsvp_deadline_test.go`, `rsvp_audit_test.go`, `admin_rsvp_test.go`), 28 component tests. Harness gains `putJSON` and `setRSVPDeadline`; the frontend test setup gains a no-op `ResizeObserver`, which Radix needs under jsdom.
+
 Decisions:
 
 - No group separator in the login code. Six characters need none, and the dash was paying for a display format, a formatting function and an input field that had to decide what to do with a typed one. Recorded in `specification/02-features.md`.
@@ -68,6 +78,15 @@ Decisions:
 - Contact names and numbers fixed and written into `labels.ts` (`contactPhoneNumber` + a new `contacts` list): Andreas Hell +43 650 9408100 (also the login fallback), Isabella Michelbacher +43 677 63668655. Frontend suite green.
 - `04-architecture`'s API sketch refreshed for the real F3/F4 surface, closing a spec-debt item in `TODO.md`.
 - Answered against the new stories, same session: soft cap stays 2 and the hint names a phone number; no error styling before the first save attempt; one countdown (wedding) with the deadline as a written-out date; hero is names + date only; IBAN is published on `/geschenke` with the semi-public consequence recorded; contact numbers set (`+43 650 9408100` in the login fallback, both on `/kontakt`); accessibility drops `axe-core` and screen readers, checklist stays inside `F11-01` — a separate `specification/08-accessibility.md` was considered and rejected, since `05-design` already holds the rules and a tick-mark table is progress.
+
+- **`internal/application` is split per use case**, done with the second one as planned. Parent package holds the shared `ErrNotFound`/`TranslateNotFound`; subpackages never import each other. `internal/application/doc.go`.
+- The deadline is checked twice on a save: `RSVP.EnsureWritable` before the body is read, so a closed form says so instead of listing field errors, and `RSVP.Save` again as the authority. Comment at both.
+- `PUT /api/rsvp` answers with the household re-read from the database rather than the values just written, so the response's timestamps are the stored ones (UTC, second precision) and the next GET cannot contradict it.
+- `members` carries no `required` rule: a household with no living members is a real state, and a body missing members it *does* have is the 409 mismatch, not a field error. `dto/rsvp.go`.
+- The bulk scope selector is **hidden for a household of one** — the single card already asks the same question — and its overwrite confirmation appears only when an existing answer would be replaced.
+- `RSVPForm` re-seeds its draft when the member set changes, which is what makes the `member_set_mismatch` reload show the new list; state adjusted during render rather than in an effect.
+- An unknown household on the admin RSVP page renders the message with a link back to the list rather than redirecting to it: a redirect swallows the reason. What the story required — never landing on the guest login — holds.
+- German help copy for every RSVP field written in `rsvpLabels` (`web/src/lib/labels.ts`) and **still to be proof-read**; noted in `TODO.md`.
 
 Time: 7h (tentative)
 Cost: Opus 5 — $44.38 (tentative)

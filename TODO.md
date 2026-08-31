@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-08-31 · Building. E0 (setup), F1 (login) and F5 (admin households & guests) are done; see [specification/features/README.md](specification/features/README.md).
+Status: as of 2026-08-31 · Building. E0 (setup), F1 (login), F5 (admin households & guests) and F3 (RSVP) are done; see [specification/features/README.md](specification/features/README.md).
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -40,7 +40,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [x] **Accessibility scope, 2026-08-31.** No automated checker (`axe-core` rejected — it cannot see targets, zoom, focus visibility or copy register) and no screen-reader pass; nobody in the guest list uses one. Manual checklist, kept **in `F11-01` itself** — a separate `specification/08-accessibility.md` was rejected the same day: the rules live in `05-design` and would be restated, and a table of tick marks is progress, which belongs in `features/README.md`.
 - [x] **One countdown, to the wedding**, 2026-08-31. The RSVP deadline is a written-out date beside the answer link, not a second counter. `F2-F02`.
 - [x] **Hero carries names and date only**; the venues get their own page. `F2-F02`, `F2-F04`.
-- [ ] **Help texts on every guest form field, behind a `?` popover** beside the label — inline help on every field would bloat the form and put an invisible length limit on the copy. Rule added to `05-design`'s form behaviour section on 2026-08-31, including the accessibility requirements. The F3/F4 stories were retrofitted the same day (`F3-F01`, `F3-F02`, `F3-F03`, `F4-F01`). Still to do: the actual German sentence per field — content, written when the forms are built.
+- [~] **Help texts on every guest form field, behind a `?` popover** beside the label — inline help on every field would bloat the form and put an invisible length limit on the copy. Rule added to `05-design`'s form behaviour section on 2026-08-31, including the accessibility requirements. The F3/F4 stories were retrofitted the same day (`F3-F01`, `F3-F02`, `F3-F03`, `F4-F01`). The F3 sentences were written with the form on 2026-08-31 (`rsvpLabels` in `web/src/lib/labels.ts`) and want a proof-read; F4's and F2's are still to write.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
 
 ### Answered against the F5 stories — 2026-08-31
@@ -58,7 +58,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 ### Raised in the 2026-08-31 code review
 
 - [ ] **Admin settings endpoint.** The admin login response deliberately carries no flags, but the admin needs to *flip* `rsvp_open`, `seating_published`, `gallery_visible` and `uploads_open`. That is a read/write endpoint (`GET`/`PATCH /api/admin/settings`) and wants a story in F6 — not a read-only copy smuggled into the login body.
-- [ ] **Split `internal/application` into `application/auth`, `application/rsvp`, …** once the second use case exists. It is what makes `auth.Bootstrap` possible instead of `application.Bootstrap`; doing it with one use case in the package buys nothing.
+- [x] **Split `internal/application` into `application/auth`, `application/households`, `application/exports`, `application/rsvp`** — done 2026-08-31 with F3-B02, the second use case. Each subpackage exposes one `UseCase` type; the parent package keeps only `ErrNotFound` and `TranslateNotFound`, which every use case needs and none may import from a sibling.
 - [ ] **`web.Dependencies` growth.** Added 2026-08-31 with config, database and auth. Every new use case is a field there and a line in `main`, never a new `NewRouter` parameter.
 - [x] **Dash dropped entirely, 2026-08-31.** Six characters need no grouping, and the separator was paying for a display format, a `FormatCode` function and an input field that had to decide what to do with a dash the guest typed. Codes are printed, exported and displayed as `ABC234`; input still strips dashes, because habit and word processors produce them.
 
@@ -106,7 +106,7 @@ Small things I know are loose, worth a pass before implementation:
 - [x] `06-privacy-security.md` is referenced from `03-data-model.md` and `04-architecture.md` — now exists.
 - [x] German UI label mapping for every English enum value — now in [05-design](specification/05-design.md), to be implemented as `web/src/lib/labels.ts`.
 - [x] The API sketch in [04-architecture](specification/04-architecture.md) was refreshed on 2026-08-31, once the F3/F4 stories fixed the real shapes: `PUT /api/rsvp` as a full replace, `POST /api/rsvp/members` taking a name, and the admin RSVP routes.
-- [ ] **Carried into F3, decided 2026-08-31 when `F3-B06` was agreed.** Write these into the F3 stories rather than rediscovering them:
+- [x] **Carried into F3, decided 2026-08-31 when `F3-B06` was agreed** — all five are in the built code as of 2026-08-31; kept here as the record of what was decided:
   - The RSVP form component takes its data and its save mutation as **props** and never fetches for itself, so the guest route and the admin route can hand it different sources. This constrains `F3-F01`–`F3-F04`.
   - One `application` use case takes a household id. The guest handler passes the session's household; the admin handler passes the path parameter. Ownership is checked in exactly one place either way.
   - **Deadline enforcement is an argument to that use case, not a rule inside it** (`F3-B04`). The admin path exists for the call that comes in late, so it must be able to write after `rsvp_deadline`.

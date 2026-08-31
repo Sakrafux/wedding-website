@@ -77,18 +77,18 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 
 **Gate 1 closes here: the RSVP field set is frozen.** Write the stories before building; every later field addition is a migration against live guest data.
 
-- [ ] `F3-B01` Domain: attendance scope gates catering, all invariants
-- [ ] `F3-B02` `GET /api/rsvp`
-- [ ] `F3-B03` `PUT /api/rsvp` with validation
-- [ ] `F3-B04` Deadline enforcement, server-side
-- [ ] `F3-B05` Audit logging for every RSVP mutation
-- [ ] `F3-F01` Form shell and household scope selector
-- [ ] `F3-F02` Member cards with scope-gated catering fields
-- [ ] `F3-F03` Transport seats and household note
-- [ ] `F3-F04` Save, confirmation, and summary
-- [ ] `F3-F05` Read-only rendering after the deadline
-- [ ] `F3-B06` `GET|PUT /api/admin/households/{id}/rsvp` — the same use case, addressed by id
-- [ ] `F3-F06` Admin RSVP page at `/admin/haushalte/{id}/rsvp`, reusing the guest form
+- [x] `F3-B01` Domain: attendance scope gates catering, all invariants
+- [x] `F3-B02` `GET /api/rsvp`
+- [x] `F3-B03` `PUT /api/rsvp` with validation
+- [x] `F3-B04` Deadline enforcement, server-side
+- [x] `F3-B05` Audit logging for every RSVP mutation
+- [x] `F3-F01` Form shell and household scope selector
+- [x] `F3-F02` Member cards with scope-gated catering fields
+- [x] `F3-F03` Transport seats and household note
+- [x] `F3-F04` Save, confirmation, and summary
+- [x] `F3-F05` Read-only rendering after the deadline
+- [x] `F3-B06` `GET|PUT /api/admin/households/{id}/rsvp` — the same use case, addressed by id
+- [x] `F3-F06` Admin RSVP page at `/admin/haushalte/{id}/rsvp`, reusing the guest form
 
 ## F4 — Plus-one · M2 · P0
 
