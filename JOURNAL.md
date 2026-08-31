@@ -104,8 +104,8 @@ Decisions:
 - An unknown household on the admin RSVP page renders the message with a link back to the list rather than redirecting to it: a redirect swallows the reason. What the story required — never landing on the guest login — holds.
 - German help copy for every RSVP field written in `rsvpLabels` (`web/src/lib/labels.ts`) and **still to be proof-read**; noted in `TODO.md`.
 
-Time: 8h
-Cost: Opus 5 — $73.21
+Time: 9h
+Cost: Opus 5 — $103.01
 
 ## 2026-08-30
 
