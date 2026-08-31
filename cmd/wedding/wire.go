@@ -37,19 +37,25 @@ import (
 // use it.
 func wire(config configuration.Config, database *configuration.Database, logger *slog.Logger) (web.Dependencies, *persistence.SessionStore) {
 	sessions := persistence.NewSessionStore(database)
+	householdStore := persistence.NewHouseholdStore(database)
+	guestStore := persistence.NewGuestStore(database)
+	auditStore := persistence.NewAuditStore(database)
 
 	auth := application.NewAuth(
 		sessions,
-		persistence.NewHouseholdStore(database),
+		householdStore,
 		persistence.NewSettingStore(database),
-		persistence.NewAuditStore(database),
+		auditStore,
 		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
 		logger,
 	)
 
+	households := application.NewHouseholds(householdStore, guestStore, sessions, auditStore, logger)
+
 	return web.Dependencies{
-		Config:   config,
-		Database: database,
-		Auth:     auth,
+		Config:     config,
+		Database:   database,
+		Auth:       auth,
+		Households: households,
 	}, sessions
 }

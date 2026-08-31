@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 )
@@ -32,4 +33,22 @@ func parseTimestamp(value string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("parsing timestamp %q: %w", value, err)
 	}
 	return parsed.UTC(), nil
+}
+
+// parseNullableTimestamp reads a nullable timestamp column, mapping SQL NULL to a
+// nil *time.Time.
+//
+// A pointer rather than a zero time, because "never happened" and "happened at the
+// zero instant" have to stay distinguishable: last_login_at being NULL is what puts
+// a household on the nudge list, and a zero time would read as a login in year one.
+func parseNullableTimestamp(value sql.NullString) (*time.Time, error) {
+	if !value.Valid {
+		return nil, nil
+	}
+
+	parsed, err := parseTimestamp(value.String)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
 }

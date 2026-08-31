@@ -24,4 +24,7 @@ type Dependencies struct {
 	// the router only through the use cases below.
 	Database *configuration.Database
 	Auth     *application.Auth
+	// Households is the admin guest list: households, their members, and login code
+	// reissue. Admin-only, and mounted only under /api/admin.
+	Households *application.Households
 }

@@ -9,8 +9,9 @@
 // builds ./cmd/wedding only, so the binary does not exist in the image; the whole
 // guard against running it in production is that it is not there.
 //
-// Households and codes are created for real elsewhere: F5-B01 for the admin CRUD
-// endpoints, F5-B03 for per-household code generation and regeneration.
+// Households and codes are created for real through the admin endpoints; this
+// command drives the same stores they do, so a seeded household is
+// indistinguishable from one an admin typed in.
 //
 // Usage:
 //
@@ -20,7 +21,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -34,12 +34,6 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 )
-
-// codeAttempts bounds the retry on a colliding login code. A collision needs two
-// of 32^6 codes to match, so anything above a couple of attempts is a symptom of
-// something else entirely — a broken generator, say — and looping forever would
-// hide it.
-const codeAttempts = 5
 
 // firstNames supplies member names, cycled. Deliberately not random: a seeded
 // household should look the same shape every run, and nothing here depends on the
@@ -97,6 +91,12 @@ func run(households, guests int, out io.Writer) error {
 	fmt.Fprintf(out, "Seeding %d household(s) with %d member(s) each into %s\n", households, guests, config.DatabasePath)
 	fmt.Fprintln(out, "DEVELOPMENT ONLY — the codes below are printed in plain text.")
 
+	// The same stores the admin endpoints use, so this command cannot drift into
+	// creating households the application would not: the login code, the origin and
+	// the defaults all come from one place.
+	householdStore := persistence.NewHouseholdStore(database)
+	guestStore := persistence.NewGuestStore(database)
+
 	existing, err := countHouseholds(ctx, database.Write)
 	if err != nil {
 		return err
@@ -107,11 +107,11 @@ func run(households, guests int, out io.Writer) error {
 		// second "Familie Testhaushalt 1" and leave two identical-looking rows.
 		name := fmt.Sprintf("Familie Testhaushalt %d", existing+int64(index))
 
-		id, code, err := insertHousehold(ctx, database.Write, name, guests)
+		household, err := insertHousehold(ctx, householdStore, guestStore, name, guests)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(out, "  #%d  %-28s  %s\n", id, name, code)
+		fmt.Fprintf(out, "  #%d  %-28s  %s\n", household.ID, household.DisplayName, household.Code)
 	}
 	return nil
 }
@@ -124,88 +124,43 @@ func countHouseholds(ctx context.Context, writePool *sqlx.DB) (int64, error) {
 	return count, nil
 }
 
-// insertHousehold inserts one household and its adult members in a single
-// transaction, returning the new id and the stored (undashed) code.
+// insertHousehold inserts one household and its adult members through the stores.
 //
-// The SQL sits in this command rather than in persistence on purpose: F5-B01 gives
-// HouseholdStore a create method for the admin endpoints, and this function calls
-// that instead once it exists. Adding it early would mean guessing the signature
-// that story needs.
-//
-// One transaction per household, not one for the whole run: an interrupted seed
-// then leaves whole households behind rather than a household with half its
-// members, which is a state no later code is written to expect.
-func insertHousehold(ctx context.Context, writePool *sqlx.DB, name string, guests int) (int64, string, error) {
-	const insertHouseholdRow = `INSERT INTO household (display_name, code) VALUES (?, ?)`
-	const insertGuestRow = `INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (?, ?, ?, 'adult', 'seeded')`
+// Not transactional across the two: the stores write a row at a time, which is what
+// the admin endpoints need, and an interrupted seed therefore leaves a household with
+// fewer members than asked for. For a dev tool that is a re-run, whereas a
+// transactional creation path used by nothing else would be a second way to create a
+// household — and the one that quietly falls behind.
+func insertHousehold(
+	ctx context.Context,
+	households *persistence.HouseholdStore,
+	guests *persistence.GuestStore,
+	name string,
+	members int,
+) (domain.Household, error) {
+	household, err := households.Create(ctx, domain.Household{DisplayName: name})
+	if err != nil {
+		return domain.Household{}, fmt.Errorf("inserting household %q: %w", name, err)
+	}
 
 	// The household surname doubles as the members' last name, number included:
 	// "Anna Testhaushalt 3" says which household a seeded person belongs to in every
 	// list that shows people without their household.
 	lastName := strings.TrimPrefix(name, "Familie ")
 
-	for attempt := 1; ; attempt++ {
-		code := domain.GenerateCode()
-
-		id, err := insertInTransaction(ctx, writePool, func(tx *sqlx.Tx) (int64, error) {
-			result, err := tx.ExecContext(ctx, insertHouseholdRow, name, code)
-			if err != nil {
-				return 0, err
-			}
-			householdID, err := result.LastInsertId()
-			if err != nil {
-				return 0, err
-			}
-
-			for member := 0; member < guests; member++ {
-				firstName := firstNames[member%len(firstNames)]
-				if _, err := tx.ExecContext(ctx, insertGuestRow, householdID, firstName, lastName); err != nil {
-					return 0, err
-				}
-			}
-			return householdID, nil
+	for member := range members {
+		_, err := guests.Create(ctx, domain.Guest{
+			HouseholdID: household.ID,
+			FirstName:   firstNames[member%len(firstNames)],
+			LastName:    lastName,
+			Kind:        domain.GuestKindAdult,
+			Origin:      domain.GuestOriginSeeded,
+			SeatingNeed: domain.SeatingNeedNormal,
 		})
-
-		if err == nil {
-			return id, code, nil
-		}
-		// The UNIQUE index on household.code is the only authority on code
-		// uniqueness — the generator never asks the database for a free code first,
-		// because the answer would be stale by the time it inserted. A rejected
-		// insert therefore means "try another code", not "fail".
-		if !isUniqueViolation(err) {
-			return 0, "", fmt.Errorf("inserting household %q: %w", name, err)
-		}
-		if attempt == codeAttempts {
-			return 0, "", fmt.Errorf("inserting household %q: %d colliding codes in a row: %w", name, codeAttempts, err)
+		if err != nil {
+			return domain.Household{}, fmt.Errorf("inserting a member of %q: %w", name, err)
 		}
 	}
-}
 
-// insertInTransaction runs body in a transaction, rolling back on any error.
-func insertInTransaction(ctx context.Context, writePool *sqlx.DB, body func(*sqlx.Tx) (int64, error)) (int64, error) {
-	tx, err := writePool.BeginTxx(ctx, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := body(tx)
-	if err != nil {
-		// Rollback error is joined rather than dropped: on a WAL database a failed
-		// rollback means the connection is in a state worth seeing.
-		return 0, errors.Join(err, tx.Rollback())
-	}
-	return id, tx.Commit()
-}
-
-// isUniqueViolation reports whether err is SQLite rejecting a duplicate key.
-//
-// Matched on the message rather than on a driver error type: modernc.org/sqlite
-// exposes its codes only through its own error struct, and importing the driver
-// package here to type-assert would couple this command to it for a single string
-// comparison. A dev tool retrying a code is the cheapest possible caller of this
-// distinction; if anything in the request path ever needs it, the mapping belongs
-// in persistence next to ErrNotFound instead.
-func isUniqueViolation(err error) bool {
-	return strings.Contains(err.Error(), "UNIQUE constraint failed")
+	return household, nil
 }

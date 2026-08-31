@@ -22,6 +22,7 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 
 	system := handler.NewSystem(dependencies.Database)
 	authHandler := handler.NewAuth(dependencies.Auth, config.SessionCookieSecure)
+	adminHouseholds := handler.NewAdminHouseholds(dependencies.Households)
 	sessions := middleware.NewSessionGate(dependencies.Auth, config.SessionCookieSecure)
 
 	// One limiter per endpoint, not one shared: a guest fumbling their code must
@@ -66,18 +67,36 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 		// application rests, budget above all, and a subtree that is created at the
 		// same moment as the first endpoint under it is a subtree somebody can
 		// create without one. Anything under /api/admin is therefore refused to a
-		// household session already; F5, F6 and F8 add the routes behind it.
+		// household session already; F6 and F8 add further routes behind it.
 		api.Route("/admin", func(admin chi.Router) {
 			admin.Use(middleware.RequireAdmin)
 
 			admin.Get("/me", authHandler.AdminMe)
+
+			admin.Route("/households", func(households chi.Router) {
+				households.Get("/", adminHouseholds.List)
+				households.Post("/", adminHouseholds.Create)
+				households.Get("/{id}", adminHouseholds.Show)
+				households.Patch("/{id}", adminHouseholds.Update)
+				households.Delete("/{id}", adminHouseholds.Delete)
+				households.Post("/{id}/code", adminHouseholds.ReissueCode)
+				households.Post("/{id}/guests", adminHouseholds.AddGuest)
+			})
+
+			// Guests are addressed by their own id rather than under their household:
+			// the admin owns every guest, and a household id in the path would be a
+			// second identifier that nothing checks and the frontend carries for
+			// nothing.
+			admin.Patch("/guests/{id}", adminHouseholds.UpdateGuest)
+			admin.Delete("/guests/{id}", adminHouseholds.RemoveGuest)
 
 			// The catch-all is load-bearing, and removing it would be silent: chi
 			// builds a sub-router's middleware chain only when a route is registered
 			// on it, so a subtree that lost its last route would serve its NotFound
 			// handler directly — middleware and all — and answer 404 to everyone
 			// instead of 401 to strangers. It also keeps an unknown /api/admin path
-			// from telling a stranger which admin endpoints exist.
+			// from telling a stranger which admin endpoints exist. It stays even now
+			// that real routes exist above it: the last one could be removed again.
 			admin.Handle("/*", http.HandlerFunc(system.APINotFound))
 		})
 

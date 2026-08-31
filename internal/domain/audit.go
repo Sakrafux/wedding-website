@@ -30,10 +30,11 @@ const (
 // Each value is spelled exactly like the SQLite table it names, so that a query
 // typed by hand months from now (`WHERE entity = 'household' AND entity_id = 12`)
 // needs no lookup table to read and hits the (entity, entity_id) index built for it.
-// The rule matters when F5 adds 'guest' and F6 'budget_item': the name of the table
-// is the name of the entity, always.
+// The rule matters when F6 adds 'budget_item': the name of the table is the name of
+// the entity, always.
 const (
 	AuditEntityHousehold = "household"
+	AuditEntityGuest     = "guest"
 	AuditEntityAdmin     = "admin"
 )
 
@@ -62,7 +63,7 @@ const AuditEntityNone int64 = 0
 //	household logs in     household / 12    household / 12
 //	admin logs in         admin / nil       admin / 0
 //	failed login          system / nil      household or admin / 0   (which door was tried)
-//	admin edits a guest   admin / nil       guest / 47               (F5)
+//	admin edits a guest   admin / nil       guest / 47
 //
 // Before and After hold the changed fields only, never whole rows: the log is a
 // history, not a second copy of the database, and a full snapshot of a guest row
@@ -137,4 +138,31 @@ func NewLoginFailureEntry(entity string, at time.Time, userAgent, ip string) Aud
 // would turn this table into the thing the login code is protected from.
 func connectionDetails(userAgent, ip string) map[string]any {
 	return map[string]any{"ip": ip, "user_agent": userAgent}
+}
+
+// NewAdminChangeEntry records the admin creating, updating or deleting a row.
+//
+// One constructor for all three actions and both entities, because the shape is the
+// same and the only thing that differs is which of Before and After is populated —
+// which Changes already decides. A per-endpoint constructor would be six functions
+// that must not drift.
+//
+// The actor has no id: there is exactly one admin and no row anywhere describing
+// them, so ActorType is the whole answer to who did this.
+//
+// **Never pass a login code in changes.** Neither the old value nor the new one:
+// audit_log is append-only and nobody ever deletes from it, so a code recorded here
+// would turn the table into a second, permanent copy of the key list. A code change
+// is recorded as the fact that it happened — see the code_changed flag the
+// regeneration path passes.
+func NewAdminChangeEntry(entity string, entityID int64, action AuditAction, at time.Time, changes Changes) AuditEntry {
+	return AuditEntry{
+		At:        at,
+		ActorType: ActorTypeAdmin,
+		Entity:    entity,
+		EntityID:  entityID,
+		Action:    action,
+		Before:    changes.Before,
+		After:     changes.After,
+	}
 }

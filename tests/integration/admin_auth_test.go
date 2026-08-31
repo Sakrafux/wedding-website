@@ -209,10 +209,26 @@ func adminRoutes(t *testing.T, app *testApp) []registeredRoute {
 	t.Helper()
 
 	var routes []registeredRoute
-	require.NoError(t, chi.Walk(app.Router, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
-		if !strings.HasPrefix(route, "/api/admin") {
-			return nil
+	for _, route := range allRoutes(t, app) {
+		if strings.HasPrefix(route.path, "/api/admin") {
+			routes = append(routes, route)
 		}
+	}
+
+	return routes
+}
+
+// allRoutes walks the real router for every registered route.
+//
+// Path parameters are left as their patterns and wildcards are replaced with a
+// concrete segment, so every entry can actually be requested: `{id}` is not a number,
+// which is a 404 from the handler, and the gate that these suites are about runs long
+// before routing resolves to one.
+func allRoutes(t *testing.T, app *testApp) []registeredRoute {
+	t.Helper()
+
+	var routes []registeredRoute
+	require.NoError(t, chi.Walk(app.Router, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		routes = append(routes, registeredRoute{method: method, path: strings.ReplaceAll(route, "/*", "/budget")})
 		return nil
 	}))

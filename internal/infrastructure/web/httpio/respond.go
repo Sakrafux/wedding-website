@@ -44,10 +44,9 @@ var (
 // request body so the frontend can render each message next to its own control.
 //
 // It is a web type, not a domain one: the field names it carries are the shape of a
-// request body, which the domain neither knows nor should. DecodeJSON already
-// reports a body that is not usable JSON through it; mapping validator/v10's
-// per-field failures into it arrives with the first endpoint whose fields have
-// rules of their own (F3-B03).
+// request body, which the domain neither knows nor should. DecodeJSON reports a body
+// that is not usable JSON through it with no fields at all; Validate in validate.go
+// fills the fields in from validator/v10.
 type ValidationError struct {
 	Fields map[string]string
 }

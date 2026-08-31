@@ -65,9 +65,9 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 
 ## F5 — Admin: households & guests · M1 · P0
 
-- [ ] `F5-B01` Household store and CRUD endpoints
-- [ ] `F5-B02` Guest store and CRUD endpoints
-- [ ] `F5-B03` Code generation and regeneration per household
+- [x] `F5-B01` Household store and CRUD endpoints
+- [x] `F5-B02` Guest store and CRUD endpoints
+- [x] `F5-B03` Code generation and regeneration per household
 - [ ] `F5-B04` `codes.csv` and `guests.csv` exports
 - [ ] `F5-F01` Household list with last-login column
 - [ ] `F5-F02` Household detail and member editing

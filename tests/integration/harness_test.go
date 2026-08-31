@@ -64,6 +64,7 @@ type testAppSpec struct {
 	registerExtraRoutes func(chi.Router)
 	cookieSecure        bool
 	trustedProxies      []netip.Prefix
+	generateCode        func() string
 }
 
 // The admin credentials every test app is configured with. Constants rather than
@@ -81,6 +82,14 @@ const (
 // chain; that is the point, since the middleware is what is under test.
 func withExtraRoutes(register func(chi.Router)) testAppOption {
 	return func(spec *testAppSpec) { spec.registerExtraRoutes = register }
+}
+
+// withCodeGenerator replaces the login-code generator, for the collision-retry
+// tests. With 32^6 codes and a handful in use, the retry path cannot be reached any
+// other way — and an untested retry is one that may not work when it is finally
+// needed.
+func withCodeGenerator(generate func() string) testAppOption {
+	return func(spec *testAppSpec) { spec.generateCode = generate }
 }
 
 // withSecureCookies turns SESSION_COOKIE_SECURE on, as production has it.
@@ -143,19 +152,27 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	// Wired exactly as main wires it, so the tests exercise the real chain of
 	// handler, use case and store rather than a shorter one assembled for them.
 	sessions := persistence.NewSessionStore(database)
+	householdStore := persistence.NewHouseholdStore(database)
+	if spec.generateCode != nil {
+		householdStore = householdStore.WithCodeGenerator(spec.generateCode)
+	}
+	guestStore := persistence.NewGuestStore(database)
+	auditStore := persistence.NewAuditStore(database)
+
 	auth := application.NewAuth(
 		sessions,
-		persistence.NewHouseholdStore(database),
+		householdStore,
 		persistence.NewSettingStore(database),
-		persistence.NewAuditStore(database),
+		auditStore,
 		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
 		discardingLogger().Logger,
 	)
 
 	router := web.NewRouter(discardingLogger(), web.Dependencies{
-		Config:   config,
-		Database: database,
-		Auth:     auth,
+		Config:     config,
+		Database:   database,
+		Auth:       auth,
+		Households: application.NewHouseholds(householdStore, guestStore, sessions, auditStore, discardingLogger().Logger),
 	})
 	if spec.registerExtraRoutes != nil {
 		spec.registerExtraRoutes(router)
@@ -175,6 +192,34 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 		DatabasePath: databasePath,
 		Client:       &http.Client{Jar: jar},
 	}
+}
+
+// onANewDevice returns the same application reached through a fresh cookie jar.
+//
+// It is what lets one test hold two sessions at once — two households logged in on
+// two phones, or an admin alongside a household. A single jar cannot: a login revokes
+// whatever session the request already carried, which is deliberate (one cookie, one
+// subject) and would otherwise quietly undo the setup of any such test.
+func (app *testApp) onANewDevice() *testApp {
+	app.t.Helper()
+
+	jar, err := cookiejar.New(nil)
+	require.NoError(app.t, err)
+
+	device := *app
+	device.Client = &http.Client{Jar: jar}
+	return &device
+}
+
+// countHouseholdSessions is how the revocation tests assert on the table rather than
+// on what the endpoint said it did.
+func (app *testApp) countHouseholdSessions(householdID int64) int {
+	app.t.Helper()
+
+	var count int
+	require.NoError(app.t, app.Database.Read.Get(&count,
+		`SELECT COUNT(*) FROM session WHERE subject_type = 'household' AND subject_id = ?`, householdID))
+	return count
 }
 
 // discardingLogger keeps a passing run readable. A failing assertion says more than a
@@ -217,6 +262,20 @@ func (app *testApp) post(path string) *testResponse {
 	app.t.Helper()
 
 	return app.request(http.MethodPost, path, nil)
+}
+
+// patchJSON and deleteRequest exist for the admin CRUD routes; both go through
+// request, so a body is encoded and a session cookie carried exactly as for a POST.
+func (app *testApp) patchJSON(path string, payload any) *testResponse {
+	app.t.Helper()
+
+	return app.request(http.MethodPatch, path, payload)
+}
+
+func (app *testApp) deleteRequest(path string) *testResponse {
+	app.t.Helper()
+
+	return app.request(http.MethodDelete, path, nil)
 }
 
 func (app *testApp) request(method, path string, payload any) *testResponse {
@@ -305,6 +364,28 @@ func (app *testApp) logInAsAdmin() *testResponse {
 	return app.postJSON("/api/auth/admin/login", map[string]string{"user": testAdminUser, "password": testAdminPassword})
 }
 
+// householdStore and guestStore are the production stores over the test database,
+// for asserting on what an endpoint actually wrote rather than on what it reported
+// having written.
+func (app *testApp) householdStore() *persistence.HouseholdStore {
+	return persistence.NewHouseholdStore(app.Database)
+}
+
+func (app *testApp) guestStore() *persistence.GuestStore {
+	return persistence.NewGuestStore(app.Database)
+}
+
+// storedCode reads a household's login code straight from the table. Used wherever a
+// test has to know whether a code changed, since no response a test asserts on is
+// allowed to be trusted for that.
+func (app *testApp) storedCode(householdID int64) string {
+	app.t.Helper()
+
+	var code string
+	require.NoError(app.t, app.Database.Read.Get(&code, `SELECT code FROM household WHERE id = ?`, householdID))
+	return code
+}
+
 // sessionStore is the production store over the test database, for the tests that
 // are about the store itself and for seeding a session no endpoint can create yet.
 func (app *testApp) sessionStore() *persistence.SessionStore {
@@ -337,6 +418,17 @@ func (app *testApp) auditRows() []auditRow {
 	require.NoError(app.t, app.Database.Read.Select(&rows,
 		`SELECT at, actor_type, actor_id, entity, entity_id, action, before, after FROM audit_log ORDER BY id`))
 	return rows
+}
+
+// auditPayloads is the whole log's before/after JSON concatenated, for asserting that
+// a value — a login code, a password — appears nowhere in it under any key.
+func (app *testApp) auditPayloads() string {
+	app.t.Helper()
+
+	var payloads string
+	require.NoError(app.t, app.Database.Read.Get(&payloads,
+		`SELECT COALESCE(GROUP_CONCAT(COALESCE(before, '') || '|' || COALESCE(after, '')), '') FROM audit_log`))
+	return payloads
 }
 
 // auditRow mirrors the audit_log columns. Kept in the test package rather than

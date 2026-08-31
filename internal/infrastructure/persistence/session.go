@@ -122,6 +122,29 @@ func (store *SessionStore) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+// DeleteForHousehold revokes every session of one household and reports how many
+// there were.
+//
+// Scoped to the household on purpose, and asserted as such by a test: reissuing one
+// household's login code must not sign the other seventy-nine out. The count is
+// returned because the admin UI says what just happened ("ein Gerät wurde
+// abgemeldet") rather than leaving the admin to infer it.
+func (store *SessionStore) DeleteForHousehold(ctx context.Context, householdID int64) (int64, error) {
+	const deleteHouseholdSessions = `DELETE FROM session WHERE subject_type = ? AND subject_id = ?`
+
+	result, err := store.database.Write.ExecContext(ctx, deleteHouseholdSessions,
+		string(domain.SubjectTypeHousehold), householdID)
+	if err != nil {
+		return 0, fmt.Errorf("deleting household sessions: %w", err)
+	}
+
+	revoked, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("deleting household sessions: %w", err)
+	}
+	return revoked, nil
+}
+
 // PurgeExpired deletes every session past its expiry and reports how many went.
 //
 // The comparison is a string comparison, which is correct only because every
