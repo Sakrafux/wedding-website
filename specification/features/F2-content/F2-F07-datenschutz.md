@@ -10,9 +10,9 @@ As a guest, I want a short page in plain German saying what you store about me, 
 
 **In:**
 
-- `/datenschutz`, reachable **without logging in**.
+- `/datenschutz`, behind the household login with the other content pages.
 - Plain-language sections: what we store, why, who sees it, how long, and how to reach us to change or delete it.
-- Links to it from `/mehr` and from the login screen.
+- The link to it from `/mehr`.
 
 **Out:**
 
@@ -21,8 +21,8 @@ As a guest, I want a short page in plain German saying what you store about me, 
 
 ## Instructions
 
-1. The route lives **outside** the `/_guest` layout, next to the login screen, because [06-privacy-security](../../06-privacy-security.md) requires it to be readable without logging in. A privacy notice you have to authenticate to read is not a notice.
-2. Add the link to the login screen too, small, below the form. Somebody who has not typed their code yet is exactly the person who might want to know what happens to it.
+1. The route lives **inside** `/_guest`, with the other content pages. It was built outside the layout first, because this story and [06-privacy-security](../../06-privacy-security.md) both called for a page readable without logging in — "a privacy notice you have to authenticate to read is not a notice". **Reversed on 2026-08-31**, with the page in front of us: nobody without a code has any data described here, the guests it is about are logged in at the moment they give us that data, and the page was the only one in the product rendering without the navigation, which read as a different site rather than as a notice. The spec sentence was changed to match.
+2. No link from the login screen. There is nothing there for somebody who has not typed a code, and the login screen already names a phone number for anybody who wants to ask.
 3. Content is derived from [06-privacy-security](../../06-privacy-security.md), not invented here: the "What we hold" table, the retention rows, and the informal-rights paragraph. It is a translation of that document into guest German, and when the two disagree, the spec is what changes first.
 4. Same register as the rest of the site: informal "du", short sentences, no legalese. [06-privacy-security](../../06-privacy-security.md) says so outright — a wall of boilerplate here would be worse than nothing, because nobody reads it and it makes the site feel like a business.
 5. Say the things that are actually true and unusual, and say them plainly: everything runs on our own server, there is no third-party service involved, nothing is public or searchable, and the data is deleted after the wedding. That is a stronger statement than any list of legal bases, and it happens to be the selling point.
@@ -34,12 +34,13 @@ As a guest, I want a short page in plain German saying what you store about me, 
 
 ## Test plan
 
-- [ ] Component: `renderApp("/datenschutz")` renders the page **without** a session, and the guard does not redirect to the login screen.
-- [ ] Component: the login screen links to it, and so does `/mehr`.
+- [ ] Component: `renderApp("/datenschutz")` renders the page with the guest navigation around it.
+- [ ] Component: a visit without a session is sent to the login screen, like every other guest route.
+- [ ] Component: `/mehr` links to it.
 - [ ] Component: the page names allergies, children's ages, and the retention period.
 - [ ] Accessibility: one `<h1>`, headings in order, prose at the capped measure, and the contact link's accessible name says where it goes.
 
 ## Done when
 
-- [ ] A guest who has not logged in can read what we store about them and how to have it removed.
+- [ ] A logged-in guest can read what we store about them and how to have it removed, without leaving the site's navigation.
 - [ ] Checkbox ticked in `README.md`.

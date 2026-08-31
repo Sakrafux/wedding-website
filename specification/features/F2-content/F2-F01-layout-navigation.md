@@ -15,7 +15,7 @@ As a guest, I want the same visible navigation on every page, so that I can find
 - A "Mehr" page at `/mehr` for the overflow entries.
 - The persistent RSVP entry point, which changes wording once the household has answered.
 - Nav entries gated by the flags from `me` (`seating_published`, `gallery_visible`).
-- The German guest URLs the content stories then fill: `/start`, `/ablauf`, `/location`, `/dresscode`, `/geschenke`, `/faq`, `/kontakt`, `/mehr`, and the public `/datenschutz`.
+- The German guest URLs the content stories then fill: `/start`, `/ablauf`, `/location`, `/dresscode`, `/geschenke`, `/faq`, `/kontakt`, `/mehr`, `/datenschutz`.
 
 **Out:**
 
@@ -25,7 +25,7 @@ As a guest, I want the same visible navigation on every page, so that I can find
 
 ## Instructions
 
-1. The chrome lives in the `/_guest` layout (`web/src/routes/_guest.tsx`), **not** in `__root.tsx`. The root also renders the login screen, the admin area and `/datenschutz`, and a nav bar offering "Ablauf" to somebody who has not logged in yet is both wrong and a small leak of what exists behind the door.
+1. The chrome lives inside the `/_guest` layout, **not** in `__root.tsx`. The root also renders the login screen and the admin area, and a nav bar offering "Ablauf" to somebody who has not logged in yet is both wrong and a small leak of what exists behind the door. As built it is a second pathless layout, `_guest/_chrome`: `/willkommen` is under `/_guest` and outside it, because the confirmation screen must not offer links that redirect straight back to itself.
 2. `web/src/routes/__root.tsx` carries two comments naming this story — one on the route doc comment, one beside the skip link. Both must be updated when this ships: the skip link stays where it is and keeps its reason, but it now skips past navigation that exists. A comment describing work that is finished is a stale comment, and nothing else will prompt anybody to look at it.
 3. Mobile is a fixed bottom bar, per [05-design](../../05-design.md): 4–5 items, **icon plus visible German label**, never icon-only. Rejected again here, not reopened: a hamburger hides exactly the links an unconfident guest is hunting for.
 4. The five bottom-bar entries are Start, Ablauf, Location, Antwort (the RSVP route `/zusagen`, owned by `F3-F01`), Mehr. Everything else lives on `/mehr`. Antwort sits in the bar rather than on the overflow page because it is the one thing we actually need the guest to do.
@@ -46,7 +46,7 @@ As a guest, I want the same visible navigation on every page, so that I can find
 - [ ] Component: tapping an entry navigates, and the target entry carries `aria-current="page"`.
 - [ ] Component: the RSVP entry reads the "noch nicht geantwortet" wording before submission and "Antwort ändern" after it.
 - [ ] Component: with `seating_published: false` and `gallery_visible: false` the Sitzplan and Galerie entries are absent from `/mehr` — asserted by their absence, so a later change that renders them disabled fails here.
-- [ ] Component: `/mehr` links to Datenschutz, and that link still resolves when logged out.
+- [ ] Component: `/mehr` links to Datenschutz. (`/datenschutz` moved behind the login on 2026-08-31 — see `F2-F07`.)
 - [ ] Component: the login screen and the admin shell render **no** guest nav.
 - [ ] Accessibility: the nav is a `<nav>` with an accessible name, the skip link still lands on `#main`, and every entry is reachable and operable by keyboard with a visible focus ring.
 

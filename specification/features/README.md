@@ -92,23 +92,23 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 
 ## F4 — Plus-one · M2 · P0
 
-- [ ] `F4-B01` Domain: the plus-one rule, deletion rules, `guest_added` origin
-- [ ] `F4-B02` `POST /api/rsvp/members` — one adult, single-person households only
-- [ ] `F4-B03` `DELETE /api/rsvp/members/{id}`
-- [ ] `F4-F01` Add-plus-one sheet, and the hint for everyone else
-- [ ] `F4-F02` Remove member, pre-deadline only
+- [x] `F4-B01` Domain: the plus-one rule, deletion rules, `guest_added` origin
+- [x] `F4-B02` `POST /api/rsvp/members` — one adult, single-person households only
+- [x] `F4-B03` `DELETE /api/rsvp/members/{id}`
+- [x] `F4-F01` Add-plus-one sheet, and the hint for everyone else
+- [x] `F4-F02` Remove member, pre-deadline only
 
 ## F2 — Informational content · M3 · P0
 
 Frontend only — content is hardcoded in components.
 
-- [ ] `F2-F01` Layout, navigation, bottom bar
-- [ ] `F2-F02` Start: hero, greeting, countdown
-- [ ] `F2-F03` Ablauf
-- [ ] `F2-F04` Location, Anreise & Übernachtung
-- [ ] `F2-F05` Dresscode, Geschenke
-- [ ] `F2-F06` FAQ, Kontakt
-- [ ] `F2-F07` Datenschutz
+- [x] `F2-F01` Layout, navigation, bottom bar
+- [x] `F2-F02` Start: hero, greeting, countdown
+- [x] `F2-F03` Ablauf
+- [ ] `F2-F04` Location, Anreise & Übernachtung — page, address block and section anchors built; **the venue facts are still open** (TODO.md), and the story refuses a placeholder Location page because it blocks send-out
+- [x] `F2-F05` Dresscode, Geschenke
+- [x] `F2-F06` FAQ, Kontakt
+- [x] `F2-F07` Datenschutz
 
 ## F11 — Cross-cutting quality · M3 · P1
 

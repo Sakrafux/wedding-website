@@ -55,7 +55,23 @@ Done:
   - `F3-F06` — `/admin/haushalte/{id}/rsvp` renders the *same* `RSVPForm` with the admin query and mutation, `allowEditingAfterDeadline` and `dense`. The household detail page's read-only RSVP block is replaced by a link, resolving the `F3-F06` forward references in the route, `labels.ts` and its test.
   - 21 domain unit tests, 30 integration tests (`rsvp_test.go`, `rsvp_deadline_test.go`, `rsvp_audit_test.go`, `admin_rsvp_test.go`), 28 component tests. Harness gains `putJSON` and `setRSVPDeadline`; the frontend test setup gains a no-op `ResizeObserver`, which Radix needs under jsdom.
 
+- **F4 — Plus-one, built end to end.** All five stories ticked.
+  - `F4-B01` — new `domain/addition.go`: `CanHouseholdAddPlusOne` (exactly one living member), `CanHouseholdRemove` (guest-added only), `NewPlusOne`, and the sentinels behind the new codes `plus_one_not_allowed` and `cannot_remove_member`. Migration `0003` deletes the `default_addition_limit` row; `Settings.DefaultAdditionLimit`, its parser and `settingInt` are gone.
+  - `F4-B02`/`F4-B03` — `POST /api/rsvp/members` (one field, the name) and `DELETE /api/rsvp/members/{id}`, both behind the F3-B04 deadline option and audited as `household`. `rsvp.UseCase` gains `AddPlusOne`/`RemoveMember` and the guest store; `GuestStore.CreateIfHouseholdAllows` checks the rule *inside* the write transaction, with the rule passed in as a function so the store still holds no business rules. `inTransaction` moved to `persistence/transaction.go`, shared by both stores.
+  - `can_add_plus_one` added to the `GET|PUT /api/rsvp` body.
+  - `F4-F01`/`F4-F02` — `components/rsvp/{AddPlusOne,RemoveMemberButton}.tsx` and a new `ui/dialog.tsx` (a sheet on a phone, a dialog above `sm`). The form's member-set re-seed became `reseedDraft`, which keeps the answers already typed: adding a companion changes the member set, and a household that lost a half-filled form to it would not trust the next attempt.
+  - 7 domain unit tests, 13 integration tests (`rsvp_members_test.go`), 12 component tests (`plus-one.test.tsx`). Frontend test setup gains a no-op `Element.prototype.scrollIntoView`.
+- **F2 — Informational content, built.** Six of seven stories ticked; `F2-F04` deliberately left open — see Decisions.
+  - `F2-F01` — guest chrome in a second pathless layout `_guest/_chrome`: bottom bar on a phone, top nav from `sm`, one entry list in `components/layout/guestNavigation.ts`. `/willkommen` stays outside it. `<main id="main">` moved out of `__root.tsx` into each layout and standalone page, so the skip link lands past the nav. Every guest route moved under `src/routes/_guest/_chrome/`.
+  - `F2-F02` — `/start`: hero (placeholder photo checked in at `src/assets/hero.{jpg,webp}`, `alt=""`, not lazy), greeting from `display_name`, days-only countdown against local midnight with its three states, one call to action. `lib/wedding.ts` is now the only place the date is written; `rsvpLabels` and `householdLabels` read it.
+  - `F2-F03`–`F2-F07` — `/ablauf`, `/location`, `/dresscode`, `/geschenke`, `/faq`, `/kontakt`, `/mehr` and the unauthenticated `/datenschutz`, with `components/layout/InfoSection.tsx` as the shared page shape. Datenschutz is written from `06-privacy-security` in guest German. The Ablauf and Location content, the dress code, the gift wording and the IBAN are placeholders, marked as such in `labels.ts` and tracked in `TODO.md`.
+  - 27 component tests (`content.test.tsx`). `shellLabels.startHeading`/`startIntro` deleted; the admin landing page got its own string.
+  - Follow-up: **`/datenschutz` moved behind the login**, into `_guest/_chrome` with the other content pages, and the link from the login screen removed. It was outside the guest layout because `06-privacy-security` and `F2-F07` both asked for a page readable without a session; reversed once the page existed — nobody without a code has data described on it, and the only page in the product rendering without navigation read as a different site. Both documents updated, reasoning recorded in each.
+
 Decisions:
+- **F2-F04 is not ticked.** The page, the address block, the anchors and the transfer copy are built; the venue facts are not decided, and the story refuses a placeholder Location page because it blocks send-out. The checkbox says so in `features/README.md`.
+- **Adding a member no longer resets the form draft.** `reseedDraft` keeps every answer already typed and only follows the server's member list — recorded in `web/src/components/rsvp/state.ts`.
+- **Content placeholders over invented facts**: schedule entries ship without times, the gift page hides the IBAN block until the account is real. Both say so on screen in German.
 
 - No group separator in the login code. Six characters need none, and the dash was paying for a display format, a formatting function and an input field that had to decide what to do with a typed one. Recorded in `specification/02-features.md`.
 - Codes are generated, never fixed — reasons in the story's Scope.
@@ -89,7 +105,7 @@ Decisions:
 - German help copy for every RSVP field written in `rsvpLabels` (`web/src/lib/labels.ts`) and **still to be proof-read**; noted in `TODO.md`.
 
 Time: 8h
-Cost: Opus 5 — $73.21 (tentative)
+Cost: Opus 5 — $73.21
 
 ## 2026-08-30
 
