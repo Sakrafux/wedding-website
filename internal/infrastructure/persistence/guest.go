@@ -21,9 +21,14 @@ func NewGuestStore(database *configuration.Database) *GuestStore {
 	return &GuestStore{database: database}
 }
 
-// guestColumns is shared by every read of a guest. The RSVP answer columns are
-// absent because F5 neither reads nor writes them; F3 adds its own projection.
-const guestColumns = `id, household_id, name, kind, age, origin, seating_need, dietary_note`
+// guestColumns is shared by every read of a guest, RSVP answers included.
+//
+// One projection rather than one per epic, for the same reason as householdColumns:
+// a Guest with an empty Attending because of *which query loaded it* is a value no
+// caller can reason about, and "is this person coming" is asked from F6, F7 and F8
+// alike.
+const guestColumns = `id, household_id, name, kind, age, origin, seating_need, dietary_note,
+	attending, meal_choice, portion, midnight_snack`
 
 // FindByID returns the guest with this id, or ErrNotFound. A soft-deleted guest is
 // not found: they are still in the table so the audit trail explains a headcount,
@@ -111,22 +116,38 @@ type guestRow struct {
 	Origin      string        `db:"origin"`
 	SeatingNeed string        `db:"seating_need"`
 	DietaryNote string        `db:"dietary_note"`
+	// Attending and MealChoice are nullable: NULL attending means the household has
+	// not answered for this person, which is a state, not a missing value.
+	Attending     sql.NullString `db:"attending"`
+	MealChoice    sql.NullString `db:"meal_choice"`
+	Portion       string         `db:"portion"`
+	MidnightSnack bool           `db:"midnight_snack"`
 }
 
 func (row guestRow) toDomain() domain.Guest {
 	guest := domain.Guest{
-		ID:          row.ID,
-		HouseholdID: row.HouseholdID,
-		Name:        row.Name,
-		Kind:        domain.GuestKind(row.Kind),
-		Origin:      domain.GuestOrigin(row.Origin),
-		SeatingNeed: domain.SeatingNeed(row.SeatingNeed),
-		DietaryNote: row.DietaryNote,
+		ID:            row.ID,
+		HouseholdID:   row.HouseholdID,
+		Name:          row.Name,
+		Kind:          domain.GuestKind(row.Kind),
+		Origin:        domain.GuestOrigin(row.Origin),
+		SeatingNeed:   domain.SeatingNeed(row.SeatingNeed),
+		DietaryNote:   row.DietaryNote,
+		Portion:       domain.Portion(row.Portion),
+		MidnightSnack: row.MidnightSnack,
 	}
 
 	if row.Age.Valid {
 		age := int(row.Age.Int64)
 		guest.Age = &age
+	}
+	if row.Attending.Valid {
+		attending := domain.Attending(row.Attending.String)
+		guest.Attending = &attending
+	}
+	if row.MealChoice.Valid {
+		mealChoice := domain.MealChoice(row.MealChoice.String)
+		guest.MealChoice = &mealChoice
 	}
 	return guest
 }

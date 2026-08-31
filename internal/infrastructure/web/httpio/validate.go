@@ -44,6 +44,34 @@ func newValidator() *validator.Validate {
 // produces a field entry — a generic sentence next to the right control beats a
 // correct sentence at the top of the form.
 func Validate(body any) error {
+	// The leaf name, which is the whole key for a flat body: `display_name`, `age`.
+	return validateKeyedBy(body, func(fieldError validator.FieldError) string {
+		return fieldError.Field()
+	})
+}
+
+// ValidatePaths is Validate for a body with a nested list, keying each error by its
+// path inside the body — "rsvp_note", "members[0].attending" — after passing that path
+// through rewrite.
+//
+// It exists because the leaf name is ambiguous the moment a body carries a list: eight
+// members would report eight errors under the single key `attending`, and seven of
+// them would be lost. rewrite is what turns the index into whatever the endpoint's
+// contract keys by — the RSVP endpoints key by member id, because the frontend renders
+// cards by id and an index breaks the moment the list is filtered.
+func ValidatePaths(body any, rewrite func(path string) string) error {
+	return validateKeyedBy(body, func(fieldError validator.FieldError) string {
+		// Namespace is "RSVPSaveRequest.members[0].attending" — with the JSON names,
+		// because of RegisterTagNameFunc above. The leading struct name is Go's and no
+		// client has ever heard of it.
+		_, path, _ := strings.Cut(fieldError.Namespace(), ".")
+		return rewrite(path)
+	})
+}
+
+// validateKeyedBy runs the validator and reports every violation under the key that
+// key returns for it.
+func validateKeyedBy(body any, key func(fieldError validator.FieldError) string) error {
 	err := validate.Struct(body)
 	if err == nil {
 		return nil
@@ -63,7 +91,7 @@ func Validate(body any) error {
 
 	fields := make(map[string]string, len(fieldErrors))
 	for _, fieldError := range fieldErrors {
-		fields[fieldError.Field()] = validationMessage(fieldError)
+		fields[key(fieldError)] = validationMessage(fieldError)
 	}
 	return ValidationError{Fields: fields}
 }
@@ -124,14 +152,21 @@ func isNumeric(fieldError validator.FieldError) bool {
 // constraint would be neither — it is not a message a form can put next to a field,
 // which is why the pairing is enforced before the write.
 func AgeValidationError(err error) error {
+	return AgeValidationErrorAt("age", err)
+}
+
+// AgeValidationErrorAt is AgeValidationError under a chosen field key, for a body that
+// carries more than one person's age: the RSVP endpoints key theirs
+// `members.<id>.age`, so the message lands on the right card.
+func AgeValidationErrorAt(field string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrAgeOnAdult):
 		return ValidationError{Fields: map[string]string{
-			"age": "Ein Alter speichern wir nur für Kinder.",
+			field: "Ein Alter speichern wir nur für Kinder.",
 		}}
 	case errors.Is(err, domain.ErrAgeOutOfRange):
 		return ValidationError{Fields: map[string]string{
-			"age": "Bitte gib ein Alter zwischen 0 und 17 Jahren an.",
+			field: "Bitte gib ein Alter zwischen 0 und 17 Jahren an.",
 		}}
 	default:
 		return err

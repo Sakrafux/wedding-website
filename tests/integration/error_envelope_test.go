@@ -62,10 +62,9 @@ func TestPanicReturnsCleanEnvelope(t *testing.T) {
 
 func TestValidationErrorReturnsFieldsKeyedByInputName(t *testing.T) {
 	app := newTestApp(t, withExtraRoutes(func(router chi.Router) {
-		// A stand-in endpoint rather than a real one: the endpoints that exist today
-		// report a body they cannot use without naming a field (see DecodeJSON), and
-		// the first per-field rules arrive with F3-B03. What is under test here is
-		// the envelope, not any particular rule.
+		// A stand-in endpoint rather than a real one, so that this test is about the
+		// envelope and not about any particular rule. The real per-field rules are
+		// asserted where they live — the admin household suites and the RSVP ones.
 		router.Get("/api/invalid", func(w http.ResponseWriter, r *http.Request) {
 			httpio.RespondError(w, r, httpio.ValidationError{Fields: map[string]string{"code": "Der Code ist zu kurz."}})
 		})

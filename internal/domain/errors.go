@@ -21,6 +21,16 @@ const (
 	// CodeRateLimited is a login endpoint refusing a caller who has spent their
 	// failure budget. Always temporary: there is no lockout in this application.
 	CodeRateLimited ErrorCode = "rate_limited"
+	// CodeRSVPClosed is a guest write after the RSVP deadline. Not a permission
+	// problem — nothing is wrong with who they are — which is why the admin path
+	// writes through the same rule with enforcement switched off (F3-B04).
+	CodeRSVPClosed ErrorCode = "rsvp_closed"
+	// CodeMemberSetMismatch is an RSVP submission that does not list exactly the
+	// household's living members: one missing, one duplicated, or one belonging to
+	// somebody else. The stale-tab case — a household that added a plus-one on a
+	// phone and still has the form open on a laptop — and refusing is the only
+	// answer that cannot silently write the older set back.
+	CodeMemberSetMismatch ErrorCode = "member_set_mismatch"
 	// CodeInvalidCredentials is a failed admin login. One code for a wrong
 	// username and a wrong password alike — the distinction would confirm a valid
 	// username to whoever is guessing.

@@ -28,9 +28,18 @@ type Household struct {
 	// AdminNote is our private note about the household, written on the assumption
 	// that they will never read it. It must never reach a guest response.
 	AdminNote string
+	// RSVPNote is the household's free-text note to us: the escape hatch for
+	// everything the structured fields do not cover. Theirs, not ours — AdminNote is
+	// the other direction and the two must never be shown in each other's place.
+	RSVPNote string
 	// RSVPSubmittedAt is NULL until the household answers, which is what puts them
-	// on the nudge list. F3 owns writing it; F5 only shows it.
+	// on the nudge list. Set on the first save and never moved afterwards, so that
+	// "have they answered" and "have they changed something" stay two questions.
 	RSVPSubmittedAt *time.Time
+	// RSVPUpdatedAt moves on every save that changed something. F6 compares it
+	// against rsvp_note_seen_at to decide whether a note counts as unread, which is
+	// why a no-op save must not touch it.
+	RSVPUpdatedAt *time.Time
 	// LastLoginAt is NULL until the household first redeems its code, which is what
 	// answers "did they even see the invitation?" and drives the nudge list.
 	LastLoginAt *time.Time

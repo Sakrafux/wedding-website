@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/auth"
 	"github.com/Sakrafux/wedding-website/internal/domain"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/httpio"
 )
@@ -25,7 +25,7 @@ type sessionContextKey struct{}
 
 // SessionGate resolves session cookies and guards routes by subject type.
 type SessionGate struct {
-	auth *application.Auth
+	auth *auth.UseCase
 	// cookieSecure mirrors SESSION_COOKIE_SECURE. Held here so that the attributes
 	// of the cookie we set, clear and read are decided in one place — a Secure flag
 	// that disagreed between issuing and clearing would leave a cookie behind that
@@ -33,8 +33,8 @@ type SessionGate struct {
 	cookieSecure bool
 }
 
-func NewSessionGate(auth *application.Auth, cookieSecure bool) *SessionGate {
-	return &SessionGate{auth: auth, cookieSecure: cookieSecure}
+func NewSessionGate(useCase *auth.UseCase, cookieSecure bool) *SessionGate {
+	return &SessionGate{auth: useCase, cookieSecure: cookieSecure}
 }
 
 // Resolve puts the caller's session into the request context, and is mounted on

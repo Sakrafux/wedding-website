@@ -1,17 +1,18 @@
-package application
+// Package households is the admin use case for the guest list: households and the
+// people in them. The households' own RSVP answers belong to package rsvp.
+package households
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/Sakrafux/wedding-website/internal/application"
 	"github.com/Sakrafux/wedding-website/internal/domain"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 )
 
-// Households is the admin use case for the guest list: households and the people in
+// UseCase is the admin use case for the guest list: households and the people in
 // them.
 //
 // Both live here rather than in two use cases because they are one task — entering
@@ -19,7 +20,7 @@ import (
 // household is this" for the audit trail. What it deliberately does *not* do is
 // touch the household's RSVP answers: those are F3's, reached through the same use
 // case the guest form uses, addressed by household id. See F5-B01 for the line.
-type Households struct {
+type UseCase struct {
 	households *persistence.HouseholdStore
 	guests     *persistence.GuestStore
 	sessions   *persistence.SessionStore
@@ -31,14 +32,14 @@ type Households struct {
 	logger *slog.Logger
 }
 
-func NewHouseholds(
+func New(
 	households *persistence.HouseholdStore,
 	guests *persistence.GuestStore,
 	sessions *persistence.SessionStore,
 	audit *persistence.AuditStore,
 	logger *slog.Logger,
-) *Households {
-	return &Households{households: households, guests: guests, sessions: sessions, audit: audit, logger: logger}
+) *UseCase {
+	return &UseCase{households: households, guests: guests, sessions: sessions, audit: audit, logger: logger}
 }
 
 // HouseholdDetail is one household with the people in it — the admin detail screen's
@@ -57,15 +58,15 @@ type CodeReissue struct {
 }
 
 // List returns every household with its member count, ordered by name.
-func (useCase *Households) List(ctx context.Context) ([]domain.HouseholdOverview, error) {
+func (useCase *UseCase) List(ctx context.Context) ([]domain.HouseholdOverview, error) {
 	return useCase.households.List(ctx)
 }
 
 // Detail returns one household and its living members, or ErrNotFound.
-func (useCase *Households) Detail(ctx context.Context, id int64) (HouseholdDetail, error) {
+func (useCase *UseCase) Detail(ctx context.Context, id int64) (HouseholdDetail, error) {
 	household, err := useCase.households.FindByID(ctx, id)
 	if err != nil {
-		return HouseholdDetail{}, translateNotFound(err)
+		return HouseholdDetail{}, application.TranslateNotFound(err)
 	}
 
 	return useCase.withMembers(ctx, household)
@@ -73,7 +74,7 @@ func (useCase *Households) Detail(ctx context.Context, id int64) (HouseholdDetai
 
 // withMembers loads the household's members and pairs them with it, so that the
 // detail body is assembled the same way whichever endpoint produced the household.
-func (useCase *Households) withMembers(ctx context.Context, household domain.Household) (HouseholdDetail, error) {
+func (useCase *UseCase) withMembers(ctx context.Context, household domain.Household) (HouseholdDetail, error) {
 	members, err := useCase.households.ListMembers(ctx, household.ID)
 	if err != nil {
 		return HouseholdDetail{}, err
@@ -82,7 +83,7 @@ func (useCase *Households) withMembers(ctx context.Context, household domain.Hou
 }
 
 // Create inserts a household, which assigns it a login code in the process.
-func (useCase *Households) Create(ctx context.Context, draft domain.Household) (domain.Household, error) {
+func (useCase *UseCase) Create(ctx context.Context, draft domain.Household) (domain.Household, error) {
 	created, err := useCase.households.Create(ctx, draft)
 	if err != nil {
 		return domain.Household{}, err
@@ -110,10 +111,10 @@ func (useCase *Households) Create(ctx context.Context, draft domain.Household) (
 // A patch that changes nothing writes no audit row: an entry whose before and after
 // are identical says only that somebody pressed save, and the log is worth reading
 // precisely because every row in it is a change.
-func (useCase *Households) Update(ctx context.Context, id int64, patch domain.HouseholdPatch) (HouseholdDetail, error) {
+func (useCase *UseCase) Update(ctx context.Context, id int64, patch domain.HouseholdPatch) (HouseholdDetail, error) {
 	current, err := useCase.households.FindByID(ctx, id)
 	if err != nil {
-		return HouseholdDetail{}, translateNotFound(err)
+		return HouseholdDetail{}, application.TranslateNotFound(err)
 	}
 
 	updated, changes := domain.ApplyHouseholdPatch(current, patch)
@@ -122,7 +123,7 @@ func (useCase *Households) Update(ctx context.Context, id int64, patch domain.Ho
 	}
 
 	if err := useCase.households.Update(ctx, updated); err != nil {
-		return HouseholdDetail{}, translateNotFound(err)
+		return HouseholdDetail{}, application.TranslateNotFound(err)
 	}
 
 	useCase.recordAudit(ctx, domain.NewAdminChangeEntry(
@@ -137,14 +138,14 @@ func (useCase *Households) Update(ctx context.Context, id int64, patch domain.Ho
 // names what is lost; the API does not second-guess a decision it cannot
 // know the reason for. The audit row is what outlives the household, which is the
 // answer to the fear that makes deleting feel dangerous.
-func (useCase *Households) Delete(ctx context.Context, id int64) error {
+func (useCase *UseCase) Delete(ctx context.Context, id int64) error {
 	household, err := useCase.households.FindByID(ctx, id)
 	if err != nil {
-		return translateNotFound(err)
+		return application.TranslateNotFound(err)
 	}
 
 	if err := useCase.households.Delete(ctx, id); err != nil {
-		return translateNotFound(err)
+		return application.TranslateNotFound(err)
 	}
 
 	useCase.recordAudit(ctx, domain.NewAdminChangeEntry(
@@ -161,10 +162,10 @@ func (useCase *Households) Delete(ctx context.Context, id int64) error {
 // the old code should stop working, and a 365-day session issued from it would
 // outlive the code by months. Before send-out this revokes nothing, which is the
 // harmless case.
-func (useCase *Households) ReissueCode(ctx context.Context, id int64) (CodeReissue, error) {
+func (useCase *UseCase) ReissueCode(ctx context.Context, id int64) (CodeReissue, error) {
 	code, err := useCase.households.AssignNewCode(ctx, id)
 	if err != nil {
-		return CodeReissue{}, translateNotFound(err)
+		return CodeReissue{}, application.TranslateNotFound(err)
 	}
 
 	revoked, err := useCase.sessions.DeleteForHousehold(ctx, id)
@@ -188,11 +189,11 @@ func (useCase *Households) ReissueCode(ctx context.Context, id int64) (CodeReiss
 // delta view reads to answer "what did the households add themselves", and an
 // admin-created guest is not that. F4-B02 owns the other path: one adult plus-one,
 // and only for a household of one.
-func (useCase *Households) AddGuest(ctx context.Context, householdID int64, draft domain.Guest) (domain.Guest, error) {
+func (useCase *UseCase) AddGuest(ctx context.Context, householdID int64, draft domain.Guest) (domain.Guest, error) {
 	// Checked first so a request naming a household that does not exist answers 404
 	// rather than surfacing a foreign-key error as a 500.
 	if _, err := useCase.households.FindByID(ctx, householdID); err != nil {
-		return domain.Guest{}, translateNotFound(err)
+		return domain.Guest{}, application.TranslateNotFound(err)
 	}
 
 	age, err := domain.ResolveAge(draft.Kind, draft.Age)
@@ -229,10 +230,10 @@ func (useCase *Households) AddGuest(ctx context.Context, householdID int64, draf
 // Not scoped to a household: the admin owns every guest, and a guest's id is the
 // whole address. A household-scoped route would put an id in the path that nothing
 // checks and that the frontend would have to carry for no reason.
-func (useCase *Households) UpdateGuest(ctx context.Context, id int64, patch domain.GuestPatch) (domain.Guest, error) {
+func (useCase *UseCase) UpdateGuest(ctx context.Context, id int64, patch domain.GuestPatch) (domain.Guest, error) {
 	current, err := useCase.guests.FindByID(ctx, id)
 	if err != nil {
-		return domain.Guest{}, translateNotFound(err)
+		return domain.Guest{}, application.TranslateNotFound(err)
 	}
 
 	updated, changes, err := domain.ApplyGuestPatch(current, patch)
@@ -244,7 +245,7 @@ func (useCase *Households) UpdateGuest(ctx context.Context, id int64, patch doma
 	}
 
 	if err := useCase.guests.Update(ctx, updated); err != nil {
-		return domain.Guest{}, translateNotFound(err)
+		return domain.Guest{}, application.TranslateNotFound(err)
 	}
 
 	useCase.recordAudit(ctx, domain.NewAdminChangeEntry(
@@ -257,14 +258,14 @@ func (useCase *Households) UpdateGuest(ctx context.Context, id int64, patch doma
 //
 // Removing the last member of a household is allowed: an empty household is a real
 // state — we know a name and have not yet asked who is coming.
-func (useCase *Households) RemoveGuest(ctx context.Context, id int64) error {
+func (useCase *UseCase) RemoveGuest(ctx context.Context, id int64) error {
 	guest, err := useCase.guests.FindByID(ctx, id)
 	if err != nil {
-		return translateNotFound(err)
+		return application.TranslateNotFound(err)
 	}
 
 	if err := useCase.guests.SoftDelete(ctx, id, time.Now()); err != nil {
-		return translateNotFound(err)
+		return application.TranslateNotFound(err)
 	}
 
 	useCase.recordAudit(ctx, domain.NewAdminChangeEntry(
@@ -282,18 +283,9 @@ func (useCase *Households) RemoveGuest(ctx context.Context, id int64) error {
 // trade as Auth.recordAudit: a broken audit table must not fail the operation, and
 // the log line is what keeps the resulting gap from reading like an event that never
 // happened.
-func (useCase *Households) recordAudit(ctx context.Context, entry domain.AuditEntry) {
+func (useCase *UseCase) recordAudit(ctx context.Context, entry domain.AuditEntry) {
 	if err := useCase.audit.Write(ctx, entry); err != nil {
 		useCase.logger.Error("audit write failed",
 			"action", entry.Action, "entity", entry.Entity, "entity_id", entry.EntityID, "error", err)
 	}
-}
-
-// translateNotFound maps the store's miss onto the use case layer's own sentinel,
-// and passes everything else through untouched.
-func translateNotFound(err error) error {
-	if errors.Is(err, persistence.ErrNotFound) {
-		return fmt.Errorf("%w: %w", ErrNotFound, err)
-	}
-	return err
 }

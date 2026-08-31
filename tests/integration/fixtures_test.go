@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
@@ -135,6 +136,23 @@ func seedHousehold(t *testing.T, pool *sqlx.DB, options ...householdOption) seed
 	}
 
 	return household
+}
+
+// setRSVPDeadline moves the deadline in app_setting.
+//
+// How every deadline test drives the rule: the clock is the application's and a test
+// that waited for a real date would never run. The format is the schema's — RFC3339,
+// UTC, second precision — so a row written here is indistinguishable from a seeded one.
+func setRSVPDeadline(t *testing.T, pool *sqlx.DB, at time.Time) {
+	t.Helper()
+
+	result, err := pool.Exec(`UPDATE app_setting SET value = ? WHERE key = 'rsvp_deadline'`,
+		at.UTC().Format(time.RFC3339))
+	require.NoError(t, err)
+
+	affected, err := result.RowsAffected()
+	require.NoError(t, err)
+	require.EqualValues(t, 1, affected, "the rsvp_deadline setting should be seeded by migration 0001")
 }
 
 // codeAlphabet duplicates the login-code alphabet from package domain, which keeps

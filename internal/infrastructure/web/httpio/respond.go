@@ -123,6 +123,20 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// times, not an attacker, and they need to know the evening is not lost.
 		"Zu viele Versuche. Bitte warte ein paar Minuten und probier es dann noch einmal. Wenn es weiter nicht klappt, ruf uns einfach an.",
 	},
+	domain.CodeRSVPClosed: {
+		http.StatusConflict,
+		// Named as a state, with the way out stated: the person reading this is a guest
+		// whose plans changed, and the phone call is the actual remedy. 409 rather than
+		// 403 — nothing is wrong with who they are.
+		"Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruf uns bitte kurz an.",
+	},
+	domain.CodeMemberSetMismatch: {
+		http.StatusConflict,
+		// The stale-tab case: the household list changed while this form was open. The
+		// only honest move is to show the new list, so the sentence asks for exactly
+		// that and does not pretend the answer was saved.
+		"Die Liste der Personen hat sich geändert. Bitte lade die Seite neu.",
+	},
 	domain.CodeUnauthenticated: {
 		http.StatusUnauthorized,
 		// One sentence for "no session", "expired session" and "wrong kind of

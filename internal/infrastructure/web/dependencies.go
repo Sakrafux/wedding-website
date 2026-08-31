@@ -1,7 +1,10 @@
 package web
 
 import (
-	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/auth"
+	"github.com/Sakrafux/wedding-website/internal/application/exports"
+	"github.com/Sakrafux/wedding-website/internal/application/households"
+	"github.com/Sakrafux/wedding-website/internal/application/rsvp"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 )
 
@@ -23,11 +26,14 @@ type Dependencies struct {
 	// licence for handlers to query: SQL lives in persistence, and the stores reach
 	// the router only through the use cases below.
 	Database *configuration.Database
-	Auth     *application.Auth
+	Auth     *auth.UseCase
 	// Households is the admin guest list: households, their members, and login code
 	// reissue. Admin-only, and mounted only under /api/admin.
-	Households *application.Households
+	Households *households.UseCase
 	// Exports serves the two admin CSV downloads. Admin-only: codes.csv is the whole
 	// login-code list.
-	Exports *application.Exports
+	Exports *exports.UseCase
+	// RSVP serves both the guests' own answer and the admin's answer on their behalf.
+	// The one use case behind two pairs of routes — see F3-B06.
+	RSVP *rsvp.UseCase
 }

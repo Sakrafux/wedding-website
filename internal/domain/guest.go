@@ -43,10 +43,6 @@ const (
 const maxChildAge = 17
 
 // Guest is one person, belonging to exactly one household.
-//
-// F3-B01 adds the RSVP answers (attending, meal choice, portion); what is here is
-// what we record about somebody ourselves, which is the line F5 draws — see
-// specification/features/F5-admin-households/F5-B01-household-store.md.
 type Guest struct {
 	ID          int64
 	HouseholdID int64
@@ -65,6 +61,17 @@ type Guest struct {
 	// RSVP form.
 	SeatingNeed SeatingNeed
 	DietaryNote string
+	// Attending is the RSVP answer: attendance and scope in one value. A nil pointer
+	// is "has not answered", which is a state the nudge list is built from — see
+	// Attending, and read it through Attends/AttendsChurch/AttendsParty rather than
+	// by comparing it.
+	Attending *Attending
+	// MealChoice, Portion and MidnightSnack are catering, and catering is gated by
+	// scope rather than by attendance: they mean nothing for a guest who is not at
+	// the party, and NormalizeGuestAnswer is what keeps the stored row saying so.
+	MealChoice    *MealChoice
+	Portion       Portion
+	MidnightSnack bool
 }
 
 // ErrAgeOnAdult reports an age recorded against an adult.

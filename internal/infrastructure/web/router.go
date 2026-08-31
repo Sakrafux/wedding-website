@@ -24,6 +24,7 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 	authHandler := handler.NewAuth(dependencies.Auth, config.SessionCookieSecure)
 	adminHouseholds := handler.NewAdminHouseholds(dependencies.Households)
 	adminExport := handler.NewAdminExport(dependencies.Exports)
+	rsvpHandler := handler.NewRSVP(dependencies.RSVP)
 	sessions := middleware.NewSessionGate(dependencies.Auth, config.SessionCookieSecure)
 
 	// One limiter per endpoint, not one shared: a guest fumbling their code must
@@ -61,6 +62,11 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 			household.Use(middleware.RequireHousehold)
 
 			household.Get("/me", authHandler.Me)
+
+			// The deadline is enforced on the write only. Reading stays open forever:
+			// a household must be able to see what they answered (F3-F05).
+			household.Get("/rsvp", rsvpHandler.Show)
+			household.Put("/rsvp", rsvpHandler.Save)
 		})
 
 		// The admin subtree is mounted with its gate before it has a single route,
@@ -82,6 +88,12 @@ func NewRouter(logger *httplog.Logger, dependencies Dependencies) *chi.Mux {
 				households.Delete("/{id}", adminHouseholds.Delete)
 				households.Post("/{id}/code", adminHouseholds.ReissueCode)
 				households.Post("/{id}/guests", adminHouseholds.AddGuest)
+
+				// The same use case and the same body as the guests' own /api/rsvp,
+				// addressed by id instead of by session. It writes after the deadline,
+				// which is the whole reason it exists (F3-B06).
+				households.Get("/{id}/rsvp", rsvpHandler.AdminShow)
+				households.Put("/{id}/rsvp", rsvpHandler.AdminSave)
 			})
 
 			// The two largest disclosures in the product, both behind the admin gate

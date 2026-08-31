@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/auth"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/dto"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/httpio"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/middleware"
@@ -13,14 +13,14 @@ import (
 // Auth serves logging in, logging out, and the bootstrap call the frontend makes
 // on every load.
 type Auth struct {
-	auth *application.Auth
+	auth *auth.UseCase
 	// cookieSecure mirrors SESSION_COOKIE_SECURE, and is passed straight through to
 	// the cookie helpers so that issuing and clearing agree on the attribute.
 	cookieSecure bool
 }
 
-func NewAuth(auth *application.Auth, cookieSecure bool) *Auth {
-	return &Auth{auth: auth, cookieSecure: cookieSecure}
+func NewAuth(useCase *auth.UseCase, cookieSecure bool) *Auth {
+	return &Auth{auth: useCase, cookieSecure: cookieSecure}
 }
 
 // LogIn redeems the household code from the request body and sets the session
@@ -153,7 +153,7 @@ func currentSessionID(r *http.Request) string {
 // Field by field on purpose: this is the boundary the privacy rule lives on, and
 // the household's login code and admin note stop here because nothing copies them
 // across. See dto.HouseholdSummary for what is left out and why.
-func bootstrapResponse(bootstrap application.Bootstrap) dto.BootstrapResponse {
+func bootstrapResponse(bootstrap auth.Bootstrap) dto.BootstrapResponse {
 	members := make([]dto.Member, 0, len(bootstrap.Members))
 	for _, member := range bootstrap.Members {
 		members = append(members, dto.Member{

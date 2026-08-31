@@ -16,7 +16,10 @@ package main
 import (
 	"log/slog"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/auth"
+	"github.com/Sakrafux/wedding-website/internal/application/exports"
+	"github.com/Sakrafux/wedding-website/internal/application/households"
+	"github.com/Sakrafux/wedding-website/internal/application/rsvp"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
@@ -40,24 +43,27 @@ func wire(config configuration.Config, database *configuration.Database, logger 
 	householdStore := persistence.NewHouseholdStore(database)
 	guestStore := persistence.NewGuestStore(database)
 	auditStore := persistence.NewAuditStore(database)
+	settingStore := persistence.NewSettingStore(database)
 
-	auth := application.NewAuth(
+	authUseCase := auth.New(
 		sessions,
 		householdStore,
-		persistence.NewSettingStore(database),
+		settingStore,
 		auditStore,
 		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
 		logger,
 	)
 
-	households := application.NewHouseholds(householdStore, guestStore, sessions, auditStore, logger)
-	exports := application.NewExports(householdStore, persistence.NewExportStore(database))
+	householdsUseCase := households.New(householdStore, guestStore, sessions, auditStore, logger)
+	exportsUseCase := exports.New(householdStore, persistence.NewExportStore(database))
+	rsvpUseCase := rsvp.New(householdStore, persistence.NewRSVPStore(database), settingStore, auditStore, logger)
 
 	return web.Dependencies{
 		Config:     config,
 		Database:   database,
-		Auth:       auth,
-		Households: households,
-		Exports:    exports,
+		Auth:       authUseCase,
+		Households: householdsUseCase,
+		Exports:    exportsUseCase,
+		RSVP:       rsvpUseCase,
 	}, sessions
 }

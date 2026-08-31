@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/households"
 	"github.com/Sakrafux/wedding-website/internal/domain"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/dto"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/httpio"
@@ -20,11 +21,11 @@ import (
 // ones in the API that carry a login code or our private note. Nothing here is
 // reachable with a household session.
 type AdminHouseholds struct {
-	households *application.Households
+	households *households.UseCase
 }
 
-func NewAdminHouseholds(households *application.Households) *AdminHouseholds {
-	return &AdminHouseholds{households: households}
+func NewAdminHouseholds(useCase *households.UseCase) *AdminHouseholds {
+	return &AdminHouseholds{households: useCase}
 }
 
 // List answers GET /api/admin/households with every household and its member count.

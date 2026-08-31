@@ -40,10 +40,15 @@ func (store *HouseholdStore) WithCodeGenerator(generate func() string) *Househol
 const codeAssignmentAttempts = 5
 
 // householdColumns is shared by every read so they cannot drift into returning
-// differently populated structs. The RSVP answer columns are absent because F5
-// neither reads nor writes them; F3 adds its own projection.
+// differently populated structs.
+//
+// One projection for the whole application rather than one per epic: a partially
+// populated domain.Household is a value that lies about the columns it left at their
+// zero value, and the caller cannot tell which read produced it. rsvp_note_seen_at is
+// the one column still missing, because nothing reads it yet — F6's note inbox is
+// what adds it, here and nowhere else.
 const householdColumns = `id, display_name, code, transport_seats_needed, transport_seats_offered,
-	has_stroller, admin_note, rsvp_submitted_at, last_login_at`
+	has_stroller, admin_note, rsvp_note, rsvp_submitted_at, rsvp_updated_at, last_login_at`
 
 // FindByCode returns the household holding this login code, or ErrNotFound.
 //
@@ -269,7 +274,9 @@ type householdRow struct {
 	TransportSeatsOffered int            `db:"transport_seats_offered"`
 	HasStroller           bool           `db:"has_stroller"`
 	AdminNote             string         `db:"admin_note"`
+	RSVPNote              string         `db:"rsvp_note"`
 	RSVPSubmittedAt       sql.NullString `db:"rsvp_submitted_at"`
+	RSVPUpdatedAt         sql.NullString `db:"rsvp_updated_at"`
 	LastLoginAt           sql.NullString `db:"last_login_at"`
 }
 
@@ -289,6 +296,7 @@ func (row householdRow) toDomain() (domain.Household, error) {
 		TransportSeatsOffered: row.TransportSeatsOffered,
 		HasStroller:           row.HasStroller,
 		AdminNote:             row.AdminNote,
+		RSVPNote:              row.RSVPNote,
 	}
 
 	submittedAt, err := parseNullableTimestamp(row.RSVPSubmittedAt)
@@ -296,6 +304,12 @@ func (row householdRow) toDomain() (domain.Household, error) {
 		return domain.Household{}, err
 	}
 	household.RSVPSubmittedAt = submittedAt
+
+	updatedAt, err := parseNullableTimestamp(row.RSVPUpdatedAt)
+	if err != nil {
+		return domain.Household{}, err
+	}
+	household.RSVPUpdatedAt = updatedAt
 
 	lastLoginAt, err := parseNullableTimestamp(row.LastLoginAt)
 	if err != nil {
@@ -309,8 +323,8 @@ func (row householdRow) toDomain() (domain.Household, error) {
 // prefixedColumns qualifies a column list with a table alias, for the joins.
 //
 // Written out rather than selecting `h.*`: sqlx fails on a column with no
-// destination field, so a star would break the moment F3 adds a column to
-// household — which is a migration away and nothing to do with this query.
+// destination field, so a star would break the next time a migration adds a column to
+// household — which has nothing to do with this query and would fail inside it.
 func prefixedColumns(alias, columns string) string {
 	parts := strings.Split(columns, ",")
 	for index, part := range parts {

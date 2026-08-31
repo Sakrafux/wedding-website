@@ -166,3 +166,26 @@ func NewAdminChangeEntry(entity string, entityID int64, action AuditAction, at t
 		After:     changes.After,
 	}
 }
+
+// NewHouseholdChangeEntry records a household changing its own data — today, its RSVP
+// answer and the members it adds or removes.
+//
+// Separate from NewAdminChangeEntry only in the actor, and that difference is the
+// whole point: the audit log is what settles "but I said we were coming", and
+// recording our own typing as the household's answer would mislead at the one moment
+// it is consulted. When we take an answer down the phone it is an admin entry, even
+// though the row it changes belongs to the household (F3-B05).
+//
+// The same rule about codes applies here — see NewAdminChangeEntry.
+func NewHouseholdChangeEntry(householdID int64, entity string, entityID int64, action AuditAction, at time.Time, changes Changes) AuditEntry {
+	return AuditEntry{
+		At:        at,
+		ActorType: ActorTypeHousehold,
+		ActorID:   &householdID,
+		Entity:    entity,
+		EntityID:  entityID,
+		Action:    action,
+		Before:    changes.Before,
+		After:     changes.After,
+	}
+}

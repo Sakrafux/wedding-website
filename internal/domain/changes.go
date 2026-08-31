@@ -60,6 +60,25 @@ func (changes *Changes) compareOptionalInt(name string, before, after *int) {
 	changes.compare(name, unwrapInt(before), unwrapInt(after))
 }
 
+// compareOptional is the case of a nullable enum — *Attending, *MealChoice. Like
+// compareOptionalInt, it exists because comparing the pointers would compare
+// addresses and report every write as a change.
+//
+// A free function rather than a method, because Go methods cannot be generic. It is
+// still unexported, so the vocabulary of audit keys stays inside this package.
+func compareOptional[T ~string](changes *Changes, name string, before, after *T) {
+	changes.compare(name, unwrapString(before), unwrapString(after))
+}
+
+// unwrapString turns a nullable enum into a nil-or-string value, so two absent
+// values compare equal and an absent one encodes as JSON null.
+func unwrapString[T ~string](value *T) any {
+	if value == nil {
+		return nil
+	}
+	return string(*value)
+}
+
 // unwrapInt turns a *int into a nil-or-number value, so that two absent values
 // compare equal and an absent one encodes as JSON null.
 func unwrapInt(value *int) any {

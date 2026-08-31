@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/httplog/v2"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/exports"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/csvio"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/web/httpio"
 )
@@ -18,10 +18,10 @@ import (
 // download on the admin household list, and the fact of the export lives in the log
 // below.
 type AdminExport struct {
-	exports *application.Exports
+	exports *exports.UseCase
 }
 
-func NewAdminExport(exports *application.Exports) *AdminExport {
+func NewAdminExport(exports *exports.UseCase) *AdminExport {
 	return &AdminExport{exports: exports}
 }
 

@@ -1,4 +1,6 @@
-package application
+// Package auth is the use case for logging in, staying logged in and logging out —
+// households by printed code, the admin by configured credentials.
+package auth
 
 import (
 	"context"
@@ -12,14 +14,14 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
 )
 
-// Auth is the use case layer for logging in, staying logged in and logging out.
+// UseCase is the use case layer for logging in, staying logged in and logging out.
 //
 // It exists so that neither a handler nor a middleware ever assembles the sequence
 // itself: normalize, look up, issue, refresh, revoke. The middleware and the login
 // endpoint are two entry points into the same rules, and a second copy of them is
 // how one of the two ends up not deleting the session of a household that was
 // removed while logged in.
-type Auth struct {
+type UseCase struct {
 	sessions   *persistence.SessionStore
 	households *persistence.HouseholdStore
 	settings   *persistence.SettingStore
@@ -34,15 +36,15 @@ type Auth struct {
 	logger *slog.Logger
 }
 
-func NewAuth(
+func New(
 	sessions *persistence.SessionStore,
 	households *persistence.HouseholdStore,
 	settings *persistence.SettingStore,
 	audit *persistence.AuditStore,
 	adminCredentials security.AdminCredentials,
 	logger *slog.Logger,
-) *Auth {
-	return &Auth{
+) *UseCase {
+	return &UseCase{
 		sessions:         sessions,
 		households:       households,
 		settings:         settings,
@@ -88,7 +90,7 @@ type HouseholdLogin struct {
 // Every failure is CodeUnknownLoginCode. A malformed code and an unknown one are
 // indistinguishable to the caller by design: "that is a valid code, just not one
 // of ours" is a sentence that turns guessing from hopeless into merely slow.
-func (auth *Auth) LogInHousehold(ctx context.Context, submittedCode, userAgent, ip, previousSessionID string) (HouseholdLogin, error) {
+func (auth *UseCase) LogInHousehold(ctx context.Context, submittedCode, userAgent, ip, previousSessionID string) (HouseholdLogin, error) {
 	code := domain.NormalizeCode(submittedCode)
 
 	// Shape is checked before the query, so a mistyped code costs no database
@@ -157,7 +159,7 @@ type AdminLogin struct {
 // one subject. An admin logging in on a device that still holds a household session
 // must not end up with both, or the subject type in the session table stops being
 // the whole answer to "who is this".
-func (auth *Auth) LogInAdmin(ctx context.Context, user, password, userAgent, ip, previousSessionID string) (AdminLogin, error) {
+func (auth *UseCase) LogInAdmin(ctx context.Context, user, password, userAgent, ip, previousSessionID string) (AdminLogin, error) {
 	if !auth.adminCredentials.Matches(user, password) {
 		return AdminLogin{}, auth.rejectLogin(ctx, domain.AuditEntityAdmin, domain.CodeInvalidCredentials, userAgent, ip)
 	}
@@ -187,7 +189,7 @@ func (auth *Auth) LogInAdmin(ctx context.Context, user, password, userAgent, ip,
 // One place for both halves, so that a future login path cannot report a failure
 // without recording it — which is the failure mode that leaves the audit log
 // quietly incomplete precisely when it is being consulted.
-func (auth *Auth) rejectLogin(ctx context.Context, entity string, code domain.ErrorCode, userAgent, ip string) error {
+func (auth *UseCase) rejectLogin(ctx context.Context, entity string, code domain.ErrorCode, userAgent, ip string) error {
 	auth.recordAudit(ctx, domain.NewLoginFailureEntry(entity, time.Now(), userAgent, ip))
 
 	return domain.NewError(code)
@@ -198,7 +200,7 @@ func (auth *Auth) rejectLogin(ctx context.Context, entity string, code domain.Er
 // A broken audit table must not stop a guest from logging in. The log is what makes
 // the silence noticeable: an audit write that failed and said nothing would leave a
 // gap that reads, later, exactly like an event that never happened.
-func (auth *Auth) recordAudit(ctx context.Context, entry domain.AuditEntry) {
+func (auth *UseCase) recordAudit(ctx context.Context, entry domain.AuditEntry) {
 	if err := auth.audit.Write(ctx, entry); err != nil {
 		auth.logger.Error("audit write failed", "action", entry.Action, "entity", entry.Entity, "error", err)
 	}
@@ -206,7 +208,7 @@ func (auth *Auth) recordAudit(ctx context.Context, entry domain.AuditEntry) {
 
 // issueSession creates a session and returns the raw token for the cookie. The
 // token is returned and never stored; what reaches the database is its hash.
-func (auth *Auth) issueSession(ctx context.Context, subjectType domain.SubjectType, subjectID int64, now time.Time, userAgent, ip string) (string, domain.Session, error) {
+func (auth *UseCase) issueSession(ctx context.Context, subjectType domain.SubjectType, subjectID int64, now time.Time, userAgent, ip string) (string, domain.Session, error) {
 	token := security.NewSessionToken()
 
 	session := domain.NewSession(security.HashSessionToken(token), subjectType, subjectID, now, userAgent, ip)
@@ -227,7 +229,7 @@ func (auth *Auth) issueSession(ctx context.Context, subjectType domain.SubjectTy
 //     login screen.
 //   - A household session past its refresh interval is rolled forward, so a guest
 //     who visits at least once a year never has to find their card again.
-func (auth *Auth) ResolveSession(ctx context.Context, token string) (domain.Session, bool, error) {
+func (auth *UseCase) ResolveSession(ctx context.Context, token string) (domain.Session, bool, error) {
 	session, err := auth.sessions.FindByID(ctx, security.HashSessionToken(token))
 	if err != nil {
 		if errors.Is(err, persistence.ErrNotFound) {
@@ -262,14 +264,14 @@ func (auth *Auth) ResolveSession(ctx context.Context, token string) (domain.Sess
 
 // LogOut revokes one session. Deleting a row that is not there is not an error, so
 // logging out twice behaves the same as logging out once.
-func (auth *Auth) LogOut(ctx context.Context, sessionID string) error {
+func (auth *UseCase) LogOut(ctx context.Context, sessionID string) error {
 	return auth.sessions.Delete(ctx, sessionID)
 }
 
 // BootstrapFor assembles the bootstrap body for an already-authenticated
 // household. Used by GET /api/me, where the session is what identifies the
 // household — never an id the frontend sent.
-func (auth *Auth) BootstrapFor(ctx context.Context, householdID int64) (Bootstrap, error) {
+func (auth *UseCase) BootstrapFor(ctx context.Context, householdID int64) (Bootstrap, error) {
 	household, err := auth.households.FindByID(ctx, householdID)
 	if err != nil {
 		if errors.Is(err, persistence.ErrNotFound) {
@@ -283,7 +285,7 @@ func (auth *Auth) BootstrapFor(ctx context.Context, householdID int64) (Bootstra
 	return auth.bootstrapFor(ctx, household)
 }
 
-func (auth *Auth) bootstrapFor(ctx context.Context, household domain.Household) (Bootstrap, error) {
+func (auth *UseCase) bootstrapFor(ctx context.Context, household domain.Household) (Bootstrap, error) {
 	members, err := auth.households.ListMembers(ctx, household.ID)
 	if err != nil {
 		return Bootstrap{}, err

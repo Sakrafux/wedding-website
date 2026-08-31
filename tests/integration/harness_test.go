@@ -21,7 +21,10 @@ import (
 	"github.com/go-chi/httplog/v2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Sakrafux/wedding-website/internal/application"
+	"github.com/Sakrafux/wedding-website/internal/application/auth"
+	"github.com/Sakrafux/wedding-website/internal/application/exports"
+	"github.com/Sakrafux/wedding-website/internal/application/households"
+	"github.com/Sakrafux/wedding-website/internal/application/rsvp"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/configuration"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/security"
@@ -168,11 +171,12 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	}
 	guestStore := persistence.NewGuestStore(database)
 	auditStore := persistence.NewAuditStore(database)
+	settingStore := persistence.NewSettingStore(database)
 
-	auth := application.NewAuth(
+	authUseCase := auth.New(
 		sessions,
 		householdStore,
-		persistence.NewSettingStore(database),
+		settingStore,
 		auditStore,
 		security.AdminCredentials{User: config.AdminUser, Password: config.AdminPassword},
 		logger.Logger,
@@ -181,9 +185,10 @@ func newTestApp(t *testing.T, options ...testAppOption) *testApp {
 	router := web.NewRouter(logger, web.Dependencies{
 		Config:     config,
 		Database:   database,
-		Auth:       auth,
-		Households: application.NewHouseholds(householdStore, guestStore, sessions, auditStore, logger.Logger),
-		Exports:    application.NewExports(householdStore, persistence.NewExportStore(database)),
+		Auth:       authUseCase,
+		Households: households.New(householdStore, guestStore, sessions, auditStore, logger.Logger),
+		Exports:    exports.New(householdStore, persistence.NewExportStore(database)),
+		RSVP:       rsvp.New(householdStore, persistence.NewRSVPStore(database), settingStore, auditStore, logger.Logger),
 	})
 	if spec.registerExtraRoutes != nil {
 		spec.registerExtraRoutes(router)
@@ -308,6 +313,12 @@ func (app *testApp) patchJSON(path string, payload any) *testResponse {
 	app.t.Helper()
 
 	return app.request(http.MethodPatch, path, payload)
+}
+
+func (app *testApp) putJSON(path string, payload any) *testResponse {
+	app.t.Helper()
+
+	return app.request(http.MethodPut, path, payload)
 }
 
 func (app *testApp) deleteRequest(path string) *testResponse {
