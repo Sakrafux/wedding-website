@@ -13,6 +13,7 @@ Done:
 - `cmd/seed/main_test.go`: counts, append-on-second-run, non-positive counts rejected before the file is created, members are seeded adults with NULL `attending`, fresh-database migration, and printed codes resolving through `HouseholdStore.FindByCode`.
 - `make seed` (with `SEED_ARGS`) and a "Test data" subsection in `README.md`'s local development chapter.
 - Verified end to end: `make seed` then a login with the printed `2BC-96G` against the running binary returns the bootstrap body.
+- Fixed missing pointer cursor on every button: Tailwind v4's preflight resets `button` to `cursor: default` and the shadcn v4 button recipe no longer adds it back. Restored globally in `index.css`'s base layer, not per component.
 
 Decisions:
 

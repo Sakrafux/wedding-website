@@ -144,6 +144,18 @@
     @apply outline-primary outline-2 outline-offset-2;
   }
 
+  /* Tailwind v4's preflight resets buttons to `cursor: default`, and the shadcn
+     button recipe no longer adds `cursor-pointer` back. Restored here rather than in
+     button.tsx so it also covers the plain <button>s and the elements Radix renders
+     with role="button", and so a re-generated shadcn component cannot drop it again.
+     Anything that reacts to a click should say so before it is clicked — this
+     audience is not going to hunt for hover states. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+
   /* Headcounts, budget cents and seat numbers all want columns that line up. */
   table {
     font-variant-numeric: tabular-nums;
