@@ -171,8 +171,7 @@ func (handler *AdminHouseholds) AddGuest(w http.ResponseWriter, r *http.Request)
 	}
 
 	created, err := handler.households.AddGuest(r.Context(), householdID, domain.Guest{
-		FirstName:   request.FirstName,
-		LastName:    request.LastName,
+		Name:        request.Name,
 		Kind:        domain.GuestKind(request.Kind),
 		Age:         request.Age,
 		SeatingNeed: seatingNeedOrDefault(request.SeatingNeed),
@@ -203,8 +202,7 @@ func (handler *AdminHouseholds) UpdateGuest(w http.ResponseWriter, r *http.Reque
 	}
 
 	updated, err := handler.households.UpdateGuest(r.Context(), id, domain.GuestPatch{
-		FirstName:   request.FirstName,
-		LastName:    request.LastName,
+		Name:        request.Name,
 		Kind:        guestKindPointer(request.Kind),
 		AgeSet:      request.Age.Present,
 		Age:         request.Age.Value,
@@ -338,8 +336,7 @@ func guestResponse(guest domain.Guest) dto.AdminGuest {
 	return dto.AdminGuest{
 		ID:          guest.ID,
 		HouseholdID: guest.HouseholdID,
-		FirstName:   guest.FirstName,
-		LastName:    guest.LastName,
+		Name:        guest.Name,
 		Kind:        string(guest.Kind),
 		Age:         guest.Age,
 		Origin:      string(guest.Origin),

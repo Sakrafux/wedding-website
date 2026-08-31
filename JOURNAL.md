@@ -36,6 +36,9 @@ Done:
   - `cmd/seed` now creates households through the stores, which resolves the forward reference it carried.
   - Test harness: `onANewDevice` (two sessions at once), `withCodeGenerator` (forces the code-collision retry), and the logger now writes to an assertable buffer — the CSV export's log line is recorded nowhere else. 21 new integration tests, 12 domain unit tests, 15 component tests.
   - Verified against the built binary: admin login, create household (code `X9JS7T`), add a child, both CSVs (BOM plus `;` asserted on the bytes), a reissued code logging in as `c2n-7pp`, and a household session refused on every admin route including the exports. Two `csv export written` lines in the log.
+- **One name per guest.** Migration `0002` merges `first_name` and `last_name` into `guest.name` (backfilled with `trim(a || ' ' || b)`, both columns dropped). Swept through domain, stores, the guests.csv column list, `dto.Member` and `dto.AdminGuest`, `cmd/seed`, the admin detail form and every fixture and test. `03-data-model`, `F1-B04`, `F1-B08`, `F5-B02`, `F5-B04` and `CLAUDE.md` updated.
+- Add-member form no longer prefills the surname from the household name: a household is any group sharing one invitation, so `display_name` is free text ("Luki & Paddi", a single person), and a name derived from it is wrong as often as right. Only `cmd/seed` derives one, because it invents the household names itself.
+- Verified the upgrade path against the previous run's database file: an existing `Emil` + `Müller` came back as `Emil Müller`, `pragma table_info(guest)` has `name` and neither old column, and `POST .../guests` with `{"name":"Oma Erika"}` works.
 
 Decisions:
 
@@ -47,6 +50,7 @@ Decisions:
 - `guests.csv` column order: `deleted_at` third wins over keeping the identifying columns together, and `household_id` serves both `guest.household_id` and `household.id`. Recorded in `F5-B04` and at `persistence.GuestExportColumns`.
 - A PATCH that changes nothing writes no audit row — every row in that log should be a change, not a record of somebody pressing save.
 - Admin forms are grouped in fieldsets with legends: the detail page carries several controls called "Vorname" and several buttons called "Speichern", and the group name is the only thing that says whose.
+- **Guest names are one field.** Decided 2026-08-31 after F5 was built: what every output needs is the full name, and one field copes with a double first name, a missing surname or "Oma Erika" — which matters most in F4, where guests type it themselves. Done now because there is no real guest data yet; after send-out it would be a migration against live answers. Accepted cost: nothing sorts by surname, `guests.csv` included.
 - Guest age stays a single domain rule (`domain.ResolveAge`) rather than a `validate` struct tag, so the kind/age pairing lives in one place; the field name and German wording are mapped in `httpio`.
 
 Time: 4h (tentative)

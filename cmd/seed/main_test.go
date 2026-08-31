@@ -135,27 +135,27 @@ func TestSeededMembersAreAdultsOfTheirHousehold(t *testing.T) {
 	database := openSeededDatabase(t, path)
 
 	type member struct {
-		FirstName string `db:"first_name"`
-		LastName  string `db:"last_name"`
+		Name      string `db:"name"`
 		Kind      string `db:"kind"`
 		Origin    string `db:"origin"`
 		Attending *string
 	}
 	var members []member
 	require.NoError(t, database.Read.Select(&members,
-		`SELECT g.first_name, g.last_name, g.kind, g.origin, g.attending
+		`SELECT g.name, g.kind, g.origin, g.attending
 		 FROM guest g JOIN household h ON h.id = g.household_id
 		 WHERE h.display_name = 'Familie Testhaushalt 1'
 		 ORDER BY g.id`))
 
 	require.Len(t, members, 2)
 	for _, m := range members {
-		// Numbered, so a member's last name names their household.
-		require.Equal(t, "Testhaushalt 1", m.LastName)
+		// Numbered, so a member's own name names their household too — the seeder
+		// derives it, which is something only the seeder may do.
+		require.Regexp(t, `^\S+ Testhaushalt 1$`, m.Name)
 		require.Equal(t, string(domain.GuestKindAdult), m.Kind)
 		require.Equal(t, string(domain.GuestOriginSeeded), m.Origin)
 		require.Nil(t, m.Attending)
-		require.NotEmpty(t, strings.TrimSpace(m.FirstName))
+		require.NotEmpty(t, strings.TrimSpace(m.Name))
 	}
 }
 

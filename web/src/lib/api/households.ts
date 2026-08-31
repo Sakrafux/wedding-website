@@ -45,8 +45,7 @@ export interface HouseholdPatch {
 
 /** The fields a new member needs, and the ones a member PATCH may carry. */
 export interface GuestDraft {
-  first_name: string;
-  last_name: string;
+  name: string;
   kind: GuestKind;
   age: number | null;
   seating_need: SeatingNeed;
@@ -54,8 +53,7 @@ export interface GuestDraft {
 }
 
 export interface GuestPatch {
-  first_name?: string;
-  last_name?: string;
+  name?: string;
   kind?: GuestKind;
   /** `null` clears the age; omitting the key leaves it alone. The two differ. */
   age?: number | null;

@@ -30,7 +30,7 @@ As an admin, I want to add, edit and remove the people in a household, so that t
 5. `DELETE` is a **soft** delete — set `deleted_at`. The guest was counted, may hold a seat assignment, and appears in the audit trail; erasing the row would leave those dangling and the history unexplainable. Every read filters `deleted_at IS NULL`, which `ListMembers` already does.
 6. A soft-deleted guest keeps their `seat_assignment` row rather than losing it silently. `F7-B01` reports it as a stale assignment for a human to resolve — seats must not quietly vanish from a finished plan.
 7. Deleting the last member of a household is allowed. An empty household is a real state: we know a name, we have not yet asked who is coming.
-8. Validation: `first_name` and `last_name` required, 1–80 characters each. `kind` must be one of the enum values. `age` 0–17 when present, and rejected outright when `kind = 'adult'` — a child of 18 is an adult, and the caterer brackets are drawn below that.
+8. Validation: `name` required, 1–160 characters. One name field, not two — see `03-data-model` for why, and 160 characters because it has to hold a double first name plus a double-barrelled surname. `kind` must be one of the enum values. `age` 0–17 when present, and rejected outright when `kind = 'adult'` — a child of 18 is an adult, and the caterer brackets are drawn below that.
 9. `dietary_note` and `seating_need` are editable here too: both are things a household tells us by phone as often as through the form.
 10. Audit every mutation with `entity = 'guest'` and the guest id. `before`/`after` carry only the changed fields.
 
@@ -45,8 +45,7 @@ Request (`POST` requires the names and `kind`; `PATCH` takes any subset):
 
 ```json
 {
-  "first_name": "Emil",
-  "last_name": "Müller",
+  "name": "Emil Müller",
   "kind": "child",
   "age": 4,
   "seating_need": "high_chair",
@@ -60,8 +59,7 @@ Response `200` / `201`:
 {
   "id": 31,
   "household_id": 12,
-  "first_name": "Emil",
-  "last_name": "Müller",
+  "name": "Emil Müller",
   "kind": "child",
   "age": 4,
   "origin": "seeded",

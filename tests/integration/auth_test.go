@@ -20,11 +20,10 @@ type bootstrapBody struct {
 		DisplayName string `json:"display_name"`
 	} `json:"household"`
 	Members []struct {
-		ID        int64  `json:"id"`
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		Kind      string `json:"kind"`
-		Origin    string `json:"origin"`
+		ID     int64  `json:"id"`
+		Name   string `json:"name"`
+		Kind   string `json:"kind"`
+		Origin string `json:"origin"`
 	} `json:"members"`
 	Flags struct {
 		RSVPOpen         bool `json:"rsvp_open"`
@@ -50,8 +49,8 @@ func TestLoginWithAValidCodeReturnsTheHousehold(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write,
 		withCode("ABC234"),
 		withDisplayName("Familie Müller"),
-		withAdult("Anna", "Müller"),
-		withChild("Emil", "Müller", 4),
+		withAdult("Anna Müller"),
+		withChild("Emil Müller", 4),
 	)
 
 	response := app.logIn("ABC234")
@@ -63,10 +62,10 @@ func TestLoginWithAValidCodeReturnsTheHousehold(t *testing.T) {
 	assert.Equal(t, "Familie Müller", body.Household.DisplayName)
 
 	require.Len(t, body.Members, 2)
-	assert.Equal(t, "Anna", body.Members[0].FirstName)
+	assert.Equal(t, "Anna Müller", body.Members[0].Name)
 	assert.Equal(t, "adult", body.Members[0].Kind)
 	assert.Equal(t, "seeded", body.Members[0].Origin)
-	assert.Equal(t, "Emil", body.Members[1].FirstName)
+	assert.Equal(t, "Emil Müller", body.Members[1].Name)
 	assert.Equal(t, "child", body.Members[1].Kind)
 
 	// Seeded by migration 0001: all three gates start closed, and the deadline is

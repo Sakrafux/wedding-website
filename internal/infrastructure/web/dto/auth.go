@@ -61,9 +61,10 @@ type HouseholdSummary struct {
 // "who are you" bootstrap; the answers live behind GET /api/rsvp (F3-B02), so that
 // there is one endpoint that owns the RSVP shape rather than two that must agree.
 type Member struct {
-	ID        int64  `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	ID int64 `json:"id"`
+	// Name is the whole name in one field. There is no first/last split anywhere in
+	// this application — see migration 0002.
+	Name string `json:"name"`
 	// Kind and Origin are the English enum values from the database. German labels
 	// are the frontend's business, mapped in web/src/lib/labels.ts.
 	Kind   string `json:"kind"`

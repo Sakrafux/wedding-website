@@ -50,9 +50,12 @@ const maxChildAge = 17
 type Guest struct {
 	ID          int64
 	HouseholdID int64
-	FirstName   string
-	LastName    string
-	Kind        GuestKind
+	// Name is the whole name in one field, as the guest writes it. Deliberately not
+	// split into first and last: what every output needs is the full name, and one
+	// field lets a household enter "Oma Erika" or a double first name without
+	// deciding which half is which. See migration 0002 for the accepted cost.
+	Name string
+	Kind GuestKind
 	// Age is **age at the wedding date** and is set for children only. Asked that
 	// way in the UI so the value does not drift over the months before the event.
 	Age    *int
@@ -101,9 +104,8 @@ func ResolveAge(kind GuestKind, age *int) (*int, error) {
 // Age needs two fields rather than one because a JSON null and an absent key mean
 // different things here — see AgeSet.
 type GuestPatch struct {
-	FirstName *string
-	LastName  *string
-	Kind      *GuestKind
+	Name *string
+	Kind *GuestKind
 	// AgeSet says the request carried an `age` key at all; Age is its value, nil for
 	// an explicit null. A single *int could not express "clear the age", since that
 	// is exactly what a null decodes to.
@@ -123,11 +125,8 @@ func ApplyGuestPatch(current Guest, patch GuestPatch) (Guest, Changes, error) {
 	updated := current
 	var changes Changes
 
-	if patch.FirstName != nil {
-		updated.FirstName = *patch.FirstName
-	}
-	if patch.LastName != nil {
-		updated.LastName = *patch.LastName
+	if patch.Name != nil {
+		updated.Name = *patch.Name
 	}
 	if patch.Kind != nil {
 		updated.Kind = *patch.Kind
@@ -155,8 +154,7 @@ func ApplyGuestPatch(current Guest, patch GuestPatch) (Guest, Changes, error) {
 	}
 	updated.Age = age
 
-	changes.compare("first_name", current.FirstName, updated.FirstName)
-	changes.compare("last_name", current.LastName, updated.LastName)
+	changes.compare("name", current.Name, updated.Name)
 	changes.compare("kind", current.Kind, updated.Kind)
 	changes.compareOptionalInt("age", current.Age, updated.Age)
 	changes.compare("seating_need", current.SeatingNeed, updated.SeatingNeed)

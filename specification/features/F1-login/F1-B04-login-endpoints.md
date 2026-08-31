@@ -47,7 +47,7 @@ Response `200`:
 {
   "household": { "id": 12, "display_name": "Familie Müller" },
   "members": [
-    { "id": 30, "first_name": "Anna", "last_name": "Müller", "kind": "adult", "origin": "seeded" }
+    { "id": 30, "name": "Anna Müller", "kind": "adult", "origin": "seeded" }
   ],
   "flags": { "rsvp_open": true, "seating_published": false, "gallery_visible": false, "uploads_open": false },
   "rsvp_deadline": "2027-05-16T21:59:00Z"

@@ -142,7 +142,7 @@ func TestGuestExportIncludesRemovedPeopleWithTheirDeletionTime(t *testing.T) {
 	app := newAdminApp(t)
 	household := seedHousehold(t, app.Database.Write,
 		withDisplayName("Familie Müller"), withCode("ABC234"),
-		withAdult("Anna", "Müller"), withChild("Emil", "Müller", 4))
+		withAdult("Anna Müller"), withChild("Emil Müller", 4))
 
 	require.Equal(t, http.StatusNoContent,
 		app.deleteRequest(fmt.Sprintf("/api/admin/guests/%d", household.Guests[1].ID)).Status)
@@ -159,7 +159,7 @@ func TestGuestExportIncludesRemovedPeopleWithTheirDeletionTime(t *testing.T) {
 
 	assert.Empty(t, byColumn(rows[1], "deleted_at"))
 	assert.NotEmpty(t, byColumn(rows[2], "deleted_at"), "Emil was removed and is still in the dump")
-	assert.Equal(t, "Emil", byColumn(rows[2], "first_name"))
+	assert.Equal(t, "Emil Müller", byColumn(rows[2], "name"))
 	assert.Equal(t, "4", byColumn(rows[2], "age"))
 	assert.Equal(t, "Familie Müller", byColumn(rows[2], "household_display_name"))
 	assert.Equal(t, "ABC234", byColumn(rows[2], "household_code"))
@@ -172,7 +172,7 @@ func TestGuestExportCarriesEmptyRSVPColumnsBeforeF3(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	seedHousehold(t, app.Database.Write, withAdult("Anna", "Müller"))
+	seedHousehold(t, app.Database.Write, withAdult("Anna Müller"))
 
 	rows := readCSV(t, app.get("/api/admin/export/guests.csv").Body)
 	require.Len(t, rows, 2)

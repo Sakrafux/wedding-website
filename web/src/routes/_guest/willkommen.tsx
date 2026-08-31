@@ -48,14 +48,14 @@ function ConfirmationPage() {
       </header>
 
       {/* The member list is what actually catches the error: two households with
-          adjacent codes will almost never have the same first names, whereas
+          adjacent codes will almost never hold the same names, whereas
           "Familie Müller" twice is entirely plausible. */}
       <section className="bg-surface border-line shadow-card flex flex-col gap-2 rounded-xl border p-6">
         <p className="text-small text-ink-muted">{confirmationLabels.membersIntro}</p>
         <ul className="flex flex-col gap-1">
           {me.members.map((member) => (
             <li key={member.id} className="text-h3">
-              {member.first_name}
+              {member.name}
             </li>
           ))}
         </ul>

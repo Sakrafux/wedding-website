@@ -295,8 +295,7 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
   const update = useUpdateMember(householdId, member.id);
   const remove = useRemoveMember(householdId, member.id);
 
-  const [firstName, setFirstName] = useState(member.first_name);
-  const [lastName, setLastName] = useState(member.last_name);
+  const [name, setName] = useState(member.name);
   const [kind, setKind] = useState<GuestKind>(member.kind);
   const [age, setAge] = useState(member.age === null ? "" : String(member.age));
   const [seatingNeed, setSeatingNeed] = useState<SeatingNeed>(member.seating_need);
@@ -317,8 +316,7 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
 
     try {
       await update.mutateAsync({
-        first_name: firstName,
-        last_name: lastName,
+        name,
         kind,
         age: kind === "child" && age !== "" ? Number(age) : null,
         seating_need: seatingNeed,
@@ -329,18 +327,14 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
     }
   }
 
-  const memberName = `${firstName} ${lastName}`.trim();
-
   return (
     <form onSubmit={submit}>
       <fieldset className="border-line flex flex-col gap-3 rounded-xl border p-4">
-        {/* A named group, so a screen reader announces *whose* Vorname a field is:
-          twenty members on one page otherwise means twenty controls called "Vorname"
-          with nothing to tell them apart. The legend uses the stored name rather than
-          the field's current value, so it does not change under the cursor. */}
-        <legend className="text-body font-semibold">
-          {member.first_name} {member.last_name}
-        </legend>
+        {/* A named group, so a screen reader announces *whose* field this is: twenty
+          members on one page otherwise means twenty controls called "Name" with
+          nothing to tell them apart. The legend uses the stored name rather than the
+          field's current value, so it does not change under the cursor. */}
+        <legend className="text-body font-semibold">{member.name}</legend>
 
         {/* Only guest-added members are marked. A badge on every ordinary guest would
           drown out the one that matters. */}
@@ -351,28 +345,8 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
         ) : null}
 
         <div className="flex flex-wrap gap-3">
-          <Field
-            label={householdLabels.firstNameLabel}
-            id={`first-name-${member.id}`}
-            error={fieldError(update.error, "first_name")}
-          >
-            <Input
-              id={`first-name-${member.id}`}
-              value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
-            />
-          </Field>
-
-          <Field
-            label={householdLabels.lastNameLabel}
-            id={`last-name-${member.id}`}
-            error={fieldError(update.error, "last_name")}
-          >
-            <Input
-              id={`last-name-${member.id}`}
-              value={lastName}
-              onChange={(event) => setLastName(event.target.value)}
-            />
+          <Field label={householdLabels.nameLabel} id={`name-${member.id}`} error={fieldError(update.error, "name")}>
+            <Input id={`name-${member.id}`} value={name} onChange={(event) => setName(event.target.value)} />
           </Field>
 
           <Field label={householdLabels.kindLabel} id={`kind-${member.id}`} error={fieldError(update.error, "kind")}>
@@ -450,7 +424,7 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
-              <AlertDialogTitle>{householdLabels.removeMemberConfirmTitle(memberName)}</AlertDialogTitle>
+              <AlertDialogTitle>{householdLabels.removeMemberConfirmTitle(member.name)}</AlertDialogTitle>
               <AlertDialogDescription>{householdLabels.removeMemberConfirmBody}</AlertDialogDescription>
               <AlertDialogFooter>
                 <AlertDialogCancel>{householdLabels.cancel}</AlertDialogCancel>
@@ -481,12 +455,13 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
  */
 function AddMemberForm({ household }: { household: AdminHousehold }) {
   const add = useAddMember(household.id);
-  const firstNameField = useRef<HTMLInputElement>(null);
+  const nameField = useRef<HTMLInputElement>(null);
 
-  const [firstName, setFirstName] = useState("");
-  // Prefilled from the household's name, which is right far more often than it is
-  // wrong — and wrong is one edit rather than one per person.
-  const [lastName, setLastName] = useState(household.display_name.replace(/^Familie\s+/u, ""));
+  // Nothing is prefilled from the household. "Household" is a flexible term here —
+  // one or more people who share an invitation — so display_name is free text like
+  // "Luki & Paddi" or a single person's name, and a name derived from it would be
+  // wrong as often as right.
+  const [name, setName] = useState("");
   const [kind, setKind] = useState<GuestKind>("adult");
   const [age, setAge] = useState("");
 
@@ -495,17 +470,16 @@ function AddMemberForm({ household }: { household: AdminHousehold }) {
 
     try {
       await add.mutateAsync({
-        first_name: firstName,
-        last_name: lastName,
+        name,
         kind,
         age: kind === "child" && age !== "" ? Number(age) : null,
         seating_need: "normal",
         dietary_note: "",
       });
 
-      setFirstName("");
+      setName("");
       setAge("");
-      firstNameField.current?.focus();
+      nameField.current?.focus();
     } catch {
       // Rendered per field below; the values stay so nothing has to be retyped.
     }
@@ -515,22 +489,23 @@ function AddMemberForm({ household }: { household: AdminHousehold }) {
     <form onSubmit={submit}>
       <fieldset className="bg-surface-sunken flex flex-col gap-3 rounded-xl p-4">
         {/* Named for the same reason the member rows are: the page carries several
-            controls called "Vorname", and the group is what says which is which. */}
+            controls called "Name", and the group is what says which is which. */}
         <legend className="text-body font-semibold">{householdLabels.addMemberHeading}</legend>
 
         <div className="flex flex-wrap gap-3">
-          <Field label={householdLabels.firstNameLabel} id="new-first-name" error={fieldError(add.error, "first_name")}>
+          <Field
+            label={householdLabels.nameLabel}
+            id="new-name"
+            hint={householdLabels.nameHint}
+            error={fieldError(add.error, "name")}
+          >
             <Input
-              id="new-first-name"
-              ref={firstNameField}
-              value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
+              id="new-name"
+              ref={nameField}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
               required
             />
-          </Field>
-
-          <Field label={householdLabels.lastNameLabel} id="new-last-name" error={fieldError(add.error, "last_name")}>
-            <Input id="new-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
           </Field>
 
           <Field label={householdLabels.kindLabel} id="new-kind" error={fieldError(add.error, "kind")}>
@@ -576,7 +551,7 @@ function AddMemberForm({ household }: { household: AdminHousehold }) {
           {add.isPending ? householdLabels.addingMember : householdLabels.addMember}
         </Button>
 
-        {add.error && !fieldError(add.error, "first_name") ? (
+        {add.error && !fieldError(add.error, "name") ? (
           <p role="alert" className="text-accent-strong text-small">
             {add.error.message}
           </p>

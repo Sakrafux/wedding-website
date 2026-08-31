@@ -13,16 +13,14 @@ describe("household confirmation", () => {
 
     expect(screen.getByRole("heading")).toHaveTextContent("Willkommen, Familie Müller — seid ihr das?");
     // The member list is what actually catches a one-character-off code: two
-    // households named Müller is plausible, two with the same first names is not.
-    expect(screen.getByText("Anna")).toBeInTheDocument();
-    expect(screen.getByText("Emil")).toBeInTheDocument();
+    // households named Müller is plausible, two with the same members is not.
+    expect(screen.getByText("Anna Müller")).toBeInTheDocument();
+    expect(screen.getByText("Emil Müller")).toBeInTheDocument();
   });
 
   it("renders a single-member household without a dangling list", async () => {
     stubApi({
-      "GET /api/me": ok(
-        bootstrap({ members: [{ id: 30, first_name: "Anna", last_name: "Müller", kind: "adult", origin: "seeded" }] }),
-      ),
+      "GET /api/me": ok(bootstrap({ members: [{ id: 30, name: "Anna Müller", kind: "adult", origin: "seeded" }] })),
     });
 
     await renderApp("/willkommen");

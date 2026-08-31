@@ -36,8 +36,7 @@ func TestAdminAddsUpdatesAndRemovesAMember(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"))
 
 	created := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
-		"first_name":   "Emil",
-		"last_name":    "Müller",
+		"name":         "Emil Müller",
 		"kind":         "child",
 		"age":          4,
 		"seating_need": "high_chair",
@@ -63,7 +62,7 @@ func TestAdminAddsUpdatesAndRemovesAMember(t *testing.T) {
 	updated := app.patchJSON(path, map[string]any{"dietary_note": "Nuss- und Sellerieallergie"})
 	require.Equal(t, http.StatusOK, updated.Status)
 	assert.Equal(t, "Nuss- und Sellerieallergie", updated.adminGuest().DietaryNote)
-	assert.Equal(t, "Emil", updated.adminGuest().FirstName, "an absent field is left alone")
+	assert.Equal(t, "Emil Müller", updated.adminGuest().Name, "an absent field is left alone")
 
 	require.Equal(t, http.StatusNoContent, app.deleteRequest(path).Status)
 	assert.Empty(t, app.members(household.ID))
@@ -78,9 +77,8 @@ func TestAMemberCreatedWithoutASeatingNeedGetsTheDefault(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write)
 
 	created := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
-		"first_name": "Anna",
-		"last_name":  "Müller",
-		"kind":       "adult",
+		"name": "Anna Müller",
+		"kind": "adult",
 	})
 
 	require.Equal(t, http.StatusCreated, created.Status)
@@ -97,10 +95,9 @@ func TestAnAgeOnAnAdultIsAFieldErrorAndNotADriverError(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write)
 
 	response := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
-		"first_name": "Anna",
-		"last_name":  "Müller",
-		"kind":       "adult",
-		"age":        30,
+		"name": "Anna Müller",
+		"kind": "adult",
+		"age":  30,
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
@@ -117,10 +114,9 @@ func TestAChildsAgeMustBeInRange(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write)
 
 	response := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
-		"first_name": "Emil",
-		"last_name":  "Müller",
-		"kind":       "child",
-		"age":        18,
+		"name": "Emil Müller",
+		"kind": "child",
+		"age":  18,
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
@@ -133,7 +129,7 @@ func TestPromotingAChildToAnAdultClearsTheAge(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withChild("Emil", "Müller", 17))
+	household := seedHousehold(t, app.Database.Write, withChild("Emil Müller", 17))
 	guestID := household.Guests[0].ID
 
 	response := app.patchJSON(fmt.Sprintf("/api/admin/guests/%d", guestID), map[string]any{"kind": "adult"})
@@ -153,10 +149,10 @@ func TestANullAgeClearsItAndAnAbsentAgeDoesNot(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withChild("Emil", "Müller", 4))
+	household := seedHousehold(t, app.Database.Write, withChild("Emil Müller", 4))
 	path := fmt.Sprintf("/api/admin/guests/%d", household.Guests[0].ID)
 
-	untouched := app.patchJSON(path, map[string]any{"first_name": "Emilia"})
+	untouched := app.patchJSON(path, map[string]any{"name": "Emilia Müller"})
 	require.Equal(t, http.StatusOK, untouched.Status)
 	require.NotNil(t, untouched.adminGuest().Age)
 	assert.Equal(t, 4, *untouched.adminGuest().Age)
@@ -173,7 +169,7 @@ func TestRemovingAMemberKeepsTheRowAndItsSeatAssignment(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withAdult("Anna", "Müller"))
+	household := seedHousehold(t, app.Database.Write, withAdult("Anna Müller"))
 	guestID := household.Guests[0].ID
 
 	unit := insertSeatingUnit(t, app.Database.Write, "party", "Tisch 1")
@@ -202,12 +198,12 @@ func TestARemovedMemberCannotBeEditedOrRemovedAgain(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withAdult("Anna", "Müller"))
+	household := seedHousehold(t, app.Database.Write, withAdult("Anna Müller"))
 	path := fmt.Sprintf("/api/admin/guests/%d", household.Guests[0].ID)
 
 	require.Equal(t, http.StatusNoContent, app.deleteRequest(path).Status)
 
-	assert.Equal(t, http.StatusNotFound, app.patchJSON(path, map[string]any{"first_name": "Anne"}).Status)
+	assert.Equal(t, http.StatusNotFound, app.patchJSON(path, map[string]any{"name": "Anne Müller"}).Status)
 	assert.Equal(t, http.StatusNotFound, app.deleteRequest(path).Status)
 }
 
@@ -217,7 +213,7 @@ func TestRemovingTheLastMemberLeavesTheHouseholdIntact(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withAdult("Anna", "Müller"))
+	household := seedHousehold(t, app.Database.Write, withAdult("Anna Müller"))
 
 	require.Equal(t, http.StatusNoContent,
 		app.deleteRequest(fmt.Sprintf("/api/admin/guests/%d", household.Guests[0].ID)).Status)
@@ -234,8 +230,8 @@ func TestAGuestIsAddressedByTheirOwnIDAcrossHouseholds(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	first := seedHousehold(t, app.Database.Write, withAdult("Anna", "Müller"))
-	second := seedHousehold(t, app.Database.Write, withAdult("Bernd", "Schmidt"))
+	first := seedHousehold(t, app.Database.Write, withAdult("Anna Müller"))
+	second := seedHousehold(t, app.Database.Write, withAdult("Bernd Schmidt"))
 
 	for _, household := range []seededHousehold{first, second} {
 		response := app.patchJSON(fmt.Sprintf("/api/admin/guests/%d", household.Guests[0].ID),
@@ -254,14 +250,13 @@ func TestAdminGuestValidationFailuresNameTheirFields(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write)
 
 	response := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
-		"first_name": "",
-		"last_name":  "Müller",
-		"kind":       "erwachsen",
+		"name": "",
+		"kind": "erwachsen",
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
 	envelope := response.errorEnvelope()
-	assert.Contains(t, envelope.Fields, "first_name")
+	assert.Contains(t, envelope.Fields, "name")
 	// The enum values are English on the wire; German exists only as a label in the
 	// frontend, so a German value is not a value at all.
 	assert.Contains(t, envelope.Fields, "kind")
@@ -274,7 +269,7 @@ func TestEachGuestMutationWritesExactlyOneAuditRow(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write)
 
 	created := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
-		"first_name": "Emil", "last_name": "Müller", "kind": "child", "age": 4,
+		"name": "Emil Müller", "kind": "child", "age": 4,
 	})
 	require.Equal(t, http.StatusCreated, created.Status)
 	guest := created.adminGuest()

@@ -27,8 +27,8 @@ export interface HouseholdSummary {
 
 export interface Member {
   id: number;
-  first_name: string;
-  last_name: string;
+  /** The whole name in one field — there is no first/last split in this app. */
+  name: string;
   kind: GuestKind;
   origin: GuestOrigin;
 }
@@ -104,8 +104,7 @@ export interface AdminHousehold extends AdminHouseholdOverview {
 export interface AdminGuest {
   id: number;
   household_id: number;
-  first_name: string;
-  last_name: string;
+  name: string;
   kind: GuestKind;
   /** Age at the wedding date, and null for an adult. */
   age: number | null;

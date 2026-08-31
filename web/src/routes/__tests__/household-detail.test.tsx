@@ -20,9 +20,9 @@ function stubHousehold(overrides: Parameters<typeof adminHousehold>[0] = {}) {
 }
 
 /**
- * Fields are scoped to their group: the page carries one "Vorname" per member plus
- * the add form's, and the fieldset legend is what tells them apart — for a screen
- * reader as much as for this test.
+ * Fields are scoped to their group: the page carries one "Name" per member plus the
+ * add form's, and the fieldset legend is what tells them apart — for a screen reader
+ * as much as for this test.
  */
 function group(name: string | RegExp) {
   return within(screen.getByRole("group", { name }));
@@ -40,7 +40,7 @@ describe("admin household detail", () => {
     expect(household.getByLabelText("Interne Notiz (nur für uns)")).toHaveValue("Kommen mit dem Zug");
     expect(household.getByLabelText("Plätze angeboten (Kirche → Feier)")).toHaveValue(4);
     expect(screen.getByText("ABC234")).toBeInTheDocument();
-    expect(group("Anna Müller").getByLabelText("Vorname")).toHaveValue("Anna");
+    expect(group("Anna Müller").getByLabelText("Name")).toHaveValue("Anna Müller");
     expect(group("Emil Müller").getByLabelText("Alter am Hochzeitstag")).toHaveValue(4);
   });
 
@@ -89,21 +89,22 @@ describe("admin household detail", () => {
   // Eighty guests entered four at a time is the actual workload.
   it("keeps the add-member form open and ready for the next person", async () => {
     const { api } = stubHousehold({ members: [] });
-    api.set("POST /api/admin/households/12/guests", ok(adminGuest({ first_name: "Bernd" })));
+    api.set("POST /api/admin/households/12/guests", ok(adminGuest({ name: "Bernd Müller" })));
 
     const { user } = await renderApp("/admin/haushalte/12");
 
     await screen.findByRole("group", { name: "Person hinzufügen" });
     const adding = group("Person hinzufügen");
 
-    const firstName = adding.getByLabelText("Vorname");
-    await user.type(firstName, "Bernd");
+    const nameField = adding.getByLabelText("Name");
+    await user.type(nameField, "Bernd Müller");
     await user.click(adding.getByRole("button", { name: "Hinzufügen" }));
 
-    await waitFor(() => expect(firstName).toHaveValue(""));
-    expect(firstName).toHaveFocus();
-    // The surname stays: it is right for the next person far more often than not.
-    expect(adding.getByLabelText("Nachname")).toHaveValue("Müller");
+    // Cleared and focused, ready for the next person. Nothing is prefilled from the
+    // household: "household" here is one or more people sharing an invitation, and
+    // its name is free text like "Luki & Paddi".
+    await waitFor(() => expect(nameField).toHaveValue(""));
+    expect(nameField).toHaveFocus();
   });
 
   it("asks for an age only for a child", async () => {
@@ -125,7 +126,7 @@ describe("admin household detail", () => {
   // A marker on every ordinary guest would drown out the one that matters.
   it("marks a member the household added itself, and nobody else", async () => {
     stubHousehold({
-      members: [adminGuest(), adminGuest({ id: 31, first_name: "Clara", origin: "guest_added" })],
+      members: [adminGuest(), adminGuest({ id: 31, name: "Clara Müller", origin: "guest_added" })],
     });
 
     await renderApp("/admin/haushalte/12");

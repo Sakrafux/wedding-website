@@ -157,11 +157,10 @@ func bootstrapResponse(bootstrap application.Bootstrap) dto.BootstrapResponse {
 	members := make([]dto.Member, 0, len(bootstrap.Members))
 	for _, member := range bootstrap.Members {
 		members = append(members, dto.Member{
-			ID:        member.ID,
-			FirstName: member.FirstName,
-			LastName:  member.LastName,
-			Kind:      string(member.Kind),
-			Origin:    string(member.Origin),
+			ID:     member.ID,
+			Name:   member.Name,
+			Kind:   string(member.Kind),
+			Origin: string(member.Origin),
 		})
 	}
 

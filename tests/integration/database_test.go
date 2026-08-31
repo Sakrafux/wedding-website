@@ -58,7 +58,7 @@ func TestForeignKeyViolationIsRejected(t *testing.T) {
 	database := newTestApp(t).Database
 
 	_, err := database.Write.Exec(
-		`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (999, 'Anna', 'Muster', 'adult', 'seeded')`)
+		`INSERT INTO guest (household_id, name, kind, origin) VALUES (999, 'Anna Muster', 'adult', 'seeded')`)
 
 	require.Error(t, err)
 	assert.Contains(t, strings.ToUpper(err.Error()), "FOREIGN KEY")

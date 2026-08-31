@@ -43,8 +43,7 @@ type adminHousehold struct {
 type adminGuest struct {
 	ID          int64  `json:"id"`
 	HouseholdID int64  `json:"household_id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
+	Name        string `json:"name"`
 	Kind        string `json:"kind"`
 	Age         *int   `json:"age"`
 	Origin      string `json:"origin"`
@@ -141,12 +140,12 @@ func TestAdminHouseholdDetailEmbedsItsMembers(t *testing.T) {
 
 	app := newAdminApp(t)
 	household := seedHousehold(t, app.Database.Write,
-		withAdult("Anna", "Müller"), withChild("Emil", "Müller", 4))
+		withAdult("Anna Müller"), withChild("Emil Müller", 4))
 
 	detail := app.get(fmt.Sprintf("/api/admin/households/%d", household.ID)).adminHousehold()
 
 	require.Len(t, detail.Members, 2)
-	assert.Equal(t, "Anna", detail.Members[0].FirstName)
+	assert.Equal(t, "Anna Müller", detail.Members[0].Name)
 	assert.Nil(t, detail.Members[0].Age)
 	assert.Equal(t, "child", detail.Members[1].Kind)
 	require.NotNil(t, detail.Members[1].Age)
@@ -216,7 +215,7 @@ func TestDeletingAHouseholdRemovesItsGuestsAndSeatAssignments(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withAdult("Anna", "Müller"))
+	household := seedHousehold(t, app.Database.Write, withAdult("Anna Müller"))
 	unit := insertSeatingUnit(t, app.Database.Write, "party", "Tisch 1")
 	seat := insertSeat(t, app.Database.Write, unit, "party", "Platz 1")
 	assignSeat(t, app.Database.Write, seat, "party", household.Guests[0].ID)
@@ -314,7 +313,7 @@ func TestAdminHouseholdRoutesAnswer404ForAnUnknownID(t *testing.T) {
 		"patch":   app.patchJSON("/api/admin/households/9999", map[string]any{"display_name": "X"}),
 		"delete":  app.deleteRequest("/api/admin/households/9999"),
 		"code":    app.post("/api/admin/households/9999/code"),
-		"guest":   app.postJSON("/api/admin/households/9999/guests", map[string]any{"first_name": "A", "last_name": "B", "kind": "adult"}),
+		"guest":   app.postJSON("/api/admin/households/9999/guests", map[string]any{"name": "A B", "kind": "adult"}),
 		"garbage": app.get("/api/admin/households/nicht-numerisch"),
 	}
 

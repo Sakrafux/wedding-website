@@ -62,8 +62,7 @@ type AdminHousehold struct {
 type AdminGuest struct {
 	ID          int64  `json:"id"`
 	HouseholdID int64  `json:"household_id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
+	Name        string `json:"name"`
 	// Kind, Origin and SeatingNeed are the English enum values from the database.
 	// German labels are the frontend's business, mapped in web/src/lib/labels.ts.
 	Kind string `json:"kind"`
@@ -123,9 +122,10 @@ type AdminCodeReissueResponse struct {
 // request claim otherwise would corrupt the one column that answers "what did the
 // households add themselves".
 type AdminGuestCreateRequest struct {
-	FirstName string `json:"first_name" validate:"required,max=80"`
-	LastName  string `json:"last_name" validate:"required,max=80"`
-	Kind      string `json:"kind" validate:"required,oneof=adult child"`
+	// One name field, not two: 160 characters covers a double first name plus a
+	// double-barrelled surname, and there is no half of it we ask about separately.
+	Name string `json:"name" validate:"required,max=160"`
+	Kind string `json:"kind" validate:"required,oneof=adult child"`
 	// Age carries no validation tag: the kind/age pairing and the range are one
 	// domain rule (domain.ResolveAge), and splitting it across a struct tag and a
 	// domain function would be two places to keep in step.
@@ -138,9 +138,8 @@ type AdminGuestCreateRequest struct {
 
 // AdminGuestPatchRequest is the body of PATCH /api/admin/guests/{id}. Any subset.
 type AdminGuestPatchRequest struct {
-	FirstName *string `json:"first_name" validate:"omitnil,min=1,max=80"`
-	LastName  *string `json:"last_name" validate:"omitnil,min=1,max=80"`
-	Kind      *string `json:"kind" validate:"omitnil,oneof=adult child"`
+	Name *string `json:"name" validate:"omitnil,min=1,max=160"`
+	Kind *string `json:"kind" validate:"omitnil,oneof=adult child"`
 	// Age is Optional rather than *int because a null and an absent key mean
 	// different things here: null clears the age, absent leaves it alone. Every
 	// other field can express "clear" as an empty value.

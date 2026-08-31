@@ -22,16 +22,16 @@ func TestEnumColumnsRejectUnknownValues(t *testing.T) {
 		statement string
 		arguments []any
 	}{
-		"guest.kind":         {`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (?, 'A', 'B', 'grown_up', 'seeded')`, []any{householdID}},
-		"guest.origin":       {`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (?, 'A', 'B', 'adult', 'imported')`, []any{householdID}},
-		"guest.attending":    {`INSERT INTO guest (household_id, first_name, last_name, kind, origin, attending) VALUES (?, 'A', 'B', 'adult', 'seeded', 'maybe')`, []any{householdID}},
-		"guest.meal_choice":  {`INSERT INTO guest (household_id, first_name, last_name, kind, origin, meal_choice) VALUES (?, 'A', 'B', 'adult', 'seeded', 'vegetarisch')`, []any{householdID}},
-		"guest.portion":      {`INSERT INTO guest (household_id, first_name, last_name, kind, origin, portion) VALUES (?, 'A', 'B', 'adult', 'seeded', 'half')`, []any{householdID}},
-		"guest.seating_need": {`INSERT INTO guest (household_id, first_name, last_name, kind, origin, seating_need) VALUES (?, 'A', 'B', 'adult', 'seeded', 'booster')`, []any{householdID}},
+		"guest.kind":         {`INSERT INTO guest (household_id, name, kind, origin) VALUES (?, 'A B', 'grown_up', 'seeded')`, []any{householdID}},
+		"guest.origin":       {`INSERT INTO guest (household_id, name, kind, origin) VALUES (?, 'A B', 'adult', 'imported')`, []any{householdID}},
+		"guest.attending":    {`INSERT INTO guest (household_id, name, kind, origin, attending) VALUES (?, 'A B', 'adult', 'seeded', 'maybe')`, []any{householdID}},
+		"guest.meal_choice":  {`INSERT INTO guest (household_id, name, kind, origin, meal_choice) VALUES (?, 'A B', 'adult', 'seeded', 'vegetarisch')`, []any{householdID}},
+		"guest.portion":      {`INSERT INTO guest (household_id, name, kind, origin, portion) VALUES (?, 'A B', 'adult', 'seeded', 'half')`, []any{householdID}},
+		"guest.seating_need": {`INSERT INTO guest (household_id, name, kind, origin, seating_need) VALUES (?, 'A B', 'adult', 'seeded', 'booster')`, []any{householdID}},
 		// 'stroller' used to be a seating_need. It moved to household.has_stroller, so
 		// the old value must now be refused rather than quietly stored.
-		"guest.seating_need/stroller": {`INSERT INTO guest (household_id, first_name, last_name, kind, origin, seating_need) VALUES (?, 'A', 'B', 'child', 'seeded', 'stroller')`, []any{householdID}},
-		"guest.age":                   {`INSERT INTO guest (household_id, first_name, last_name, kind, origin, age) VALUES (?, 'A', 'B', 'adult', 'seeded', 34)`, []any{householdID}},
+		"guest.seating_need/stroller": {`INSERT INTO guest (household_id, name, kind, origin, seating_need) VALUES (?, 'A B', 'child', 'seeded', 'stroller')`, []any{householdID}},
+		"guest.age":                   {`INSERT INTO guest (household_id, name, kind, origin, age) VALUES (?, 'A B', 'adult', 'seeded', 34)`, []any{householdID}},
 		"seating_unit.venue":          {`INSERT INTO seating_unit (venue, label) VALUES ('garden', 'Tisch 1')`, nil},
 		"budget_item.status":          {`INSERT INTO budget_item (category, title, status) VALUES ('Catering', 'Menü', 'gebucht')`, nil},
 		"session.subject_type":        {`INSERT INTO session (id, subject_type, expires_at) VALUES ('hash', 'guest', '2027-07-17T00:00:00Z')`, nil},
@@ -217,4 +217,33 @@ func TestAppSettingsAreSeeded(t *testing.T) {
 		"uploads_open":           "false",
 		"gallery_visible":        "false",
 	}, settings)
+}
+
+// Migration 0002 replaced first_name and last_name with one `name`. Asserted against
+// the table itself, because the split columns leaving is the whole content of that
+// migration and a half-applied rename would otherwise surface as a query error in
+// some later story.
+func TestGuestCarriesOneNameColumn(t *testing.T) {
+	app := newTestApp(t)
+
+	columns := tableColumns(t, app, "guest")
+
+	assert.Contains(t, columns, "name")
+	assert.NotContains(t, columns, "first_name")
+	assert.NotContains(t, columns, "last_name")
+}
+
+// The backfill in 0002 joins the two old values with a space. There is no live row to
+// check it against — E-OPS-01 has not run — so the statement is exercised directly on
+// the shape the old schema had.
+func TestMigration0002JoinsTheOldNameHalves(t *testing.T) {
+	app := newTestApp(t)
+
+	var joined string
+	require.NoError(t, app.Database.Read.Get(&joined, `SELECT trim(? || ' ' || ?)`, "Anna", "Müller"))
+	assert.Equal(t, "Anna Müller", joined)
+
+	// A guest we only ever knew by one name kept it, without a trailing space.
+	require.NoError(t, app.Database.Read.Get(&joined, `SELECT trim(? || ' ' || ?)`, "Oma Erika", ""))
+	assert.Equal(t, "Oma Erika", joined)
 }

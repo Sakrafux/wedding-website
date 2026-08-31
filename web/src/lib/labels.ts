@@ -255,8 +255,11 @@ export const householdLabels = {
   membersHeading: "Personen",
   membersEmpty: "Noch niemand eingetragen.",
   addMemberHeading: "Person hinzufügen",
-  firstNameLabel: "Vorname",
-  lastNameLabel: "Nachname",
+  /** One field, not two. What every list, place card and caterer sheet needs is the
+      whole name, and asking for halves would make a guest decide which part of
+      "Oma Erika" is the surname. */
+  nameLabel: "Name",
+  nameHint: "Vor- und Nachname, so wie die Person genannt werden möchte.",
   kindLabel: "Erwachsen oder Kind",
   ageLabel: "Alter am Hochzeitstag",
   ageHint: "Nur bei Kindern, und gemeint ist das Alter am 17.07.2027.",

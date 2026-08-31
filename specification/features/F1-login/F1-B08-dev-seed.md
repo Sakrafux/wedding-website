@@ -32,7 +32,7 @@ Until this exists the only code that creates a household is `tests/integration/f
 2. Flags `-households` and `-guests`, validated: below 1 is a usage error, not a silent no-op.
 3. `configuration.Load()` for the environment, `configuration.OpenDatabase` for the handles, `persistence.Migrate` before the first insert.
 4. Insert with plain SQL on `database.Write`, one transaction per household, so an interrupted run leaves whole households rather than a household with half its members. The SQL lives in `cmd/seed` on purpose and carries a `F5-B01` forward reference: once `HouseholdStore` grows a create method, this command calls it instead.
-5. Display names are obviously synthetic (`Familie Testhaushalt <n>`, members `<Vorname> Testhaushalt`), numbered from the current household count so a second run does not repeat the first one's names.
+5. Display names are obviously synthetic (`Familie Testhaushalt <n>`, members `<Vorname> Testhaushalt <n>`), numbered from the current household count so a second run does not repeat the first one's names. Deriving a member's name from the household's is something only this command may do — it invented the household name in the first place, whereas a real one is free text.
 6. Retry a `UNIQUE` collision on `household.code` a few times before failing. Collisions are ~impossible at 32^6, but the retry is what makes the UNIQUE index the sole authority on uniqueness — the tool never queries for a free code first.
 7. Exit non-zero with a plain stderr message on any failure. No structured logger: this is a shell tool, and its output is read by a person.
 

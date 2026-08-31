@@ -212,8 +212,7 @@ func (useCase *Households) AddGuest(ctx context.Context, householdID int64, draf
 		domain.AuditEntityGuest, created.ID, domain.AuditActionCreate, time.Now(),
 		domain.CreatedChanges(map[string]any{
 			"household_id": created.HouseholdID,
-			"first_name":   created.FirstName,
-			"last_name":    created.LastName,
+			"name":         created.Name,
 			"kind":         string(created.Kind),
 			"age":          created.Age,
 			"seating_need": string(created.SeatingNeed),
@@ -271,8 +270,7 @@ func (useCase *Households) RemoveGuest(ctx context.Context, id int64) error {
 		domain.AuditEntityGuest, id, domain.AuditActionDelete, time.Now(),
 		domain.DeletedChanges(map[string]any{
 			"household_id": guest.HouseholdID,
-			"first_name":   guest.FirstName,
-			"last_name":    guest.LastName,
+			"name":         guest.Name,
 		}),
 	))
 

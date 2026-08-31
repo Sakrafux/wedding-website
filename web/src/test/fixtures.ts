@@ -16,8 +16,8 @@ export function bootstrap(overrides: Partial<BootstrapResponse> = {}): Bootstrap
   return {
     household: { id: 12, display_name: "Familie Müller" },
     members: [
-      { id: 30, first_name: "Anna", last_name: "Müller", kind: "adult", origin: "seeded" },
-      { id: 31, first_name: "Emil", last_name: "Müller", kind: "child", origin: "seeded" },
+      { id: 30, name: "Anna Müller", kind: "adult", origin: "seeded" },
+      { id: 31, name: "Emil Müller", kind: "child", origin: "seeded" },
     ],
     flags: { rsvp_open: true, seating_published: false, gallery_visible: false, uploads_open: false },
     rsvp_deadline: "2027-05-17T21:59:59Z",
@@ -43,7 +43,7 @@ export function adminHousehold(overrides: Partial<AdminHousehold> = {}): AdminHo
     transport_seats_needed: 0,
     transport_seats_offered: 4,
     has_stroller: false,
-    members: [adminGuest(), adminGuest({ id: 31, first_name: "Emil", kind: "child", age: 4 })],
+    members: [adminGuest(), adminGuest({ id: 31, name: "Emil Müller", kind: "child", age: 4 })],
     ...overrides,
   };
 }
@@ -52,8 +52,7 @@ export function adminGuest(overrides: Partial<AdminGuest> = {}): AdminGuest {
   return {
     id: 30,
     household_id: 12,
-    first_name: "Anna",
-    last_name: "Müller",
+    name: "Anna Müller",
     kind: "adult",
     age: null,
     origin: "seeded",

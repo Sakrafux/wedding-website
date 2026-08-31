@@ -23,11 +23,10 @@ type seededHousehold struct {
 }
 
 type seededGuest struct {
-	ID        int64
-	FirstName string
-	LastName  string
-	Kind      string
-	Age       *int
+	ID   int64
+	Name string
+	Kind string
+	Age  *int
 }
 
 type householdOption func(*householdSpec)
@@ -40,10 +39,9 @@ type householdSpec struct {
 }
 
 type guestSpec struct {
-	firstName string
-	lastName  string
-	kind      string
-	age       *int
+	name string
+	kind string
+	age  *int
 }
 
 // withCode pins the login code, for a test that logs in or asserts on the code
@@ -70,24 +68,23 @@ func withGuests(count int) householdOption {
 			spec.guests = append(spec.guests, guestSpec{
 				// Numbered from the current length, so repeated options and the
 				// named builders below keep producing Gast1, Gast2, Gast3.
-				firstName: fmt.Sprintf("Gast%d", len(spec.guests)+1),
-				lastName:  "Muster",
-				kind:      "adult",
+				name: fmt.Sprintf("Gast%d Muster", len(spec.guests)+1),
+				kind: "adult",
 			})
 		}
 	}
 }
 
-func withAdult(firstName, lastName string) householdOption {
+func withAdult(name string) householdOption {
 	return func(spec *householdSpec) {
-		spec.guests = append(spec.guests, guestSpec{firstName: firstName, lastName: lastName, kind: "adult"})
+		spec.guests = append(spec.guests, guestSpec{name: name, kind: "adult"})
 	}
 }
 
 // withChild adds a child. The age is age at the wedding date, as the schema means it.
-func withChild(firstName, lastName string, age int) householdOption {
+func withChild(name string, age int) householdOption {
 	return func(spec *householdSpec) {
-		spec.guests = append(spec.guests, guestSpec{firstName: firstName, lastName: lastName, kind: "child", age: &age})
+		spec.guests = append(spec.guests, guestSpec{name: name, kind: "child", age: &age})
 	}
 }
 
@@ -124,17 +121,16 @@ func seedHousehold(t *testing.T, pool *sqlx.DB, options ...householdOption) seed
 
 	for _, guest := range spec.guests {
 		guestResult, err := pool.Exec(
-			`INSERT INTO guest (household_id, first_name, last_name, kind, age, origin) VALUES (?, ?, ?, ?, ?, 'seeded')`,
-			household.ID, guest.firstName, guest.lastName, guest.kind, guest.age,
+			`INSERT INTO guest (household_id, name, kind, age, origin) VALUES (?, ?, ?, ?, 'seeded')`,
+			household.ID, guest.name, guest.kind, guest.age,
 		)
 		require.NoError(t, err)
 
 		household.Guests = append(household.Guests, seededGuest{
-			ID:        lastInsertID(t, guestResult),
-			FirstName: guest.firstName,
-			LastName:  guest.lastName,
-			Kind:      guest.kind,
-			Age:       guest.age,
+			ID:   lastInsertID(t, guestResult),
+			Name: guest.name,
+			Kind: guest.kind,
+			Age:  guest.age,
 		})
 	}
 
@@ -179,13 +175,13 @@ func insertHousehold(t *testing.T, pool *sqlx.DB, code string) int64 {
 	return lastInsertID(t, result)
 }
 
-func insertGuest(t *testing.T, pool *sqlx.DB, householdID int64, firstName string) int64 {
+func insertGuest(t *testing.T, pool *sqlx.DB, householdID int64, name string) int64 {
 	t.Helper()
 
 	// Only the columns without a default, so the defaults stay observable.
 	result, err := pool.Exec(
-		`INSERT INTO guest (household_id, first_name, last_name, kind, origin) VALUES (?, ?, 'Muster', 'adult', 'seeded')`,
-		householdID, firstName,
+		`INSERT INTO guest (household_id, name, kind, origin) VALUES (?, ?, 'adult', 'seeded')`,
+		householdID, name,
 	)
 	require.NoError(t, err)
 	return lastInsertID(t, result)

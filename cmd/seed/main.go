@@ -35,7 +35,7 @@ import (
 	"github.com/Sakrafux/wedding-website/internal/infrastructure/persistence"
 )
 
-// firstNames supplies member names, cycled. Deliberately not random: a seeded
+// firstNames supplies the given-name half of a seeded member's name, cycled. Deliberately not random: a seeded
 // household should look the same shape every run, and nothing here depends on the
 // names being varied.
 var firstNames = []string{"Anna", "Bernd", "Clara", "Dieter", "Erika", "Frank"}
@@ -143,16 +143,17 @@ func insertHousehold(
 		return domain.Household{}, fmt.Errorf("inserting household %q: %w", name, err)
 	}
 
-	// The household surname doubles as the members' last name, number included:
-	// "Anna Testhaushalt 3" says which household a seeded person belongs to in every
-	// list that shows people without their household.
-	lastName := strings.TrimPrefix(name, "Familie ")
+	// The household name, minus its prefix, doubles as the members' surname, number
+	// included: "Anna Testhaushalt 3" says which household a seeded person belongs to
+	// in every list that shows people without their household. Only this command may
+	// derive a name that way — it invents the household names in the first place. The
+	// admin form does not, because a real household is named anything at all.
+	surname := strings.TrimPrefix(name, "Familie ")
 
 	for member := range members {
 		_, err := guests.Create(ctx, domain.Guest{
 			HouseholdID: household.ID,
-			FirstName:   firstNames[member%len(firstNames)],
-			LastName:    lastName,
+			Name:        firstNames[member%len(firstNames)] + " " + surname,
 			Kind:        domain.GuestKindAdult,
 			Origin:      domain.GuestOriginSeeded,
 			SeatingNeed: domain.SeatingNeedNormal,

@@ -23,7 +23,7 @@ func NewGuestStore(database *configuration.Database) *GuestStore {
 
 // guestColumns is shared by every read of a guest. The RSVP answer columns are
 // absent because F5 neither reads nor writes them; F3 adds its own projection.
-const guestColumns = `id, household_id, first_name, last_name, kind, age, origin, seating_need, dietary_note`
+const guestColumns = `id, household_id, name, kind, age, origin, seating_need, dietary_note`
 
 // FindByID returns the guest with this id, or ErrNotFound. A soft-deleted guest is
 // not found: they are still in the table so the audit trail explains a headcount,
@@ -48,11 +48,11 @@ func (store *GuestStore) FindByID(ctx context.Context, id int64) (domain.Guest, 
 // it is decides what the admin delta view shows.
 func (store *GuestStore) Create(ctx context.Context, guest domain.Guest) (domain.Guest, error) {
 	const insertGuest = `
-		INSERT INTO guest (household_id, first_name, last_name, kind, age, origin, seating_need, dietary_note)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		INSERT INTO guest (household_id, name, kind, age, origin, seating_need, dietary_note)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := store.database.Write.ExecContext(ctx, insertGuest,
-		guest.HouseholdID, guest.FirstName, guest.LastName, string(guest.Kind), guest.Age,
+		guest.HouseholdID, guest.Name, string(guest.Kind), guest.Age,
 		string(guest.Origin), string(guest.SeatingNeed), guest.DietaryNote)
 	if err != nil {
 		return domain.Guest{}, fmt.Errorf("inserting guest: %w", err)
@@ -73,11 +73,11 @@ func (store *GuestStore) Create(ctx context.Context, guest domain.Guest) (domain
 func (store *GuestStore) Update(ctx context.Context, guest domain.Guest) error {
 	const updateGuest = `
 		UPDATE guest
-		SET first_name = ?, last_name = ?, kind = ?, age = ?, seating_need = ?, dietary_note = ?
+		SET name = ?, kind = ?, age = ?, seating_need = ?, dietary_note = ?
 		WHERE id = ? AND deleted_at IS NULL`
 
 	result, err := store.database.Write.ExecContext(ctx, updateGuest,
-		guest.FirstName, guest.LastName, string(guest.Kind), guest.Age,
+		guest.Name, string(guest.Kind), guest.Age,
 		string(guest.SeatingNeed), guest.DietaryNote, guest.ID)
 	if err != nil {
 		return fmt.Errorf("updating guest: %w", err)
@@ -105,8 +105,7 @@ func (store *GuestStore) SoftDelete(ctx context.Context, id int64, at time.Time)
 type guestRow struct {
 	ID          int64         `db:"id"`
 	HouseholdID int64         `db:"household_id"`
-	FirstName   string        `db:"first_name"`
-	LastName    string        `db:"last_name"`
+	Name        string        `db:"name"`
 	Kind        string        `db:"kind"`
 	Age         sql.NullInt64 `db:"age"`
 	Origin      string        `db:"origin"`
@@ -118,8 +117,7 @@ func (row guestRow) toDomain() domain.Guest {
 	guest := domain.Guest{
 		ID:          row.ID,
 		HouseholdID: row.HouseholdID,
-		FirstName:   row.FirstName,
-		LastName:    row.LastName,
+		Name:        row.Name,
 		Kind:        domain.GuestKind(row.Kind),
 		Origin:      domain.GuestOrigin(row.Origin),
 		SeatingNeed: domain.SeatingNeed(row.SeatingNeed),

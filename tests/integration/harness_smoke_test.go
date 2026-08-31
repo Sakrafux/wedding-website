@@ -87,8 +87,8 @@ func TestSeedHouseholdAppliesOptions(t *testing.T) {
 		withCode("XYZ789"),
 		withDisplayName("Familie Beispiel"),
 		withAdminNote("zahlt bar"),
-		withAdult("Anna", "Beispiel"),
-		withChild("Emil", "Beispiel", 4),
+		withAdult("Anna Beispiel"),
+		withChild("Emil Beispiel", 4),
 	)
 
 	assert.Equal(t, "XYZ789", household.Code)
@@ -117,7 +117,7 @@ func TestFindLeakDetectsPrivateFields(t *testing.T) {
 		{"admin note", `{"household":{"admin_note":"zahlt bar"}}`},
 		{"budget amount", `{"items":[{"title":"Catering","planned_cents":250000}]}`},
 		{"budget vendor", `{"items":[{"vendor":"Catering Müller"}]}`},
-		{"nested in a list", `{"guests":[{"first_name":"Anna"},{"first_name":"Emil","admin_note":"x"}]}`},
+		{"nested in a list", `{"guests":[{"name":"Anna"},{"name":"Emil","admin_note":"x"}]}`},
 	}
 
 	for _, testCase := range leaky {

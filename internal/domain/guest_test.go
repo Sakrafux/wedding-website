@@ -62,8 +62,7 @@ func child() domain.Guest {
 	return domain.Guest{
 		ID:          31,
 		HouseholdID: 12,
-		FirstName:   "Emil",
-		LastName:    "Müller",
+		Name:        "Emil Müller",
 		Kind:        domain.GuestKindChild,
 		Age:         age(4),
 		Origin:      domain.GuestOriginSeeded,
@@ -120,7 +119,7 @@ func TestApplyGuestPatchLeavesAbsentFieldsAlone(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, note, updated.DietaryNote)
-	assert.Equal(t, "Emil", updated.FirstName)
+	assert.Equal(t, "Emil Müller", updated.Name)
 	assert.Equal(t, domain.SeatingNeedHighChair, updated.SeatingNeed)
 	assert.Equal(t, []string{"dietary_note"}, changedFields(changes))
 }
@@ -130,8 +129,8 @@ func TestApplyGuestPatchLeavesAbsentFieldsAlone(t *testing.T) {
 func TestApplyGuestPatchReportsNoChangesWhenNothingDiffers(t *testing.T) {
 	t.Parallel()
 
-	sameName := "Emil"
-	_, changes, err := domain.ApplyGuestPatch(child(), domain.GuestPatch{FirstName: &sameName})
+	sameName := "Emil Müller"
+	_, changes, err := domain.ApplyGuestPatch(child(), domain.GuestPatch{Name: &sameName})
 
 	require.NoError(t, err)
 	assert.True(t, changes.IsEmpty())

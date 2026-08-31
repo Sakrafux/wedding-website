@@ -42,8 +42,7 @@ A person. Belongs to exactly one household.
 |---|---|---|
 | `id` | INTEGER PK | |
 | `household_id` | INTEGER FK → household | |
-| `first_name` | TEXT | |
-| `last_name` | TEXT | Required. Plenty of households are couples with different surnames, so it cannot be inherited from `household.display_name`, and the caterer's and seating lists need the full name. |
+| `name` | TEXT | The **whole** name in one field, required. Not split into first and last (migration `0002` merged them): every output — place card, caterer list, "so haben wir euch notiert" — wants the full name, and one field lets a household enter a double first name, a person with no surname we know, or "Oma Erika" without deciding which half is which. It cannot be inherited from `household.display_name` either: a household is any group sharing one invitation, so its name is free text like "Luki & Paddi". Accepted cost: nothing sorts by surname any more — see `F5-B04`. |
 | `kind` | TEXT | `adult` \| `child` |
 | `age` | INTEGER NULL | Children only. **Age at the wedding date**, not at RSVP time — the UI asks it that way so the value does not drift over the months before the event. Feeds caterer pricing brackets and venue headcounts. |
 | `origin` | TEXT | `seeded` (we created it) \| `guest_added` (household added it). Drives the admin delta view. |
