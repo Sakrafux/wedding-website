@@ -20,7 +20,7 @@ Done:
   - Login rate limit windows split: guest 10 / 15 min, admin 5 / 1 h. Spec updated in `04-architecture`, `06-privacy-security` and `F1-B05`.
   - `domain.AuditEntry` now documents actor vs entity with the divergence table; the entity constants say why they match table names.
   - `router.go` — removed the misplaced duplicate of the admin catch-all comment.
-  - Frontend: `lib/api/{client,dto,enums,session}.ts`, `lib/routing/navigation.ts`, tests moved into `__tests__/` directories. `lib/utils.ts` stays put (shadcn's `components.json` alias).
+  - Frontend: `lib/api/{client,dto,enums,session}.ts`, `lib/routing/navigation.ts`, tests moved into `__tests__/` directories, with `routeFileIgnorePattern: "__tests__"` in `vite.config.ts` — the router plugin scans everything under `src/routes/` and warned once per test file. `lib/utils.ts` stays put (shadcn's `components.json` alias).
   - `CodeInput` keeps a dash the guest types and never inserts one; `sanitizeCodeInput` for display, `normalizeCode` on submit. Placeholder `ABC-234`, hint says the dash is optional.
   - New epic `F12 — Observability with Dynatrace`, explicitly below optional; open questions in `TODO.md`.
 - `wire` in `cmd/wedding/wire.go`: one function builds every store and use case and returns `web.Dependencies` plus the session store the purge loop needs. `run` keeps the lifetimes. Own file so `main.go` stays the startup-order file; package `main` because `cmd` is the composition root — in package `web` it would drag `persistence` into the package that holds the handlers.

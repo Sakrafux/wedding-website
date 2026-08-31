@@ -70,7 +70,7 @@ Markdown is excluded from prettier so the repo keeps one Markdown convention: no
 | `src/lib/labels.ts` | The only place a German string is written — enum labels and screen copy alike. |
 | `src/lib/code.ts` | The login code on the client: what the field displays, and what gets sent. |
 | `src/lib/utils.ts` | `cn` only, and it stays at this path: `components.json` aliases it and every `shadcn add` writes `@/lib/utils` into the component it generates. |
-| `**/__tests__/` | Component and route tests, one directory per level, so a source directory lists only source. Matched by vitest's `src/**/*.test.{ts,tsx}` and ignored by the router plugin, which skips `*.test.*` — a test file under `src/routes/` never becomes a route. |
+| `**/__tests__/` | Component and route tests, one directory per level, so a source directory lists only source. Matched by vitest's `src/**/*.test.{ts,tsx}`, and excluded from route generation by `routeFileIgnorePattern: "__tests__"` in `vite.config.ts` — without that the plugin scans them and warns once per file on every dev start and build. |
 | `src/test/` | The component-test harness: a fetch stub keyed by `"METHOD /path"`, and `renderApp` which mounts the real router with the real guards. |
 | `src/index.css` | Design tokens from [05-design](../specification/05-design.md), plus the global base layer. |
 | `src/assets/fonts/` | Self-hosted `.woff2`. No Google Fonts request at runtime — the CSP forbids it. |
