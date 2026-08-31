@@ -279,6 +279,20 @@ export const householdLabels = {
   rsvpAnsweredAt: (date: string) => `Beantwortet am ${date}.`,
   rsvpComingSoon: "Die Antworten selbst bearbeiten geht, sobald das RSVP-Formular gebaut ist.",
 
+  exportHeading: "Downloads",
+  /** Named for what they are for, not for their filename: nobody downloading these
+      thinks in filenames. */
+  exportCodes: "Codes für die Druckerei",
+  /** Shown next to the link, so a truncated or empty file is obvious before it
+      reaches the printer rather than after. */
+  exportCodesCount: (households: number) => `${households} Haushalte, je eine Zeile`,
+  /** The app cannot enforce E-OPS-07, and a warning nobody sees is no warning. */
+  exportCodesWarning:
+    "Diese Datei enthält alle Login-Codes. Bitte lösche sie nach dem Druck wieder — hier auf dem Rechner und bei der Druckerei.",
+  exportGuests: "Gästeliste (Rohdaten)",
+  exportGuestsWarning:
+    "Vollständiger Auszug aus der Datenbank, entfernte Personen inklusive. Also keine Zählgrundlage: zum Zählen zuerst die entfernten Zeilen herausfiltern.",
+
   deleteHeading: "Haushalt löschen",
   delete: "Haushalt löschen",
   deleteConfirmTitle: "Haushalt löschen?",

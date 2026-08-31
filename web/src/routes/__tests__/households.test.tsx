@@ -155,3 +155,50 @@ describe("admin household list", () => {
     ]);
   });
 });
+
+describe("admin export links", () => {
+  it("links to both files, as downloads, named for what they are for", async () => {
+    stubApi({
+      "GET /api/admin/me": ok(adminSession),
+      "GET /api/admin/households": householdList(adminHouseholdOverview()),
+    });
+
+    await renderApp("/admin/haushalte");
+
+    const codes = await screen.findByRole("link", { name: "Codes für die Druckerei" });
+    expect(codes).toHaveAttribute("href", "/api/admin/export/codes.csv");
+    expect(codes).toHaveAttribute("download");
+
+    const guests = screen.getByRole("link", { name: "Gästeliste (Rohdaten)" });
+    expect(guests).toHaveAttribute("href", "/api/admin/export/guests.csv");
+    expect(guests).toHaveAttribute("download");
+
+    // So a truncated or empty file is obvious before it reaches the printer.
+    expect(screen.getByText("1 Haushalte, je eine Zeile")).toBeInTheDocument();
+  });
+
+  // The app cannot enforce E-OPS-07, so the sentence has to be where the download is.
+  it("warns that codes.csv holds every login code and must be deleted again", async () => {
+    stubApi({
+      "GET /api/admin/me": ok(adminSession),
+      "GET /api/admin/households": householdList(adminHouseholdOverview()),
+    });
+
+    await renderApp("/admin/haushalte");
+
+    expect(await screen.findByText(/enthält alle Login-Codes/)).toHaveTextContent(/lösche sie nach dem Druck/);
+  });
+
+  // Somebody will otherwise count the rows in May and brief the caterer from the
+  // total.
+  it("says the guest list includes removed people and is not a headcount", async () => {
+    stubApi({
+      "GET /api/admin/me": ok(adminSession),
+      "GET /api/admin/households": householdList(adminHouseholdOverview()),
+    });
+
+    await renderApp("/admin/haushalte");
+
+    expect(await screen.findByText(/entfernte Personen inklusive/)).toHaveTextContent(/keine Zählgrundlage/);
+  });
+});

@@ -111,6 +111,7 @@ function HouseholdListPage() {
       )}
 
       <CreateHouseholdForm />
+      <ExportLinks households={households.length} />
     </div>
   );
 }
@@ -223,5 +224,40 @@ function CreateHouseholdForm() {
         </p>
       ) : null}
     </form>
+  );
+}
+
+/**
+ * The two CSV downloads, on this page rather than on an exports page of their own — a
+ * separate page for two links is a page nobody would find.
+ *
+ * Plain `<a download>` and no fetch-and-blob dance: the cookie rides along, the
+ * browser handles the save dialog, and there is no in-memory copy of the code list
+ * sitting in a tab all afternoon. No progress UI either — sixty rows are
+ * instantaneous, and a spinner would be a lie about the work involved.
+ */
+function ExportLinks({ households }: { households: number }) {
+  return (
+    <section className="border-line flex flex-col gap-4 border-t pt-6">
+      <h2 className="text-h3 font-body">{householdLabels.exportHeading}</h2>
+
+      <div className="flex flex-col gap-1">
+        <a href="/api/admin/export/codes.csv" download className="self-start underline underline-offset-4">
+          {householdLabels.exportCodes}
+        </a>
+        <span className="text-ink-muted text-small">{householdLabels.exportCodesCount(households)}</span>
+        {/* The most sensitive artefact this application produces. The app cannot
+            delete it again for anybody, so the sentence sits where the download
+            happens. */}
+        <p className="text-accent-strong text-small">{householdLabels.exportCodesWarning}</p>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <a href="/api/admin/export/guests.csv" download className="self-start underline underline-offset-4">
+          {householdLabels.exportGuests}
+        </a>
+        <p className="text-ink-muted text-small">{householdLabels.exportGuestsWarning}</p>
+      </div>
+    </section>
   );
 }

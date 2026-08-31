@@ -46,10 +46,7 @@ describe("admin household detail", () => {
 
   it("saves the household fields and reports a validation error next to its field", async () => {
     const { api } = stubHousehold();
-    api.set(
-      "PATCH /api/admin/households/12",
-      apiError(400, "validation_failed", "Bitte prüfe die markierten Felder."),
-    );
+    api.set("PATCH /api/admin/households/12", apiError(400, "validation_failed", "Bitte prüfe die markierten Felder."));
 
     const { user } = await renderApp("/admin/haushalte/12");
 

@@ -71,7 +71,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F5-B04` `codes.csv` and `guests.csv` exports
 - [x] `F5-F01` Household list with last-login column
 - [x] `F5-F02` Household detail and member editing
-- [ ] `F5-F03` Export actions
+- [x] `F5-F03` Export actions
 
 ## F3 — RSVP · M2 · P0
 
