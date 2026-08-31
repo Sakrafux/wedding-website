@@ -53,8 +53,8 @@ Decisions:
 - **Guest names are one field.** Decided 2026-08-31 after F5 was built: what every output needs is the full name, and one field copes with a double first name, a missing surname or "Oma Erika" — which matters most in F4, where guests type it themselves. Done now because there is no real guest data yet; after send-out it would be a migration against live answers. Accepted cost: nothing sorts by surname, `guests.csv` included.
 - Guest age stays a single domain rule (`domain.ResolveAge`) rather than a `validate` struct tag, so the kind/age pairing lives in one place; the field name and German wording are mapped in `httpio`.
 
-Time: 4h (tentative)
-Cost: Opus 5 — $12.56 (tentative)
+Time: 5h (tentative)
+Cost: Opus 5 — $30.23 (tentative)
 
 ## 2026-08-30
 
