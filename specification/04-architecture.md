@@ -98,7 +98,7 @@ Two layers, no mocking layer.
 - Budget rollup: per-head items track live headcount; `external_cents` is excluded from our own cost.
 - Code normalization: case, whitespace, dashes; ambiguous glyphs never generated.
 
-**Integration tests** drive the HTTP API against a real SQLite temp file with migrations applied, covering login, full RSVP submission and edit, plus-one addition past the soft cap, deadline lockout, admin authorization boundaries, and that guest-facing responses never contain `code`, `admin_note`, or any budget field.
+**Integration tests** drive the HTTP API against a real SQLite temp file with migrations applied, covering login, full RSVP submission and edit, plus-one addition and its refusal for a household that already has two members, deadline lockout, admin authorization boundaries, and that guest-facing responses never contain `code`, `admin_note`, or any budget field.
 
 Test dependencies: `stretchr/testify` (`require` for setup, `assert` where multiple failures are useful) and `google/go-cmp` for readable diffs on large structs like headcount rollups. Nothing else — stdlib `httptest` covers the HTTP side, and there is no interface to mock.
 
@@ -126,8 +126,9 @@ POST   /api/auth/logout
 GET    /api/me                                      → household + members + flags
 
 GET    /api/rsvp                                    → own household RSVP state
-PUT    /api/rsvp                                    → attendance/meal/portion/needs/note
-POST   /api/rsvp/members                            → add plus-one or child
+PUT    /api/rsvp                                    → full replace: per-member scope + catering,
+                                                      transport seats, household note
+POST   /api/rsvp/members            { name }        → one adult plus-one, single-person households
 DELETE /api/rsvp/members/{id}                       → only guest_added, pre-deadline
 
 GET    /api/seating                                 → floor plan + own table, if published
@@ -135,6 +136,8 @@ GET    /api/gallery
 POST   /api/gallery                                 → upload, if uploads_open
 
 GET    /api/admin/households                        CRUD
+GET    /api/admin/households/{id}/rsvp               → same use case as /api/rsvp, by id
+PUT    /api/admin/households/{id}/rsvp                 (no deadline; audited as admin)
 GET    /api/admin/dashboard                         → headcounts, deltas, notes, stale seats
 GET    /api/admin/export/guests.csv
 GET    /api/admin/export/codes.csv                  → for variable-data printing

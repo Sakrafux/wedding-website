@@ -186,7 +186,8 @@ func (useCase *Households) ReissueCode(ctx context.Context, id int64) (CodeReiss
 //
 // Guests added here are always seeded, never guest_added: origin is what the admin
 // delta view reads to answer "what did the households add themselves", and an
-// admin-created guest is not that. F4-B02 owns the other path, with its soft cap.
+// admin-created guest is not that. F4-B02 owns the other path: one adult plus-one,
+// and only for a household of one.
 func (useCase *Households) AddGuest(ctx context.Context, householdID int64, draft domain.Guest) (domain.Guest, error) {
 	// Checked first so a request naming a household that does not exist answers 404
 	// rather than surfacing a foreign-key error as a 500.

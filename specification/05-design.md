@@ -38,7 +38,7 @@ Warm neutrals plus two accents. Two accents rather than one because the app has 
 | `accent-strong` | `#8E4231` | Same hue, darkened — required for terracotta **text** at body size. |
 | `accent-soft` | `#F6E9E4` | Tinted attention background. |
 | `success` | `#3F6B4A` | RSVP saved confirmation. |
-| `warning` | `#8A6A1F` | Over-capacity table, soft cap reached. Admin-facing mostly. |
+| `warning` | `#8A6A1F` | Over-capacity table, addition limit reached. Admin-facing mostly. |
 | `danger` | `#9A3324` | Destructive confirmation, validation errors. |
 
 ### Measured contrast on `paper` (#FAF7F0)
@@ -126,7 +126,7 @@ Built on shadcn/ui (Radix primitives, copied into the repo).
 | `InfoSection` | Generic heading + prose block for hardcoded content pages. |
 | `RsvpMemberCard` | One card per member: attendance scope, then the catering fields **revealed only** for `party_only`/`both`. |
 | `ScopeSelector` | The household-level "Wir kommen zu:" bulk setter. Large radio cards, not a `<select>`. |
-| `AddMemberSheet` | Add a plus-one or child. Enforces the soft cap with a "ruf uns an" hint, never a hard block. |
+| `AddPlusOneSheet` | One field: the companion's name. Offered only to a household of one that has not already added somebody; every other household sees an explanation and our phone number in its place, never a disabled button. |
 | `TransportFields` | Seats needed / seats offered steppers, with plain-language explanation of what they are for. |
 | `RsvpSummary` | Post-submit recap of exactly what was saved. Unmissable. |
 | `SeatingMap` | Renders the checked-in floor-plan SVG; colours the own table `primary-soft` with an `accent` outline, labels it with names. Pan/zoom on mobile. |
@@ -140,6 +140,7 @@ Admin uses the same tokens with denser spacing and the decorative layer (hero, s
 ### Form behaviour
 
 - Every input has a visible `<label>`. Placeholders are never labels.
+- **Every guest-facing field carries a help text, behind a help button.** A small `?` icon button sits beside the label and opens a popover with one or two sentences: what the field is for, and what answer we expect. Not inline under the field — "Mitternachtssnack", "Plätze angeboten" and "Alter am Hochzeitstag" all need explaining and all of them explained at once turns the RSVP form into a wall of grey text that gets skipped, which costs the guests who actually needed it. The popover also removes the pressure to write help that fits in half a line. Rules: the button is a real `<button>` with an accessible name naming its field ("Hilfe zu Mitternachtssnack"), not a bare "?"; it meets the 48×48 target with an invisible hit area if the icon is smaller; it is a Radix `Popover`, so Escape and click-outside close it and focus returns; it is never the only route to the information for anything a guest *must* understand to answer correctly — a field whose label cannot be understood without the popover has the wrong label. `portion: none` keeps its inline hint, since it disambiguates two options rather than explaining one field. Admin fields are exempt. Added 2026-08-31, after the F3/F4 stories were written — retrofit where they are silent about it.
 - Errors appear **under the field**, in `danger`, with an icon, and the field gets `aria-invalid`. A summary at the top of the form lists them and links to each field.
 - Validation on blur and on submit; never on every keystroke.
 - The RSVP form autosaves nothing. There is one explicit "Speichern" button, because a silent autosave gives an unconfident guest no moment of completion.

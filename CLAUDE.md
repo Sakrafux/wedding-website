@@ -25,7 +25,7 @@ Private wedding web app. Currently in **specification phase** — no code yet. S
 - Code format: 6 chars from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no ambiguous glyphs), printed **ungrouped** as `ABC234` — a group separator was rejected as unnecessary at six characters, and it was the source of every awkward case in the input field. Input normalized: uppercase, strip spaces/dashes; dashes stay accepted because guests type them out of habit.
 - Session: `HttpOnly`, `Secure`, `SameSite=Lax` cookie, 365-day lifetime.
 - RSVP unit is the **household**, not the individual.
-- Households **can** add plus-ones and children themselves. Guest-added members are flagged as such and shown separately to admins. Soft cap, not a hard wall.
+- **A household may add exactly one plus-one, and only if we seeded it as a single person.** One adult, no children, no second addition, refused server-side. A household we seeded as two or more adds nobody. Everything else — a child, a third adult, a companion for a couple — goes through us on the phone, and the form says so. Tightened 2026-08-31 from a numeric soft cap: the only case we genuinely cannot know in advance is whether a single guest is bringing someone, and every other addition is a headcount we should hear about directly. Guest-added members keep `origin = 'guest_added'` and are shown separately to admins.
 - Admin sessions are short-lived (hours); household sessions last 365 days with rolling refresh. Different risk profiles.
 - Budget data is admin-only and must be enforced server-side.
 - Page content (schedule, travel, dress code, FAQ, …) is **hardcoded in React components**. No CMS, no Markdown pipeline, no DB-backed text. Content change = rebuild + redeploy; accepted.

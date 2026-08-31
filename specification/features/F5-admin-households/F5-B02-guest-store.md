@@ -18,7 +18,7 @@ As an admin, I want to add, edit and remove the people in a household, so that t
 **Out:**
 
 - Households themselves → `F5-B01`.
-- Households adding their own members → `F4-B02`; that path sets `origin = 'guest_added'` and obeys the soft cap, neither of which applies here.
+- Households adding their own members → `F4-B02`; that path sets `origin = 'guest_added'`, takes a name and nothing else, and is refused unless the household is a single person. None of that applies here, deliberately: this is the uncapped path, and it is how every child and every second companion gets onto the list.
 - Editing the household's answers (`attending`, `meal_choice`, `portion`, `midnight_snack`) → `F3`. `seating_need` and `dietary_note` are editable here: see the line drawn in `F5-B01`.
 
 ## Instructions

@@ -31,7 +31,7 @@ So the question for every milestone is only: *does this have to work before the 
 | F1 Household login | The code on the card is worthless without it |
 | F5 Admin households & guests | Codes have to be generated and exported before they can be printed |
 | F3 RSVP | The reason the card points anywhere |
-| F4 Plus-ones & children | Part of the same form; adding it later is a migration against live data |
+| F4 Plus-one | Part of the same form; adding it later is a migration against live data |
 | F2 Informational content | A guest who logs in on day one and finds an empty site does not come back |
 | F11 Accessibility basics | Retrofitting is worse than building it in, and this audience needs it most |
 
@@ -83,7 +83,7 @@ F1 and F5 together, because a code you cannot generate is not testable and a hou
 The heart of the product, and the part that must not change afterwards.
 
 - F3: the RSVP form, scope selector, per-member overrides, scope-gated catering fields, transport steppers, household note.
-- F4: guest-added members, soft cap, deletion rules.
+- F4: the single-person plus-one, its refusals, deletion rules.
 - Domain unit tests for every invariant in [04-architecture](04-architecture.md).
 - Audit logging on every RSVP mutation.
 - Deadline behaviour: read-only rendering after `rsvp_deadline`.
@@ -181,7 +181,7 @@ All are inputs we do not control. The urgency has changed considerably: several 
 | Venue and church: names, addresses, travel and accommodation notes | M3 | Being fixed by ~early September 2026. Also fixes the date |
 | Schedule of the day, dress code, gift wishes, bank details | M3 | **Before send-out** — now the highest-urgency unknown |
 | RSVP deadline: the exact date, and what the site says after it | M2 configuration, and the wording printed on the card | **Before send-out** |
-| Soft cap on guest-added members | M2 | Before send-out |
+| Plus-one rule for single-person households | M2 | Before send-out |
 | Final guest list and household groupings | M4 | Before send-out — codes are printed per household |
 | Caterer age brackets | F6 dashboard | Can slip; derived at read time |
 | Reception room and table layout | The SVG, and therefore M6 | Spring 2027 |

@@ -90,12 +90,12 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [ ] `F3-B06` `GET|PUT /api/admin/households/{id}/rsvp` — the same use case, addressed by id
 - [ ] `F3-F06` Admin RSVP page at `/admin/haushalte/{id}/rsvp`, reusing the guest form
 
-## F4 — Plus-ones & children · M2 · P0
+## F4 — Plus-one · M2 · P0
 
-- [ ] `F4-B01` Domain: soft cap, deletion rules, `guest_added` origin
-- [ ] `F4-B02` `POST /api/rsvp/members`
+- [ ] `F4-B01` Domain: the plus-one rule, deletion rules, `guest_added` origin
+- [ ] `F4-B02` `POST /api/rsvp/members` — one adult, single-person households only
 - [ ] `F4-B03` `DELETE /api/rsvp/members/{id}`
-- [ ] `F4-F01` Add-member sheet with cap hint
+- [ ] `F4-F01` Add-plus-one sheet, and the hint for everyone else
 - [ ] `F4-F02` Remove member, pre-deadline only
 
 ## F2 — Informational content · M3 · P0

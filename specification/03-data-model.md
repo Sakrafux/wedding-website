@@ -186,7 +186,6 @@ Key/value for things we want to change without a redeploy.
 | Key | Purpose |
 |---|---|
 | `rsvp_deadline` | After this, guest RSVP editing is read-only. |
-| `default_addition_limit` | Soft cap on guest-added members per household. |
 | `seating_published` | Gate the guest-facing seating view. |
 | `uploads_open` | Gate guest photo uploads (post-wedding). |
 | `gallery_visible` | Gate the gallery entirely. |
@@ -216,6 +215,7 @@ Everything else that is genuinely static (page text, wedding date, venue) is har
 | `arrival_day` | Single-day wedding — no arrival planning needed. |
 | `needs_accommodation` | Not our concern. Hotel suggestions are static page content. |
 | `household.addition_limit` | Over-engineering; a global default covers it, and we can add a person ourselves in admin. |
+| `app_setting.default_addition_limit` | Seeded by migration `0001`, removed by `0003`. The rule became structural on 2026-08-31 — one adult, only for a household of one — and a structural rule has no number to configure. A setting nothing reads is a setting somebody will one day change and expect to matter. |
 | `meal_option` table | Only three fixed choices — collapsed to a `CHECK`-constrained column on `guest`. |
 | `guest.age_band` | Replaced by a plain `age` integer (defined as age at the wedding date) plus `seating_need` and `portion`. Bands are derived at read time, so a caterer's bracket boundaries can change without a migration. |
 | `guest.kids_menu` BOOLEAN | Two states were not enough — infants eat nothing. Replaced by the three-way `portion` enum. |

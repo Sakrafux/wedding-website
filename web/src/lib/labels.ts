@@ -128,12 +128,19 @@ export const auditActionLabels: Record<AuditAction, string> = {
 /**
  * Where a guest is told to turn when the code will not work.
  *
- * TODO(content): the real number, before the cards go to print. It appears on the
- * login screen after two failed attempts and is the only escape hatch a guest has
- * — a placeholder reaching the print run would strand exactly the people this
- * fallback exists for. Tracked in TODO.md.
+ * One number, not both: somebody whose code has just failed twice needs a person to
+ * ring, not a choice. Both numbers are listed on the Kontakt page (F2-F06).
  */
-export const contactPhoneNumber = "+49 000 0000000";
+export const contactPhoneNumber = "+43 650 9408100";
+
+/**
+ * The Kontakt page's list, and the source for any copy naming a specific person.
+ * Written out here rather than in a component, like every other German string.
+ */
+export const contacts = [
+  { name: "Andreas Hell", phone: contactPhoneNumber },
+  { name: "Isabella Michelbacher", phone: "+43 677 63668655" },
+] as const;
 
 export const loginLabels = {
   heading: "Willkommen",

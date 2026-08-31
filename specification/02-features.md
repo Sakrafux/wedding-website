@@ -11,7 +11,7 @@ Priorities: **P0** = site is useless without it · **P1** = ship for invite send
 | F1 | Household login | Guest | P0 | Printed per-household code redeemed for a long-lived session. |
 | F2 | Informational content | Guest | P0 | Schedule, venue, travel, dress code, gifts, FAQ, contact. |
 | F3 | RSVP | Guest | P0 | One submission per household, per-member attendance + meal + allergies. |
-| F4 | Plus-ones & children | Guest | P0 | Households add companions and kids themselves; we see the additions. |
+| F4 | Plus-one | Guest | P0 | A guest invited alone may add one companion; everything else goes through us. |
 | F5 | Admin: households & guests | Admin | P0 | CRUD households/members, generate and export codes. |
 | F6 | Admin: RSVP dashboard | Admin | P1 | Totals, meal counts, allergy list, no-answer list, CSV export. |
 | F7 | Seating chart | Admin + Guest | P1 | Admins assign guests to tables; guests see the plan and their own seat. |
@@ -55,16 +55,16 @@ One RSVP per household, editable until a deadline, then read-only.
 - All changes audit-logged (who, when, what).
 - Save shows an unmissable confirmation plus a summary of what was submitted.
 
-## F4 — Plus-ones & children (P0)
+## F4 — Plus-one (P0)
 
-We do not know every guest's current situation, so households add their own companions rather than us guessing. Scale stays manageable (~60 households, most already known to us).
+We do not know whether a guest invited on their own is bringing somebody, so a single-person household answers that itself rather than us guessing. Everything else about the member list is ours.
 
-- A household can add members itself: name, type (adult / child), meal choice, portion, seating need, allergies, and an age for children.
+- A single-person household can add **one adult companion**: a name, and nothing else. The companion is then answered for in the RSVP form like any other member.
 - Added members are marked as **guest-added** and surfaced to us distinctly in the admin dashboard, so the delta from our original list is always visible.
-- Soft cap per household (configurable, default e.g. 2 additions) with a "mehr? ruf uns an" hint rather than a hard wall.
+- **Exactly one plus-one, and only for a household of one.** A household we seeded as a single person may add one adult companion. A household of two or more may add nobody, and nobody may add a child. Enforced server-side; the form explains the rule and gives our number rather than hiding the control. **Tightened on 2026-08-31**, from a numeric cap of two: the one thing we genuinely cannot know when addressing the invitations is whether a single guest is bringing someone, and that is the case worth automating. Everything else — a child, a second companion, a friend of a couple — is a headcount that reaches the caterer, the seating plan and the budget, and we want to hear about it rather than discover it. The admin path (`F5-B02`) is uncapped, so the answer is still yes; it costs a phone call, which is the point. Consequence, accepted: households have very little control over their own member list, and we hold almost all of it.
 - Removing a guest-added member is allowed until the RSVP deadline; removing a household member we seeded is not (they set attending = no instead).
 - **Decided:** additions count toward the headcount immediately — no approval step, no pending state, no guest left waiting. They appear highlighted in the admin dashboard as a delta against our original list, and we intervene only if something looks wrong.
-- Children are recorded with an age (as of the wedding date), which feeds caterer pricing brackets and venue counts. Physical needs are captured separately in `seating_need`, so we never infer a high chair from an age.
+- Children are never guest-added. They are recorded with an age (as of the wedding date) when *we* enter them, which feeds caterer pricing brackets and venue counts. Physical needs are captured separately in `seating_need`, so we never infer a high chair from an age.
 - Every addition and removal is audit-logged.
 
 ## F5 — Admin: households & guests (P0)

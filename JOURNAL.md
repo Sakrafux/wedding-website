@@ -8,6 +8,11 @@ Entries stay short. The reasoning behind a decision belongs in the spec, the sto
 
 Done:
 
+- Story files written for the next four epics — planning only, nothing built and no checkbox ticked.
+- `F3 — RSVP`: twelve stories in `specification/features/F3-rsvp/`, backend-leads order `B01`–`B05`, `F01`–`F05`, then `B06`/`F06` for the admin-addressed variant.
+- `F4 — Plus-ones & children`: five stories in `specification/features/F4-plus-ones/`.
+- `F2 — Informational content`: seven stories in `specification/features/F2-content/`.
+- `F11 — Cross-cutting quality`: three stories in `specification/features/F11-quality/`.
 - `F1-B08` — new story: `cmd/seed`, the local dev tool that inserts households with real generated codes. Spec in `specification/features/F1-login/F1-B08-dev-seed.md`.
 - `cmd/seed/main.go`: `-households` (default 1) and `-guests` (default 2), loads the app's own environment, migrates a fresh file, one transaction per household, retries a colliding code against the UNIQUE index, prints id/name/`FormatCode` code to stdout behind a `DEVELOPMENT ONLY` banner.
 - `cmd/seed/main_test.go`: counts, append-on-second-run, non-positive counts rejected before the file is created, members are seeded adults with NULL `attending`, fresh-database migration, and printed codes resolving through `HouseholdStore.FindByCode`.
@@ -52,6 +57,17 @@ Decisions:
 - Admin forms are grouped in fieldsets with legends: the detail page carries several controls called "Vorname" and several buttons called "Speichern", and the group name is the only thing that says whose.
 - **Guest names are one field.** Decided 2026-08-31 after F5 was built: what every output needs is the full name, and one field copes with a double first name, a missing surname or "Oma Erika" — which matters most in F4, where guests type it themselves. Done now because there is no real guest data yet; after send-out it would be a migration against live answers. Accepted cost: nothing sorts by surname, `guests.csv` included.
 - Guest age stays a single domain rule (`domain.ResolveAge`) rather than a `validate` struct tag, so the kind/age pairing lives in one place; the field name and German wording are mapped in `httpio`.
+- `PUT /api/rsvp` is a full replace whose body must list exactly the household's living members; a mismatch is `member_set_mismatch` 409, and every member's `attending` is required. Reasons in `F3-B03`.
+- Scope-gated catering fields are reset to the schema defaults on write, not preserved and not set to `none`; transport seat counts are zeroed when nobody attends `both`. `F3-B01`.
+- `kind` is not editable through the RSVP — only at add time (`F4`) and by us afterwards. `F3-B01`.
+- Guest RSVP route is `/zusagen`; the admin page stays `/admin/haushalte/{id}/rsvp` and renders the same form component, which is why `RsvpForm` takes data and mutation as props. `F3-F01`, `F3-F06`.
+- German guest URLs and a five-entry bottom bar (Start, Ablauf, Location, Antwort, Mehr); flag-gated entries are absent rather than disabled, and `/datenschutz` sits outside the guest guard. `F2-F01`, `F2-F07`.
+- `E-OPS-03` gates the print run; `F11-03` gates send-out. `F11-03`.
+- **Additions tightened twice**: soft cap → hard cap of 2 → one adult plus-one for single-person households only, no guest-added children at all. Admin path uncapped. `default_addition_limit` becomes dead config, dropped in migration `0003` by `F4-B01`. Spec-wide; files listed in `TODO.md`. F4 retitled "Plus-one".
+- Help text required on every guest form field, behind a `?` popover beside the label rather than inline; rule and its accessibility requirements in `05-design`, retrofit tracked in `TODO.md`.
+- Contact names and numbers fixed and written into `labels.ts` (`contactPhoneNumber` + a new `contacts` list): Andreas Hell +43 650 9408100 (also the login fallback), Isabella Michelbacher +43 677 63668655. Frontend suite green.
+- `04-architecture`'s API sketch refreshed for the real F3/F4 surface, closing a spec-debt item in `TODO.md`.
+- Answered against the new stories, same session: soft cap stays 2 and the hint names a phone number; no error styling before the first save attempt; one countdown (wedding) with the deadline as a written-out date; hero is names + date only; IBAN is published on `/geschenke` with the semi-public consequence recorded; contact numbers set (`+43 650 9408100` in the login fallback, both on `/kontakt`); accessibility drops `axe-core` and screen readers, checklist stays inside `F11-01` — a separate `specification/08-accessibility.md` was considered and rejected, since `05-design` already holds the rules and a tick-mark table is progress.
 
 Time: 5h (tentative)
 Cost: Opus 5 — $30.23 (tentative)
