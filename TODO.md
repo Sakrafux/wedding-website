@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-08-30 · Building. E0 (setup) and F1 (login) are done; see [specification/features/README.md](specification/features/README.md).
+Status: as of 2026-08-31 · Building. E0 (setup) and F1 (login) are done; see [specification/features/README.md](specification/features/README.md).
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -48,6 +48,20 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [x] **`guests.csv` is a full dump** — every column of `guest` and of its household, soft-deleted rows included with `deleted_at` visible. It is therefore not a headcount, and both the story and the download label say so.
 - [x] **German admin URLs.**
 - [x] **F3 stories are written after F5 is built.**
+
+### Raised in the 2026-08-31 code review
+
+- [ ] **Admin settings endpoint.** The admin login response deliberately carries no flags, but the admin needs to *flip* `rsvp_open`, `seating_published`, `gallery_visible` and `uploads_open`. That is a read/write endpoint (`GET`/`PATCH /api/admin/settings`) and wants a story in F6 — not a read-only copy smuggled into the login body.
+- [ ] **Split `internal/application` into `application/auth`, `application/rsvp`, …** once the second use case exists. It is what makes `auth.Bootstrap` possible instead of `application.Bootstrap`; doing it with one use case in the package buys nothing.
+- [ ] **`web.Dependencies` growth.** Added 2026-08-31 with config, database and auth. Every new use case is a field there and a line in `main`, never a new `NewRouter` parameter.
+- [ ] **Dash in `CodeInput`:** a typed dash is now kept but never inserted. Whether the printed form needs the dash at all — six characters may be short enough to want no grouping — is a print-shop-era question, and `E-OPS-04` (proof-read a physical card) is where it gets answered by looking at one.
+
+### Dynatrace / F12 — open questions
+
+- [ ] Which tenant, and a token scoped to ingest only (`openTelemetryTrace.ingest`, `metrics.ingest`, `logs.ingest`) — nothing that can read back.
+- [ ] Traces must carry **no household id, no guest name and no login code** as attributes. Route patterns only, never resolved paths that embed an id.
+- [ ] OneAgent in the image versus the OTel SDK in the binary: the SDK is more code and more learning, OneAgent is less of both and fights the single-static-binary design. Leaning SDK.
+- [ ] Frontend RUM means loading a third-party script into a `script-src 'self'` CSP. Decide whether that trade is worth it *before* writing `F12-02`.
 
 ### Seating detail (for the F7 story)
 

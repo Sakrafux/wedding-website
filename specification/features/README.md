@@ -166,6 +166,14 @@ Blocked until the RSVP deadline has passed (Gate 4) and the floor-plan SVG exist
 - [ ] `F10-F01` Upload dropzone with progress and retry
 - [ ] `F10-F02` Moderation grid
 
+## F12 — Observability with Dynatrace · after everything · P3
+
+**Below optional, and explicitly a learning exercise** — the user works at Dynatrace and wants one real application on it. Nothing else may depend on this epic, and the app must run identically with it switched off: telemetry is out-of-band, export failures are logged and never fail a request, and an unset endpoint means no exporter at all. Stories get written when the epic is picked up; the open questions are in [TODO.md](../../TODO.md).
+
+- [ ] `F12-01` Backend traces and metrics: OpenTelemetry SDK, OTLP/HTTP exporter, `otelhttp` plus chi route-pattern span naming, all env-gated
+- [ ] `F12-02` Decide on frontend RUM — it is a third-party script against a `script-src 'self'` CSP, so it is a security decision before it is a feature
+- [ ] `F12-03` Scrub check: no login code, no guest name and no household id in any span, metric or log attribute
+
 ## E-ops — Gates and non-code work
 
 These are the steps that get skipped when they live only in prose. They are checkboxes for the same reason everything else is.

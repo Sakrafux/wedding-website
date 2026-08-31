@@ -15,6 +15,15 @@ Done:
 - Verified end to end: `make seed` then a login with the printed `2BC-96G` against the running binary returns the bootstrap body.
 - Fixed missing pointer cursor on every button: Tailwind v4's preflight resets `button` to `cursor: default` and the shadcn v4 button recipe no longer adds it back. Restored globally in `index.css`'s base layer, not per component.
 
+- Review follow-ups (all under discussion in the 2026-08-31 review):
+  - `web.Dependencies` — named holder for config, database and auth; `NewRouter(logger, deps)`, built in `main`. Later use cases are fields, not parameters.
+  - Login rate limit windows split: guest 10 / 15 min, admin 5 / 1 h. Spec updated in `04-architecture`, `06-privacy-security` and `F1-B05`.
+  - `domain.AuditEntry` now documents actor vs entity with the divergence table; the entity constants say why they match table names.
+  - `router.go` — removed the misplaced duplicate of the admin catch-all comment.
+  - Frontend: `lib/api/{client,dto,enums,session}.ts`, `lib/routing/navigation.ts`, tests moved into `__tests__/` directories. `lib/utils.ts` stays put (shadcn's `components.json` alias).
+  - `CodeInput` keeps a dash the guest types and never inserts one; `sanitizeCodeInput` for display, `normalizeCode` on submit. Placeholder `ABC-234`, hint says the dash is optional.
+  - New epic `F12 — Observability with Dynatrace`, explicitly below optional; open questions in `TODO.md`.
+
 Decisions:
 
 - Codes are generated, never fixed — reasons in the story's Scope.
