@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { shellLabels } from "@/lib/labels";
+import { adminLabels } from "@/lib/labels";
 
 export const Route = createFileRoute("/admin/_shell/")({
   component: AdminHome,
@@ -11,5 +11,5 @@ export const Route = createFileRoute("/admin/_shell/")({
  * more. F6-F01 puts the dashboard here.
  */
 function AdminHome() {
-  return <p className="text-ink-muted">{shellLabels.startIntro}</p>;
+  return <p className="text-ink-muted">{adminLabels.dashboardPlaceholder}</p>;
 }

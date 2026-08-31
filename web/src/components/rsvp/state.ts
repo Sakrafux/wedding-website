@@ -70,6 +70,32 @@ export function draftFrom(answer: RSVPResponse): RSVPDraft {
 }
 
 /**
+ * reseedDraft takes a fresh answer and keeps what the household has typed.
+ *
+ * The member list is the server's — a member who was added or removed appears or
+ * disappears — while every answer already on screen survives. Re-seeding wholesale
+ * would be simpler and wrong: adding a plus-one changes the member set (F4-F01), and a
+ * household that lost a half-filled form to the act of naming their companion would
+ * have no reason to trust the next attempt either.
+ */
+export function reseedDraft(current: RSVPDraft, answer: RSVPResponse): RSVPDraft {
+  const seeded = draftFrom(answer);
+  const members: Record<number, MemberDraft> = {};
+
+  for (const member of answer.members) {
+    const typed = current.members[member.id];
+    const fresh = seeded.members[member.id];
+    if (typed) {
+      members[member.id] = typed;
+    } else if (fresh) {
+      members[member.id] = fresh;
+    }
+  }
+
+  return { ...current, members };
+}
+
+/**
  * toRequest serialises the draft in the order the response listed the members.
  *
  * The order is the response's because the body has to name exactly the household's

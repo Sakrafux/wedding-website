@@ -5,12 +5,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api/client";
-import type { RSVPResponse, RSVPSaveRequest } from "@/lib/api/dto";
+import type { RSVPAddMemberResponse, RSVPResponse, RSVPSaveRequest } from "@/lib/api/dto";
 import type { Attending } from "@/lib/api/enums";
 import { formatShortDate } from "@/lib/dates";
 import { contactPhoneNumber, rsvpLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
+import { AddPlusOne } from "./AddPlusOne";
 import { RSVPMemberCard } from "./RSVPMemberCard";
 import { RSVPSummary } from "./RSVPSummary";
 import { ScopeSelector } from "./ScopeSelector";
@@ -23,6 +24,7 @@ import {
   missingAnswers,
   noteCounterThreshold,
   type RSVPDraft,
+  reseedDraft,
   toRequest,
 } from "./state";
 
@@ -44,6 +46,8 @@ export function RSVPForm({
   answer,
   onSave,
   onReload,
+  onAddMember,
+  onRemoveMember,
   allowEditingAfterDeadline = false,
   dense = false,
 }: {
@@ -52,6 +56,13 @@ export function RSVPForm({
   /** Refetches the answer. Used for the stale-tab case, where merging state would be
       the dishonest option — see `member_set_mismatch` below. */
   onReload: () => Promise<unknown>;
+  /**
+   * The plus-one pair (F4). Both absent on the admin form: we add and remove people
+   * through F5's own screens, which have no rule beyond validity, and rendering the
+   * guest's "ruf uns an" sentence to ourselves would be advice to phone ourselves.
+   */
+  onAddMember?: (name: string) => Promise<RSVPAddMemberResponse>;
+  onRemoveMember?: (memberId: number) => Promise<unknown>;
   /**
    * The admin override. `editable: false` means "the deadline has passed", not "you may
    * not write" — the admin page exists for the late phone call and passes this
@@ -64,6 +75,10 @@ export function RSVPForm({
   const [draft, setDraft] = useState<RSVPDraft>(() => draftFrom(answer));
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [saved, setSaved] = useState<RSVPResponse | null>(null);
+  // Set when adding or removing a member is refused because the deadline passed while
+  // this form was open — the same recovery a refused save gets, from a request that is
+  // not a save.
+  const [closedWhileOpen, setClosedWhileOpen] = useState(false);
   const [saveError, setSaveError] = useState<unknown>(null);
   const [isSaving, setIsSaving] = useState(false);
   const confirmationHeading = useRef<HTMLHeadingElement>(null);
@@ -79,7 +94,7 @@ export function RSVPForm({
   // right — an effect would flash the stale list.
   if (seededMemberSet !== memberSetKey) {
     setSeededMemberSet(memberSetKey);
-    setDraft(draftFrom(answer));
+    setDraft((current) => reseedDraft(current, answer));
     setSaveError(null);
     setSubmitAttempted(false);
   }
@@ -91,7 +106,7 @@ export function RSVPForm({
   // The server refused because the deadline passed while this form was open. It is a
   // race a guest can genuinely hit — filling the form in on the evening of the deadline
   // — and the honest answer is the read-only view, not a retry button.
-  const closedByServer = errorCode === "rsvp_closed";
+  const closedByServer = errorCode === "rsvp_closed" || closedWhileOpen;
   const isReadOnly = (!answer.editable && !allowEditingAfterDeadline) || closedByServer;
 
   useEffect(() => {
@@ -228,9 +243,20 @@ export function RSVPForm({
               onChange={(change) => updateMember(member.id, change)}
               fieldErrors={fieldErrors}
               showMissingAnswer={submitAttempted}
+              onRemove={onRemoveMember ? () => onRemoveMember(member.id) : undefined}
             />
           ) : null;
         })}
+
+        {/* After the cards, and secondary: it is the most consequential thing a guest
+            invited alone can do here, but it is not the question the page is asking. */}
+        {onAddMember ? (
+          <AddPlusOne
+            canAdd={answer.can_add_plus_one}
+            onAdd={onAddMember}
+            onRSVPClosed={() => setClosedWhileOpen(true)}
+          />
+        ) : null}
       </section>
 
       <TransportFields

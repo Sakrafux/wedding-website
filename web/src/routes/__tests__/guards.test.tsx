@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { getJson } from "@/lib/api/client";
 import { ok, stubApi, unauthenticated } from "@/test/api";
-import { adminSession, bootstrap } from "@/test/fixtures";
+import { adminSession, bootstrap, rsvpAnswer } from "@/test/fixtures";
 import { currentPath, renderApp } from "@/test/render";
 
 /** Marks the household as already confirmed, so a test can reach the content. */
@@ -62,7 +62,9 @@ describe("route guards", () => {
   // A year-long session can still be revoked, and the app must notice from
   // whichever request found out rather than showing a white screen.
   it("drops to the login screen when the session is revoked mid-visit", async () => {
-    const api = stubApi({ "GET /api/me": ok(bootstrap()) });
+    // The guest chrome asks for the RSVP answer to word its "Antwort" entry, so every
+    // test that reaches a guest page stubs it (F2-F01).
+    const api = stubApi({ "GET /api/me": ok(bootstrap()), "GET /api/rsvp": ok(rsvpAnswer()) });
     confirmHousehold();
 
     const { router, queryClient } = await renderApp("/start");

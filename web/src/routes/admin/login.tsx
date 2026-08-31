@@ -52,7 +52,7 @@ function AdminLoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4 py-12">
+    <main id="main" className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4 py-12">
       {/* No display serif and no decoration: the admin side shares the tokens and
           drops the guest styling, per 05-design. */}
       <h1 className="text-h2 font-body">{adminLabels.heading}</h1>
@@ -106,6 +106,6 @@ function AdminLoginPage() {
           {login.isPending ? adminLabels.submitting : adminLabels.submit}
         </Button>
       </form>
-    </div>
+    </main>
   );
 }

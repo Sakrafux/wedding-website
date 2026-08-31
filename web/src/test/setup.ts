@@ -8,6 +8,12 @@ import { afterEach, expect, vi } from "vitest";
 // failure in the output.
 window.scrollTo = () => {};
 
+// Same reason, from the other side: jsdom implements no scrolling on an element
+// either, and the form scrolls to the first unanswered card and to a freshly added
+// one. An unimplemented method there throws *inside an event handler*, which surfaces
+// as an unhandled error a long way from the assertion that provoked it.
+Element.prototype.scrollIntoView = () => {};
+
 // Radix's popover and radio-group measure their trigger, and jsdom ships no
 // ResizeObserver. A no-op is enough: nothing here asserts on position, and the
 // alternative is every component that uses a Radix primitive failing with

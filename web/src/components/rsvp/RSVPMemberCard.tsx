@@ -15,6 +15,7 @@ import {
   seatingNeedLabels,
 } from "@/lib/labels";
 
+import { RemoveMemberButton } from "./RemoveMemberButton";
 import {
   attendsAnything,
   coversParty,
@@ -46,6 +47,7 @@ export function RSVPMemberCard({
   onChange,
   fieldErrors,
   showMissingAnswer,
+  onRemove,
 }: {
   member: RSVPMember;
   draft: MemberDraft;
@@ -58,6 +60,12 @@ export function RSVPMemberCard({
    * as broken, and it is the opposite of the register the copy is written in.
    */
   showMissingAnswer: boolean;
+  /**
+   * Removes this member. Absent on the admin form, which edits the member list through
+   * F5's own screens — and never rendered for a seeded member, whom no household may
+   * remove (F4-F02).
+   */
+  onRemove?: () => Promise<unknown>;
 }) {
   const scopeFieldId = `${memberCardId(member.id)}-attending`;
   const isMissing = showMissingAnswer && draft.attending === null;
@@ -70,11 +78,18 @@ export function RSVPMemberCard({
     <Card id={memberCardId(member.id)} className="gap-4 px-4 py-4" data-testid={memberCardId(member.id)}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-h3 font-body">{member.name}</h3>
-        {draft.attending === null ? (
-          <p className={isMissing ? "text-danger text-small" : "text-ink-muted text-small"}>
-            {rsvpLabels.memberUnanswered}
-          </p>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {draft.attending === null ? (
+            <p className={isMissing ? "text-danger text-small" : "text-ink-muted text-small"}>
+              {rsvpLabels.memberUnanswered}
+            </p>
+          ) : null}
+          {/* Only what the household added itself. A seeded member's remedy is the
+              scope control below, not a removal (F4-B01). */}
+          {onRemove && member.origin === "guest_added" ? (
+            <RemoveMemberButton name={member.name} onRemove={onRemove} />
+          ) : null}
+        </div>
       </div>
 
       <FormField

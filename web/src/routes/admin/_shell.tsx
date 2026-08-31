@@ -93,7 +93,9 @@ function AdminShell() {
         </ul>
       </nav>
 
-      <Outlet />
+      <main id="main">
+        <Outlet />
+      </main>
     </div>
   );
 }

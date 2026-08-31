@@ -10,8 +10,8 @@
 
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { getJson, putJson } from "./client";
-import type { RSVPResponse, RSVPSaveRequest } from "./dto";
+import { deleteRequest, getJson, postJson, putJson } from "./client";
+import type { RSVPAddMemberRequest, RSVPAddMemberResponse, RSVPResponse, RSVPSaveRequest } from "./dto";
 import { householdQueryKey, householdsQueryKey } from "./households";
 import { meQueryKey } from "./session";
 
@@ -71,6 +71,47 @@ export function useSaveAdminRSVP(householdId: number) {
         queryClient.invalidateQueries({ queryKey: householdsQueryKey }),
         queryClient.invalidateQueries({ queryKey: householdQueryKey(householdId) }),
       ]);
+    },
+  });
+}
+
+/**
+ * Adds the household's plus-one.
+ *
+ * The response carries the created member and the recomputed flag, so the cache is
+ * patched rather than refetched: the form the guest is filling in stays exactly as it
+ * is, with one more card at the end. A refetch here would be a round trip for data we
+ * were just handed — and, worse, would race with unsaved answers on screen.
+ */
+export function useAddPlusOne() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: RSVPAddMemberRequest) => postJson<RSVPAddMemberResponse>("/rsvp/members", request),
+    onSuccess: (added) => {
+      queryClient.setQueryData<RSVPResponse>(rsvpQueryKey, (answer) =>
+        answer
+          ? { ...answer, members: [...answer.members, added.member], can_add_plus_one: added.can_add_plus_one }
+          : answer,
+      );
+    },
+  });
+}
+
+/**
+ * Removes a member the household added itself.
+ *
+ * The endpoint answers 204, so the flag comes back from a refetch: whether the
+ * household may now add somebody else is the server's answer, and assuming `true` here
+ * would be this file re-deriving the rule.
+ */
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: number) => deleteRequest(`/rsvp/members/${memberId}`),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: rsvpQueryKey });
     },
   });
 }

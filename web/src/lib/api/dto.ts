@@ -122,6 +122,29 @@ export interface RSVPResponse {
    * `false` here and still accepts a write (F3-B06).
    */
   editable: boolean;
+  /**
+   * Whether this household may add a companion (F4-B02).
+   *
+   * The server computes it from the rule the add endpoint enforces with. Branch on it
+   * and nothing else — re-deriving "one member, none added yet" from `members` is how
+   * the screen and the server end up disagreeing in front of a guest.
+   */
+  can_add_plus_one: boolean;
+}
+
+/** The body of POST /api/rsvp/members. One field, because the server takes one. */
+export interface RSVPAddMemberRequest {
+  name: string;
+}
+
+/**
+ * The created companion, plus the recomputed right to add another — always `false`
+ * after a successful addition, and sent rather than assumed because the rule is the
+ * server's.
+ */
+export interface RSVPAddMemberResponse {
+  member: RSVPMember;
+  can_add_plus_one: boolean;
 }
 
 /** One member's answer, as PUT sends it. */

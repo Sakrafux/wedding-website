@@ -11,11 +11,20 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuestRouteImport } from './routes/_guest'
-import { Route as GuestStartRouteImport } from './routes/_guest/start'
+import { Route as GuestChromeRouteImport } from './routes/_guest/_chrome'
 import { Route as GuestWillkommenRouteImport } from './routes/_guest/willkommen'
-import { Route as GuestZusagenRouteImport } from './routes/_guest/zusagen'
 import { Route as AdminShellRouteImport } from './routes/admin/_shell'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as GuestChromeAblaufRouteImport } from './routes/_guest/_chrome/ablauf'
+import { Route as GuestChromeDatenschutzRouteImport } from './routes/_guest/_chrome/datenschutz'
+import { Route as GuestChromeDresscodeRouteImport } from './routes/_guest/_chrome/dresscode'
+import { Route as GuestChromeFaqRouteImport } from './routes/_guest/_chrome/faq'
+import { Route as GuestChromeGeschenkeRouteImport } from './routes/_guest/_chrome/geschenke'
+import { Route as GuestChromeKontaktRouteImport } from './routes/_guest/_chrome/kontakt'
+import { Route as GuestChromeLocationRouteImport } from './routes/_guest/_chrome/location'
+import { Route as GuestChromeMehrRouteImport } from './routes/_guest/_chrome/mehr'
+import { Route as GuestChromeStartRouteImport } from './routes/_guest/_chrome/start'
+import { Route as GuestChromeZusagenRouteImport } from './routes/_guest/_chrome/zusagen'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
 import { Route as AdminShellHaushalteIndexRouteImport } from './routes/admin/_shell/haushalte/index'
 import { Route as AdminShellHaushalteHouseholdIdRouteImport } from './routes/admin/_shell/haushalte/$householdId'
@@ -30,19 +39,13 @@ const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuestStartRoute = GuestStartRouteImport.update({
-  id: '/start',
-  path: '/start',
+const GuestChromeRoute = GuestChromeRouteImport.update({
+  id: '/_chrome',
   getParentRoute: () => GuestRoute,
 } as any)
 const GuestWillkommenRoute = GuestWillkommenRouteImport.update({
   id: '/willkommen',
   path: '/willkommen',
-  getParentRoute: () => GuestRoute,
-} as any)
-const GuestZusagenRoute = GuestZusagenRouteImport.update({
-  id: '/zusagen',
-  path: '/zusagen',
   getParentRoute: () => GuestRoute,
 } as any)
 const AdminShellRoute = AdminShellRouteImport.update({
@@ -54,6 +57,56 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const GuestChromeAblaufRoute = GuestChromeAblaufRouteImport.update({
+  id: '/ablauf',
+  path: '/ablauf',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeDatenschutzRoute = GuestChromeDatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeDresscodeRoute = GuestChromeDresscodeRouteImport.update({
+  id: '/dresscode',
+  path: '/dresscode',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeFaqRoute = GuestChromeFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeGeschenkeRoute = GuestChromeGeschenkeRouteImport.update({
+  id: '/geschenke',
+  path: '/geschenke',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeKontaktRoute = GuestChromeKontaktRouteImport.update({
+  id: '/kontakt',
+  path: '/kontakt',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeLocationRoute = GuestChromeLocationRouteImport.update({
+  id: '/location',
+  path: '/location',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeMehrRoute = GuestChromeMehrRouteImport.update({
+  id: '/mehr',
+  path: '/mehr',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeStartRoute = GuestChromeStartRouteImport.update({
+  id: '/start',
+  path: '/start',
+  getParentRoute: () => GuestChromeRoute,
+} as any)
+const GuestChromeZusagenRoute = GuestChromeZusagenRouteImport.update({
+  id: '/zusagen',
+  path: '/zusagen',
+  getParentRoute: () => GuestChromeRoute,
 } as any)
 const AdminShellIndexRoute = AdminShellIndexRouteImport.update({
   id: '/',
@@ -81,11 +134,19 @@ const AdminShellHaushalteHouseholdIdRsvpRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/start': typeof GuestStartRoute
   '/willkommen': typeof GuestWillkommenRoute
-  '/zusagen': typeof GuestZusagenRoute
   '/admin': typeof AdminShellRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/ablauf': typeof GuestChromeAblaufRoute
+  '/datenschutz': typeof GuestChromeDatenschutzRoute
+  '/dresscode': typeof GuestChromeDresscodeRoute
+  '/faq': typeof GuestChromeFaqRoute
+  '/geschenke': typeof GuestChromeGeschenkeRoute
+  '/kontakt': typeof GuestChromeKontaktRoute
+  '/location': typeof GuestChromeLocationRoute
+  '/mehr': typeof GuestChromeMehrRoute
+  '/start': typeof GuestChromeStartRoute
+  '/zusagen': typeof GuestChromeZusagenRoute
   '/admin/': typeof AdminShellIndexRoute
   '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
   '/admin/haushalte/': typeof AdminShellHaushalteIndexRoute
@@ -93,10 +154,18 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/start': typeof GuestStartRoute
   '/willkommen': typeof GuestWillkommenRoute
-  '/zusagen': typeof GuestZusagenRoute
   '/admin/login': typeof AdminLoginRoute
+  '/ablauf': typeof GuestChromeAblaufRoute
+  '/datenschutz': typeof GuestChromeDatenschutzRoute
+  '/dresscode': typeof GuestChromeDresscodeRoute
+  '/faq': typeof GuestChromeFaqRoute
+  '/geschenke': typeof GuestChromeGeschenkeRoute
+  '/kontakt': typeof GuestChromeKontaktRoute
+  '/location': typeof GuestChromeLocationRoute
+  '/mehr': typeof GuestChromeMehrRoute
+  '/start': typeof GuestChromeStartRoute
+  '/zusagen': typeof GuestChromeZusagenRoute
   '/admin': typeof AdminShellIndexRoute
   '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
   '/admin/haushalte': typeof AdminShellHaushalteIndexRoute
@@ -106,11 +175,20 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_guest': typeof GuestRouteWithChildren
-  '/_guest/start': typeof GuestStartRoute
+  '/_guest/_chrome': typeof GuestChromeRouteWithChildren
   '/_guest/willkommen': typeof GuestWillkommenRoute
-  '/_guest/zusagen': typeof GuestZusagenRoute
   '/admin/_shell': typeof AdminShellRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/_guest/_chrome/ablauf': typeof GuestChromeAblaufRoute
+  '/_guest/_chrome/datenschutz': typeof GuestChromeDatenschutzRoute
+  '/_guest/_chrome/dresscode': typeof GuestChromeDresscodeRoute
+  '/_guest/_chrome/faq': typeof GuestChromeFaqRoute
+  '/_guest/_chrome/geschenke': typeof GuestChromeGeschenkeRoute
+  '/_guest/_chrome/kontakt': typeof GuestChromeKontaktRoute
+  '/_guest/_chrome/location': typeof GuestChromeLocationRoute
+  '/_guest/_chrome/mehr': typeof GuestChromeMehrRoute
+  '/_guest/_chrome/start': typeof GuestChromeStartRoute
+  '/_guest/_chrome/zusagen': typeof GuestChromeZusagenRoute
   '/admin/_shell/': typeof AdminShellIndexRoute
   '/admin/_shell/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
   '/admin/_shell/haushalte/': typeof AdminShellHaushalteIndexRoute
@@ -120,11 +198,19 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/start'
     | '/willkommen'
-    | '/zusagen'
     | '/admin'
     | '/admin/login'
+    | '/ablauf'
+    | '/datenschutz'
+    | '/dresscode'
+    | '/faq'
+    | '/geschenke'
+    | '/kontakt'
+    | '/location'
+    | '/mehr'
+    | '/start'
+    | '/zusagen'
     | '/admin/'
     | '/admin/haushalte/$householdId'
     | '/admin/haushalte/'
@@ -132,10 +218,18 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/start'
     | '/willkommen'
-    | '/zusagen'
     | '/admin/login'
+    | '/ablauf'
+    | '/datenschutz'
+    | '/dresscode'
+    | '/faq'
+    | '/geschenke'
+    | '/kontakt'
+    | '/location'
+    | '/mehr'
+    | '/start'
+    | '/zusagen'
     | '/admin'
     | '/admin/haushalte/$householdId'
     | '/admin/haushalte'
@@ -144,11 +238,20 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_guest'
-    | '/_guest/start'
+    | '/_guest/_chrome'
     | '/_guest/willkommen'
-    | '/_guest/zusagen'
     | '/admin/_shell'
     | '/admin/login'
+    | '/_guest/_chrome/ablauf'
+    | '/_guest/_chrome/datenschutz'
+    | '/_guest/_chrome/dresscode'
+    | '/_guest/_chrome/faq'
+    | '/_guest/_chrome/geschenke'
+    | '/_guest/_chrome/kontakt'
+    | '/_guest/_chrome/location'
+    | '/_guest/_chrome/mehr'
+    | '/_guest/_chrome/start'
+    | '/_guest/_chrome/zusagen'
     | '/admin/_shell/'
     | '/admin/_shell/haushalte/$householdId'
     | '/admin/_shell/haushalte/'
@@ -178,11 +281,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_guest/start': {
-      id: '/_guest/start'
-      path: '/start'
-      fullPath: '/start'
-      preLoaderRoute: typeof GuestStartRouteImport
+    '/_guest/_chrome': {
+      id: '/_guest/_chrome'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof GuestChromeRouteImport
       parentRoute: typeof GuestRoute
     }
     '/_guest/willkommen': {
@@ -190,13 +293,6 @@ declare module '@tanstack/react-router' {
       path: '/willkommen'
       fullPath: '/willkommen'
       preLoaderRoute: typeof GuestWillkommenRouteImport
-      parentRoute: typeof GuestRoute
-    }
-    '/_guest/zusagen': {
-      id: '/_guest/zusagen'
-      path: '/zusagen'
-      fullPath: '/zusagen'
-      preLoaderRoute: typeof GuestZusagenRouteImport
       parentRoute: typeof GuestRoute
     }
     '/admin/_shell': {
@@ -212,6 +308,76 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_guest/_chrome/ablauf': {
+      id: '/_guest/_chrome/ablauf'
+      path: '/ablauf'
+      fullPath: '/ablauf'
+      preLoaderRoute: typeof GuestChromeAblaufRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/datenschutz': {
+      id: '/_guest/_chrome/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof GuestChromeDatenschutzRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/dresscode': {
+      id: '/_guest/_chrome/dresscode'
+      path: '/dresscode'
+      fullPath: '/dresscode'
+      preLoaderRoute: typeof GuestChromeDresscodeRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/faq': {
+      id: '/_guest/_chrome/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof GuestChromeFaqRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/geschenke': {
+      id: '/_guest/_chrome/geschenke'
+      path: '/geschenke'
+      fullPath: '/geschenke'
+      preLoaderRoute: typeof GuestChromeGeschenkeRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/kontakt': {
+      id: '/_guest/_chrome/kontakt'
+      path: '/kontakt'
+      fullPath: '/kontakt'
+      preLoaderRoute: typeof GuestChromeKontaktRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/location': {
+      id: '/_guest/_chrome/location'
+      path: '/location'
+      fullPath: '/location'
+      preLoaderRoute: typeof GuestChromeLocationRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/mehr': {
+      id: '/_guest/_chrome/mehr'
+      path: '/mehr'
+      fullPath: '/mehr'
+      preLoaderRoute: typeof GuestChromeMehrRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/start': {
+      id: '/_guest/_chrome/start'
+      path: '/start'
+      fullPath: '/start'
+      preLoaderRoute: typeof GuestChromeStartRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/zusagen': {
+      id: '/_guest/_chrome/zusagen'
+      path: '/zusagen'
+      fullPath: '/zusagen'
+      preLoaderRoute: typeof GuestChromeZusagenRouteImport
+      parentRoute: typeof GuestChromeRoute
     }
     '/admin/_shell/': {
       id: '/admin/_shell/'
@@ -244,16 +410,44 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface GuestChromeRouteChildren {
+  GuestChromeAblaufRoute: typeof GuestChromeAblaufRoute
+  GuestChromeDatenschutzRoute: typeof GuestChromeDatenschutzRoute
+  GuestChromeDresscodeRoute: typeof GuestChromeDresscodeRoute
+  GuestChromeFaqRoute: typeof GuestChromeFaqRoute
+  GuestChromeGeschenkeRoute: typeof GuestChromeGeschenkeRoute
+  GuestChromeKontaktRoute: typeof GuestChromeKontaktRoute
+  GuestChromeLocationRoute: typeof GuestChromeLocationRoute
+  GuestChromeMehrRoute: typeof GuestChromeMehrRoute
+  GuestChromeStartRoute: typeof GuestChromeStartRoute
+  GuestChromeZusagenRoute: typeof GuestChromeZusagenRoute
+}
+
+const GuestChromeRouteChildren: GuestChromeRouteChildren = {
+  GuestChromeAblaufRoute: GuestChromeAblaufRoute,
+  GuestChromeDatenschutzRoute: GuestChromeDatenschutzRoute,
+  GuestChromeDresscodeRoute: GuestChromeDresscodeRoute,
+  GuestChromeFaqRoute: GuestChromeFaqRoute,
+  GuestChromeGeschenkeRoute: GuestChromeGeschenkeRoute,
+  GuestChromeKontaktRoute: GuestChromeKontaktRoute,
+  GuestChromeLocationRoute: GuestChromeLocationRoute,
+  GuestChromeMehrRoute: GuestChromeMehrRoute,
+  GuestChromeStartRoute: GuestChromeStartRoute,
+  GuestChromeZusagenRoute: GuestChromeZusagenRoute,
+}
+
+const GuestChromeRouteWithChildren = GuestChromeRoute._addFileChildren(
+  GuestChromeRouteChildren,
+)
+
 interface GuestRouteChildren {
-  GuestStartRoute: typeof GuestStartRoute
+  GuestChromeRoute: typeof GuestChromeRouteWithChildren
   GuestWillkommenRoute: typeof GuestWillkommenRoute
-  GuestZusagenRoute: typeof GuestZusagenRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
-  GuestStartRoute: GuestStartRoute,
+  GuestChromeRoute: GuestChromeRouteWithChildren,
   GuestWillkommenRoute: GuestWillkommenRoute,
-  GuestZusagenRoute: GuestZusagenRoute,
 }
 
 const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)

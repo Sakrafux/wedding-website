@@ -104,6 +104,9 @@ export function rsvpAnswer(overrides: Partial<RSVPResponse> = {}): RSVPResponse 
     members: [rsvpMember(), rsvpMember({ id: 31, name: "Emil Müller", kind: "child", age: 4 })],
     deadline: "2027-05-17T21:59:59Z",
     editable: true,
+    // Two seeded members by default, so the default household is one that may not add
+    // — which is what most households are.
+    can_add_plus_one: false,
     ...overrides,
   };
 }

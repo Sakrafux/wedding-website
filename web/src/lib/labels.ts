@@ -34,6 +34,7 @@ import type {
   Portion,
   SeatingNeed,
 } from "./api/enums";
+import { weddingDateLong, weddingDateShort } from "./wedding";
 
 export const attendingLabels: Record<Attending, string> = {
   no: "Kommt nicht",
@@ -174,9 +175,9 @@ export const shellLabels = {
   /** Shown with the id from the error envelope, so a guest on the phone can read
       out something that finds their request in the log. */
   requestId: "Fehlernummer:",
-  /** The authenticated landing page until F2-F02 builds the real start page. */
-  startHeading: "Ihr seid angemeldet",
-  startIntro: "Die Einladung mit allen Infos kommt hier in Kürze.",
+  /** Lives on /mehr rather than in the bottom bar: it is used once a year, and a
+      fifth bar item that logs you out beside the one showing the schedule is a
+      mis-tap waiting to happen. */
   logout: "Abmelden",
 } as const;
 
@@ -223,6 +224,7 @@ export const rsvpLabels = {
       : `Damit werden die Antworten von ${changed} Personen auf „${scope}“ geändert.`,
   householdScopeOverwriteConfirm: "Ja, für alle setzen",
   cancel: "Abbrechen",
+  close: "Schließen",
 
   membersHeading: "Wer kommt?",
   /** A statement of fact in the muted ink, not an error: a form that opens red at a
@@ -249,8 +251,8 @@ export const rsvpLabels = {
   dietaryNotePlaceholderHint: "Zum Beispiel: Nussallergie, laktosefrei",
   /** The date is in the label, not only in the help: a bare "Alter" gets answered as
       of today, and then the value drifts over the months before the wedding. */
-  ageLabel: (name: string) => `Alter von ${name} am Hochzeitstag, 17. Juli 2027`,
-  ageHelp: "Gemeint ist das Alter am 17. Juli 2027, nicht heute. Das Catering rechnet nach Alter am Tag der Feier.",
+  ageLabel: (name: string) => `Alter von ${name} am Hochzeitstag, ${weddingDateLong}`,
+  ageHelp: `Gemeint ist das Alter am ${weddingDateLong}, nicht heute. Das Catering rechnet nach Alter am Tag der Feier.`,
 
   transportHeading: "Fahrt von der Kirche zur Feier",
   transportNeededLabel: "Plätze gesucht",
@@ -274,6 +276,37 @@ export const rsvpLabels = {
   noteHint: "Zum Beispiel: „Wir kommen erst nach der Zeremonie“ oder „Oma braucht einen Platz nah am Ausgang“.",
   noteReadPromise: "Wir lesen das.",
   noteRemaining: (remaining: number) => `Noch ${remaining} Zeichen.`,
+
+  /* F4 — the plus-one. Phrased as the question it answers rather than as an
+     administrative option: for a guest invited alone it is the most consequential
+     thing on this page. */
+  addPlusOneTrigger: "Kommst du zu zweit? Begleitung hinzufügen",
+  addPlusOneHeading: "Begleitung hinzufügen",
+  addPlusOneBody: "Trag die Person ein, die mit dir kommt. Wozu sie kommt, fragen wir gleich darunter im Formular.",
+  addPlusOneNameLabel: "Name der Begleitung",
+  addPlusOneNameHelp:
+    "Gemeint ist eine erwachsene Person, die mit dir kommt. Kinder und weitere Gäste tragen wir gern für euch ein — ruf uns dazu bitte kurz an.",
+  addPlusOneSubmit: "Hinzufügen",
+  addPlusOneSubmitting: "Wird hinzugefügt …",
+  /** Says both things: the person is on the list, and the form still has to be
+      answered and saved. The asymmetry is real, so the copy names it. */
+  addPlusOneAdded: (name: string) =>
+    `${name} steht jetzt auf eurer Liste. Sag uns unten noch, wozu ${name} kommt, und speichere das Formular.`,
+  /** Shown in place of the trigger for every household that may not add — which is
+      most of them. An offer, not a refusal: the answer is yes, we just want to hear
+      the Personenzahl. */
+  plusOneUnavailable: "Weitere Personen tragen wir gern für euch ein.",
+  plusOneUnavailableCall: "Ruf uns dazu bitte kurz an:",
+
+  /** "entfernen", never "löschen": it is a soft delete and the German should not
+      promise otherwise. Same wording as the admin screen (F5-F02). */
+  removeMember: "entfernen",
+  removeMemberAccessibleName: (name: string) => `${name} entfernen`,
+  removeMemberConfirmTitle: "Person entfernen?",
+  removeMemberConfirmBody: (name: string) =>
+    `${name} wird von eurer Liste genommen. Danach könnt ihr wieder jemanden hinzufügen.`,
+  removeMemberConfirmAction: "Ja, entfernen",
+  removeMemberFailedHeading: "Das Entfernen hat nicht geklappt",
 
   submit: "Speichern",
   submitting: "Wird gespeichert …",
@@ -341,6 +374,9 @@ export const adminLabels = {
   navSeating: "Sitzplan",
   navBudget: "Budget",
   navPhotos: "Fotos",
+  /** The admin landing page until F6-F01 puts the dashboard there. Admin-facing, so
+      it may say what it is. */
+  dashboardPlaceholder: "Das Dashboard kommt mit F6. Bis dahin geht es über Haushalte.",
 } as const;
 
 /**
@@ -414,7 +450,7 @@ export const householdLabels = {
   nameHint: "Vor- und Nachname, so wie die Person genannt werden möchte.",
   kindLabel: "Erwachsen oder Kind",
   ageLabel: "Alter am Hochzeitstag",
-  ageHint: "Nur bei Kindern, und gemeint ist das Alter am 17.07.2027.",
+  ageHint: `Nur bei Kindern, und gemeint ist das Alter am ${weddingDateShort}.`,
   seatingNeedLabel: "Platz",
   dietaryNoteLabel: "Allergien und Unverträglichkeiten",
   addMember: "Hinzufügen",
@@ -454,4 +490,275 @@ export const householdLabels = {
     `„${name}“ wird mit ${members === 1 ? "einer Person" : `${members} Personen`} gelöscht, dazu ihre Rückmeldungen und Sitzplätze. Der Eintrag im Änderungsprotokoll bleibt erhalten.`,
   deleteConfirm: "Ja, endgültig löschen",
   cancel: "Abbrechen",
+} as const;
+
+/* ------------------------------------------------------------------------- *
+ * F2 — the informational pages
+ *
+ * Content is hardcoded in the frontend by decision (02-features), and every German
+ * string still lives here rather than in the components — including the schedule
+ * entries and the FAQ, which are content *and* copy at the same time. The rule has no
+ * exception clause, and one file is what makes the whole site proof-readable in one
+ * sitting.
+ *
+ * Several blocks below are **placeholders**, marked as such and tracked in TODO.md:
+ * the venues, the schedule, the dress code, the gift wording and the account details
+ * are not decided yet. They are written as honest sentences ("steht noch nicht fest")
+ * rather than as lorem ipsum, because the one thing worse than a page that says the
+ * date is open is a page that says "Lorem ipsum" to eighty guests.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The navigation. One definition, rendered as a bottom bar on a phone and a top nav
+ * on a desktop — never two lists that drift apart.
+ */
+export const navLabels = {
+  guestNav: "Seiten",
+  start: "Start",
+  schedule: "Ablauf",
+  location: "Location",
+  /** The RSVP entry, in its two states. Primary until the household has answered,
+      because it is the one thing we actually need them to do. */
+  rsvp: "Antwort",
+  rsvpAnswered: "Antwort ändern",
+  more: "Mehr",
+  /** The overflow page's own entries. */
+  dresscode: "Dresscode",
+  gifts: "Geschenke",
+  faq: "Häufige Fragen",
+  contact: "Kontakt",
+  privacy: "Datenschutz",
+  seating: "Sitzplan",
+  gallery: "Galerie",
+} as const;
+
+export const moreLabels = {
+  heading: "Mehr",
+  intro: "Alles Weitere zur Hochzeit — und wie du uns erreichst.",
+} as const;
+
+export const startLabels = {
+  /** Built around the display name rather than glued in front of it: "Luki & Paddi"
+      is a valid display name, and "Liebe Luki & Paddi," would read wrong. */
+  greeting: (householdName: string) => `Schön, dass ihr da seid, ${householdName}.`,
+  intro: "Hier findet ihr alles zur Hochzeit — und hier sagt ihr uns, wer von euch kommt.",
+  names: "Isabella & Andreas",
+  /** Days only, never a ticking clock: it is a badge, not a timer. */
+  countdown: (days: number) => (days === 1 ? "Noch 1 Tag" : `Noch ${days} Tage`),
+  countdownToday: "Heute ist es so weit",
+  rsvpCallToAction: "Jetzt zusagen",
+  rsvpCallToActionAnswered: "Antwort ändern",
+  /** Beside the answer link, spelled out — the deadline is a sentence, not a second
+      countdown competing with the big number above it. */
+  rsvpDeadline: (date: string) => `Bitte antwortet bis zum ${date}.`,
+  rsvpAnswered: "Ihr habt uns schon geantwortet. Danke!",
+} as const;
+
+/**
+ * The schedule. Times are plain strings: there is one timezone and one fixed day, and
+ * parsing a time only to format it back is work that can go wrong for no gain.
+ *
+ * PLACEHOLDER (TODO.md): the running order is not fixed. Entries without a time are
+ * rendered without one — a time on this page will be believed, so a guessed one is
+ * worse than none.
+ */
+export const scheduleLabels = {
+  heading: "Ablauf",
+  intro: "So ist der Tag geplant. Sobald die Zeiten feststehen, tragen wir sie hier ein.",
+  /** Which part of the day an entry belongs to, so a guest can see at a glance what
+      their own Zusage covers. The timeline is never filtered by it: somebody who nur
+      zur Kirche kommt still wants to know that a party happens. */
+  church: "Kirche",
+  party: "Feier",
+  timeOpen: "Uhrzeit steht noch nicht fest",
+  entries: [
+    {
+      time: null,
+      title: "Trauung",
+      detail: "Die kirchliche Trauung — wo genau, steht auf der Seite Location.",
+      part: "church",
+    },
+    { time: null, title: "Empfang", detail: "Sekt, Zeit zum Ankommen und für Fotos.", part: "party" },
+    {
+      time: null,
+      title: "Abendessen",
+      detail: "Gemeinsames Essen. Was ihr esst, fragen wir im Formular.",
+      part: "party",
+    },
+    { time: null, title: "Feier", detail: "Musik, Tanz und später am Abend eine kleine Stärkung.", part: "party" },
+  ],
+} as const;
+
+/**
+ * The two venues and how to get to them.
+ *
+ * PLACEHOLDER (TODO.md): names, addresses, parking and travel notes are open until
+ * the venues are booked. This page must not ship to guests with these strings in it —
+ * 07-roadmap accepts a thin Ablauf page at launch and explicitly does not accept an
+ * empty Location page.
+ */
+export const locationLabels = {
+  heading: "Location & Anreise",
+  intro: "Getraut wird in der Kirche, gefeiert wird danach. Beide Adressen stehen hier, sobald sie feststehen.",
+  venuesHeading: "Die Orte",
+  churchHeading: "Kirche",
+  partyHeading: "Feier",
+  addressOpen: "Die Adresse steht noch nicht fest. Sie kommt hier auf die Seite, sobald wir gebucht haben.",
+  mapLink: "Auf der Karte ansehen",
+  /** Said in the link text as well as by the icon: nobody in this audience should be
+      surprised by a new tab. */
+  externalHint: "(öffnet in einem neuen Tab)",
+  arrivalHeading: "Anreise & Parken",
+  arrivalOpen:
+    "Wie ihr am besten hinkommt und wo ihr parken könnt, schreiben wir hier auf, sobald die Orte feststehen.",
+  transferHeading: "Von der Kirche zur Feier",
+  transfer:
+    "Zwischen Kirche und Feier liegt eine kurze Fahrt. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden — sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
+  accommodationHeading: "Übernachtung",
+  accommodationOpen:
+    "Eine Liste mit Hotels und Pensionen in der Nähe kommt hier auf die Seite. Zimmer reserviert haben wir nicht.",
+} as const;
+
+/**
+ * PLACEHOLDER (TODO.md): the dress code wording is unwritten. What is decided is the
+ * shape — plain words and an example, never a category name: "festlich" means five
+ * different things to five relatives.
+ */
+export const dresscodeLabels = {
+  heading: "Dresscode",
+  lead: "Zieht an, worin ihr euch wohlfühlt — festlich, aber nicht steif.",
+  body: "Wir schreiben hier noch genauer auf, was wir selbst anziehen, damit ihr eine Vorstellung habt. Wenn der Boden oder das Wetter eine Rolle für die Schuhwahl spielen, sagen wir das an dieser Stelle dazu.",
+} as const;
+
+/**
+ * PLACEHOLDER (TODO.md): the gift wording and the account details.
+ *
+ * The IBAN is published deliberately (F2-F05): a content page is compiled into the
+ * bundle and the bundle is served to anyone who loads the site, so it is semi-public.
+ * That was decided with the trade in view — an IBAN lets somebody send money, not take
+ * it — and the placeholder below keeps the shape without publishing a real account.
+ */
+export const giftLabels = {
+  heading: "Geschenke",
+  lead: "Das größte Geschenk ist, dass ihr da seid.",
+  body: "Wenn ihr uns trotzdem etwas mitbringen möchtet, freuen wir uns über einen Beitrag zu unserer Hochzeitsreise. Die genauen Worte dazu schreiben wir noch — und niemand muss etwas mitbringen.",
+  accountHeading: "Bankverbindung",
+  accountHolderLabel: "Kontoinhaber",
+  accountHolder: "Noch nicht eingetragen",
+  ibanLabel: "IBAN",
+  /** Stored unspaced, which is what the copy button puts on the clipboard; the
+      grouping in fours is display only. */
+  iban: "AT000000000000000000",
+  ibanPending: "Die Bankverbindung tragen wir hier ein, sobald sie feststeht.",
+  copyIban: "IBAN kopieren",
+  ibanCopied: "IBAN kopiert",
+} as const;
+
+/**
+ * The FAQ. Answers are always expanded — no accordion: a collapsed answer hides the
+ * text from find-in-page and costs a tap per question.
+ *
+ * Seeded from what we expect to be asked; the real list follows the first phone calls
+ * after send-out (TODO.md). An answer that a content page already gives links there
+ * rather than restating it, so there is one copy to keep in step.
+ */
+export const faqLabels = {
+  heading: "Häufige Fragen",
+  intro: "Was uns schon gefragt wurde. Ist deine Frage nicht dabei, ruf uns einfach an.",
+  entries: [
+    {
+      question: "Sind Kinder eingeladen?",
+      answer:
+        "Ja. Sag uns im Antwortformular Bescheid, wer mitkommt und wie alt die Kinder am Hochzeitstag sind — daran hängen Essen und Sitzplatz. Wenn wir ein Kind noch nicht auf eurer Liste haben, ruf uns bitte kurz an, dann tragen wir es ein.",
+      link: null,
+    },
+    {
+      question: "Darf ich jemanden mitbringen?",
+      answer:
+        "Wer allein eingeladen ist, kann im Antwortformular eine Begleitung eintragen. Für alle weiteren Personen ruft uns bitte an — wir tragen sie gern ein, wollen die Anzahl aber vorher wissen.",
+      link: null,
+    },
+    {
+      question: "Was ziehe ich an?",
+      answer: "Festlich, aber ohne Zwang. Die Einzelheiten stehen auf der Seite Dresscode.",
+      link: { to: "/dresscode", label: "Zum Dresscode" },
+    },
+    {
+      question: "Wo ist die Hochzeit, und wo kann ich parken?",
+      answer: "Beide Adressen, Parken und Anreise stehen auf der Seite Location & Anreise.",
+      link: { to: "/location", label: "Zu Location & Anreise" },
+    },
+    {
+      question: "Wie komme ich von der Kirche zur Feier?",
+      answer:
+        "Es ist eine kurze Fahrt. Im Antwortformular fragen wir, wie viele Plätze ihr braucht und wie viele ihr anbieten könnt — daran sehen wir, ob sich ein Shuttle lohnt. Wer mit wem fährt, klären wir nicht über die Seite.",
+      link: null,
+    },
+    {
+      question: "Was, wenn wir später kommen oder früher gehen müssen?",
+      answer:
+        "Kein Problem. Sag uns im Antwortformular, ob ihr zur Kirche, zur Feier oder zu beidem kommt, und schreib uns den Rest in die Nachricht am Ende des Formulars.",
+      link: null,
+    },
+    {
+      question: "Was schenken wir euch?",
+      answer:
+        "Am liebsten gar nichts außer eurer Zeit. Wenn ihr doch etwas möchtet, steht das auf der Seite Geschenke.",
+      link: { to: "/geschenke", label: "Zu den Geschenken" },
+    },
+    {
+      question: "Mein Code funktioniert nicht — was jetzt?",
+      answer:
+        "Groß- und Kleinschreibung ist egal, Leerzeichen und Bindestriche auch. Klappt es trotzdem nicht, ruf uns an — wir sagen dir den Code oder tragen deine Antwort direkt für dich ein.",
+      link: { to: "/kontakt", label: "Zum Kontakt" },
+    },
+    {
+      question: "Kann ich meine Antwort noch ändern?",
+      answer:
+        "Ja, bis zum Stichtag jederzeit. Danach geht es nicht mehr über die Seite — dann ruf uns bitte an, wir ändern es für dich.",
+      link: null,
+    },
+  ],
+} as const;
+
+export const contactLabels = {
+  heading: "Kontakt",
+  intro: "Ruf einfach an — wir sind beide erreichbar.",
+  codeHelpHeading: "Wenn der Code nicht funktioniert",
+  codeHelp:
+    "Der Code steht auf eurer Einladungskarte, sechs Zeichen, Groß- und Kleinschreibung egal. Klappt es nicht, ruf uns an: wir sagen dir den Code am Telefon oder tragen eure Antwort gleich selbst ein.",
+} as const;
+
+/**
+ * Datenschutz, in guest German.
+ *
+ * A translation of 06-privacy-security into "du", not a new document: when the two
+ * disagree, the spec changes first. Deliberately not boilerplate — a wall of legalese
+ * would be worse than nothing here, because nobody reads it and it makes a wedding
+ * invitation feel like a business.
+ *
+ * Wants a proof-read before send-out (TODO.md). The photo-retention sentence is
+ * missing on purpose: the gallery lifetime is undecided, and a number we have not
+ * chosen must not be promised.
+ */
+export const privacyLabels = {
+  heading: "Datenschutz",
+  lead: "Kurz und ohne Juristendeutsch: Das hier läuft auf unserem eigenen Server, und außer uns bekommt niemand eure Daten zu sehen.",
+  storedHeading: "Was wir speichern",
+  stored:
+    "Euren Haushalt mit dem Namen, unter dem wir euch eingeladen haben, die Namen der Personen, euren Code von der Einladungskarte, und alles, was ihr im Antwortformular ausfüllt: wer kommt, wozu, was ihr esst, ob ihr Plätze im Auto braucht oder anbietet, und eure Nachricht an uns.",
+  sensitiveHeading: "Allergien und das Alter der Kinder",
+  sensitive:
+    "Beides fragen wir, weil das Catering es braucht: Allergien landen auf der Liste für die Küche, das Alter am Hochzeitstag entscheidet über Portion und Preis. Ihr müsst nichts ausfüllen, was ihr nicht wollt — dann ruft uns lieber an.",
+  whyHeading: "Warum wir das speichern",
+  why: "Damit wir die Hochzeit planen können: Personenzahl, Essen, Sitzplätze, Fahrten. Für nichts sonst. Wir schicken keine Werbung, es gibt keine Auswertung und keine Weitergabe an Dritte außer den Zahlen, die das Catering braucht.",
+  whoHeading: "Wer das sieht",
+  who: "Wir beide. Die Seite läuft auf unserem eigenen Server, ohne Google, ohne Tracking, ohne externe Schriften und ohne Cookies außer dem einen, mit dem ihr angemeldet bleibt. Die Seite steht in keiner Suchmaschine.",
+  retentionHeading: "Wie lange",
+  retention:
+    "Die Seite geht ungefähr drei Monate nach der Hochzeit offline, und die Daten gehen mit ihr. Was wir behalten, ist eine private Kopie für uns selbst — so, wie man ein Gästebuch behält.",
+  rightsHeading: "Ändern oder löschen",
+  rights:
+    "Ruf uns an oder schreib uns, dann ändern oder löschen wir es. Kein Formular, kein Verfahren — bei achtzig Gästen ist ein Anruf schneller als alles andere.",
+  contactLink: "Zum Kontakt",
 } as const;

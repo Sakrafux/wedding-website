@@ -2,7 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { RSVPForm } from "@/components/rsvp/RSVPForm";
-import { rsvpQueryOptions, useSaveRSVP } from "@/lib/api/rsvp";
+import { rsvpQueryOptions, useAddPlusOne, useRemoveMember, useSaveRSVP } from "@/lib/api/rsvp";
 import { rsvpLabels } from "@/lib/labels";
 
 /**
@@ -13,7 +13,7 @@ import { rsvpLabels } from "@/lib/labels";
  * error state and a slow load the shared skeleton — rather than a blank form that
  * fills in later.
  */
-export const Route = createFileRoute("/_guest/zusagen")({
+export const Route = createFileRoute("/_guest/_chrome/zusagen")({
   loader: ({ context }) => context.queryClient.ensureQueryData(rsvpQueryOptions),
   component: RSVPPage,
 });
@@ -21,6 +21,8 @@ export const Route = createFileRoute("/_guest/zusagen")({
 function RSVPPage() {
   const { data: answer, refetch } = useSuspenseQuery(rsvpQueryOptions);
   const save = useSaveRSVP();
+  const addPlusOne = useAddPlusOne();
+  const removeMember = useRemoveMember();
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-12">
@@ -29,7 +31,13 @@ function RSVPPage() {
 
       {/* The form fetches nothing itself: the query and the mutation are handed in, so
           the admin route can hand it different ones (F3-F06). */}
-      <RSVPForm answer={answer} onSave={save.mutateAsync} onReload={refetch} />
+      <RSVPForm
+        answer={answer}
+        onSave={save.mutateAsync}
+        onReload={refetch}
+        onAddMember={(name) => addPlusOne.mutateAsync({ name })}
+        onRemoveMember={removeMember.mutateAsync}
+      />
     </div>
   );
 }

@@ -71,7 +71,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-4 py-12">
+    <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-4 py-12">
       <header className="flex flex-col gap-3 text-center">
         <h1 className="text-display">{loginLabels.heading}</h1>
         <p className="text-ink-muted">{loginLabels.intro}</p>
@@ -103,6 +103,6 @@ function LoginPage() {
           </a>
         </p>
       ) : null}
-    </div>
+    </main>
   );
 }
