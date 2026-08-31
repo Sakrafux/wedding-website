@@ -8,6 +8,16 @@ import { afterEach, expect, vi } from "vitest";
 // failure in the output.
 window.scrollTo = () => {};
 
+// Radix's popover and radio-group measure their trigger, and jsdom ships no
+// ResizeObserver. A no-op is enough: nothing here asserts on position, and the
+// alternative is every component that uses a Radix primitive failing with
+// "ResizeObserver is not defined" instead of with whatever it is actually about.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // React Testing Library does not unmount between tests on its own when globals are
 // enabled through a setup file, and a left-over tree makes the next test's queries
 // ambiguous in a way that reads like a component bug.

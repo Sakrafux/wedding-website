@@ -4,6 +4,8 @@ import type {
   AdminHouseholdOverview,
   AdminSession,
   BootstrapResponse,
+  RSVPMember,
+  RSVPResponse,
 } from "@/lib/api/dto";
 
 /**
@@ -76,6 +78,49 @@ export function adminHouseholdOverview(overrides: Partial<AdminHouseholdOverview
     member_count: household.member_count,
     last_login_at: household.last_login_at,
     rsvp_submitted_at: household.rsvp_submitted_at,
+    ...overrides,
+  };
+}
+
+/**
+ * The RSVP answer, exactly as both the guest and the admin endpoint send it.
+ *
+ * Unanswered by default — `attending: null` for everybody, no submitted timestamp —
+ * because that is the state every household starts in and the one most of the form's
+ * behaviour hangs off.
+ */
+export function rsvpAnswer(overrides: Partial<RSVPResponse> = {}): RSVPResponse {
+  return {
+    household: {
+      id: 12,
+      display_name: "Familie Müller",
+      transport_seats_needed: 0,
+      transport_seats_offered: 0,
+      has_stroller: false,
+      rsvp_note: "",
+      rsvp_submitted_at: null,
+      rsvp_updated_at: null,
+    },
+    members: [rsvpMember(), rsvpMember({ id: 31, name: "Emil Müller", kind: "child", age: 4 })],
+    deadline: "2027-05-17T21:59:59Z",
+    editable: true,
+    ...overrides,
+  };
+}
+
+export function rsvpMember(overrides: Partial<RSVPMember> = {}): RSVPMember {
+  return {
+    id: 30,
+    name: "Anna Müller",
+    kind: "adult",
+    age: null,
+    origin: "seeded",
+    attending: null,
+    meal_choice: null,
+    portion: "full",
+    midnight_snack: false,
+    seating_need: "normal",
+    dietary_note: "",
     ...overrides,
   };
 }

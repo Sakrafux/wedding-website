@@ -201,15 +201,19 @@ describe("admin household detail", () => {
     await waitFor(() => expect(currentPath(router)).toBe("/admin/haushalte"));
   });
 
-  it("shows a read-only RSVP summary until F3-F06 exists", async () => {
+  it("reports whether the household has answered and links to their own form", async () => {
     stubHousehold({ rsvp_submitted_at: null });
 
     await renderApp("/admin/haushalte/12");
 
     expect(await screen.findByText("Dieser Haushalt hat noch nicht geantwortet.")).toBeInTheDocument();
-    // No second RSVP form here: F3-F06 renders the guests' own form against the
-    // admin endpoint, and a second field set is what Gate 1 exists to prevent.
-    expect(screen.queryByLabelText("Kommt")).not.toBeInTheDocument();
+    // A link, not a second form: the answers are edited on the same component the
+    // guests use, which is what Gate 1 exists to protect.
+    expect(screen.getByRole("link", { name: "Rückmeldung bearbeiten" })).toHaveAttribute(
+      "href",
+      "/admin/haushalte/12/rsvp",
+    );
+    expect(screen.queryByRole("radiogroup", { name: /Wozu kommt/ })).not.toBeInTheDocument();
   });
 
   it("labels every control and keeps the confirmation dialogs dismissible by keyboard", async () => {

@@ -180,6 +180,151 @@ export const shellLabels = {
   logout: "Abmelden",
 } as const;
 
+/**
+ * Copy shared by every form control, rather than by one screen.
+ *
+ * The accessible names in here are the reason they are functions: a help button called
+ * "?" and a stepper button called "+" are unreadable out of context, and eight of each
+ * on one page are indistinguishable. Naming the field is what makes them usable.
+ */
+export const formLabels = {
+  helpFor: (field: string) => `Hilfe zu ${field}`,
+  stepperDecrease: (field: string) => `Einen weniger: ${field}`,
+  stepperIncrease: (field: string) => `Einen mehr: ${field}`,
+} as const;
+
+/**
+ * The RSVP form — the screen this whole product exists for.
+ *
+ * Every field carries a `*Help` sentence, per the form rules in 05-design: the help
+ * lives behind a `?` popover beside the label, so a guest who needs the explanation
+ * gets it and the form does not become a wall of grey text for everybody else.
+ *
+ * The register is the same "du" as everywhere else, addressed to a household — so the
+ * questions are plural where they concern the group ("Wozu kommt ihr?") and singular
+ * where they concern one person ("Was isst Anna?").
+ */
+export const rsvpLabels = {
+  heading: "Sagt uns Bescheid",
+  intro: "Bitte sagt uns, wer von euch kommt. Ändern könnt ihr die Antwort jederzeit bis zum Stichtag.",
+  deadlineNotice: (date: string) => `Bitte antwortet bis zum ${date}.`,
+  lastChanged: (date: string) => `Zuletzt geändert am ${date}.`,
+
+  householdScopeHeading: "Wir kommen zu:",
+  householdScopeHelp:
+    "Das setzt die Antwort für alle Personen unten auf einmal. Danach kannst du einzelne Personen noch ändern.",
+  /** Shown instead of a lit-up option once the cards disagree: a selector that stayed
+      lit while the cards said something else would be a lie about what gets saved. */
+  householdScopeMixed: "Ihr habt unterschiedliche Antworten — siehe unten.",
+  householdScopeOverwriteTitle: "Antworten überschreiben?",
+  householdScopeOverwriteBody: (changed: number, scope: string) =>
+    changed === 1
+      ? `Damit wird die Antwort einer Person auf „${scope}“ geändert.`
+      : `Damit werden die Antworten von ${changed} Personen auf „${scope}“ geändert.`,
+  householdScopeOverwriteConfirm: "Ja, für alle setzen",
+  cancel: "Abbrechen",
+
+  membersHeading: "Wer kommt?",
+  /** A statement of fact in the muted ink, not an error: a form that opens red at a
+      household who has not answered yet reads as broken. */
+  memberUnanswered: "Noch keine Antwort",
+  memberScopeLabel: (name: string) => `Wozu kommt ${name}?`,
+  memberScopeHelp:
+    "Kirche und Feier sind getrennt — manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
+  mealChoiceLabel: (name: string) => `Was isst ${name}?`,
+  mealChoiceHelp: "Wir geben dem Catering nur die Zahlen weiter, keine Namen. „Isst alles“ heißt: kein Sonderwunsch.",
+  portionLabel: (name: string) => `Portion für ${name}`,
+  portionHelp:
+    "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra — sag ruhig, was wirklich passt.",
+  midnightSnackLabel: (name: string) => `Mitternachtssnack für ${name}`,
+  midnightSnackHelp:
+    "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele — wer schon im Bett ist, braucht keinen.",
+  midnightSnackHint: "Kleine Stärkung spät am Abend",
+  seatingNeedLabel: (name: string) => `Platz für ${name}`,
+  seatingNeedHelp:
+    "Damit planen wir die Plätze in der Kirche und am Tisch: Rollstuhl, Hochstuhl, oder ein Kind, das bei den Eltern sitzt.",
+  dietaryNoteLabel: (name: string) => `Allergien oder Unverträglichkeiten von ${name}`,
+  dietaryNoteHelp:
+    "Was die Küche wissen muss, zum Beispiel „Nussallergie“ oder „laktosefrei“. Kurz reicht — wir fragen nach, wenn etwas unklar ist.",
+  dietaryNotePlaceholderHint: "Zum Beispiel: Nussallergie, laktosefrei",
+  /** The date is in the label, not only in the help: a bare "Alter" gets answered as
+      of today, and then the value drifts over the months before the wedding. */
+  ageLabel: (name: string) => `Alter von ${name} am Hochzeitstag, 17. Juli 2027`,
+  ageHelp: "Gemeint ist das Alter am 17. Juli 2027, nicht heute. Das Catering rechnet nach Alter am Tag der Feier.",
+
+  transportHeading: "Fahrt von der Kirche zur Feier",
+  transportNeededLabel: "Plätze gesucht",
+  transportNeededHelp:
+    "Wie viele von euch bräuchten eine Mitfahrgelegenheit von der Kirche zur Feier? Wir sehen daran, ob sich ein Shuttle lohnt — wir vermitteln keine Fahrgemeinschaften.",
+  transportOfferedLabel: "Plätze angeboten",
+  transportOfferedHelp:
+    "Wie viele freie Plätze hättet ihr im Auto von der Kirche zur Feier? Auch das ist nur für die Planung; wer mitfährt, klärt sich vor Ort.",
+  /** Said rather than silently discarded: a number that vanishes without explanation
+      is exactly the kind of thing that gets phoned in about. */
+  transportDropped:
+    "Die Angaben zur Fahrt gelten nicht mehr, weil niemand von euch zu Kirche und Feier kommt. Wir speichern sie nicht.",
+  strollerLabel: "Wir bringen einen Kinderwagen mit",
+  strollerHelp:
+    "Ein Kinderwagen braucht Platz zum Abstellen, keinen Sitzplatz. Deshalb fragen wir das einmal für den ganzen Haushalt.",
+
+  noteHeading: "Willst du uns noch etwas sagen?",
+  noteLabel: "Nachricht an uns",
+  noteHelp:
+    "Alles, wonach das Formular nicht fragt. Wir lesen jede Nachricht — eine Antwort hier im Formular gibt es aber nicht.",
+  noteHint: "Zum Beispiel: „Wir kommen erst nach der Zeremonie“ oder „Oma braucht einen Platz nah am Ausgang“.",
+  noteReadPromise: "Wir lesen das.",
+  noteRemaining: (remaining: number) => `Noch ${remaining} Zeichen.`,
+
+  submit: "Speichern",
+  submitting: "Wird gespeichert …",
+  /** Named at the top of the form and linking to each card, so a household with one
+      missing answer does not have to hunt for it. */
+  missingAnswersHeading: "Bitte antworte noch für diese Personen:",
+  missingAnswerLink: (name: string) => `${name} — Antwort fehlt`,
+  saveFailedHeading: "Das Speichern hat nicht geklappt",
+  reload: "Neu laden",
+
+  summaryHeading: "Danke, wir haben es notiert",
+  summarySavedAt: (date: string) => `Gespeichert am ${date}.`,
+  summaryHouseholdHeading: "Euer Haushalt",
+  summaryMembersHeading: "Personen",
+  summaryMeal: "Essen",
+  summaryPortion: "Portion",
+  summarySnack: "Mitternachtssnack",
+  summarySnackYes: "Ja",
+  summarySnackNo: "Nein",
+  summarySeatingNeed: "Platz",
+  summaryDietaryNote: "Allergien",
+  summaryTransportNeeded: "Plätze gesucht",
+  summaryTransportOffered: "Plätze angeboten",
+  summaryStroller: "Kinderwagen",
+  summaryStrollerYes: "Ja",
+  summaryNote: "Nachricht an uns",
+  summaryNothing: "—",
+  changeAnswer: "Antwort ändern",
+  changeableUntil: (date: string) => `Ändern kannst du das noch bis zum ${date}.`,
+
+  closedHeading: "Die Rückmeldefrist ist vorbei",
+  closedBody: (date: string) =>
+    `Am ${date} haben wir die Zahlen ans Catering weitergegeben. Das ist, was wir notiert haben — wenn sich etwas geändert hat, ruf uns bitte kurz an:`,
+  closedNothingRecorded:
+    "Von euch haben wir keine Rückmeldung. Die Frist ist vorbei, aber ruf uns bitte trotzdem an — wir tragen es dann ein:",
+} as const;
+
+/**
+ * The admin's view of the same form. Its own block, because these sentences are
+ * addressed to us and not to a household.
+ */
+export const adminRSVPLabels = {
+  heading: (householdName: string) => `Rückmeldung für ${householdName}`,
+  /** An admin with two tabs open must not write Familie Müller's answer into Familie
+      Schmidt: the household's name is on the page, in the heading, not only in the URL. */
+  intro: (householdName: string) => `Du beantwortest dieses Formular für ${householdName}.`,
+  deadlinePassed: "Die Frist ist abgelaufen — du kannst hier trotzdem speichern.",
+  back: "Zurück zum Haushalt",
+  notFound: "Diesen Haushalt gibt es nicht.",
+} as const;
+
 export const adminLabels = {
   heading: "Verwaltung",
   userLabel: "Benutzername",
@@ -283,11 +428,10 @@ export const householdLabels = {
   removeMemberConfirm: "Ja, entfernen",
 
   rsvpHeading: "Rückmeldung",
-  /** Until F3-F06 exists there is no form to link to, and a read-only summary is the
-      honest thing to show. */
   rsvpNotAnswered: "Dieser Haushalt hat noch nicht geantwortet.",
   rsvpAnsweredAt: (date: string) => `Beantwortet am ${date}.`,
-  rsvpComingSoon: "Die Antworten selbst bearbeiten geht, sobald das RSVP-Formular gebaut ist.",
+  /** A link, not a second form: the same component the guests use, addressed by id. */
+  rsvpOpenForm: "Rückmeldung bearbeiten",
 
   exportHeading: "Downloads",
   /** Named for what they are for, not for their filename: nobody downloading these

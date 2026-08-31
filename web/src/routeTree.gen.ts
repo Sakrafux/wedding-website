@@ -13,11 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuestRouteImport } from './routes/_guest'
 import { Route as GuestStartRouteImport } from './routes/_guest/start'
 import { Route as GuestWillkommenRouteImport } from './routes/_guest/willkommen'
+import { Route as GuestZusagenRouteImport } from './routes/_guest/zusagen'
 import { Route as AdminShellRouteImport } from './routes/admin/_shell'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
 import { Route as AdminShellHaushalteIndexRouteImport } from './routes/admin/_shell/haushalte/index'
 import { Route as AdminShellHaushalteHouseholdIdRouteImport } from './routes/admin/_shell/haushalte/$householdId'
+import { Route as AdminShellHaushalteHouseholdIdRsvpRouteImport } from './routes/admin/_shell/haushalte/$householdId_.rsvp'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,6 +38,11 @@ const GuestStartRoute = GuestStartRouteImport.update({
 const GuestWillkommenRoute = GuestWillkommenRouteImport.update({
   id: '/willkommen',
   path: '/willkommen',
+  getParentRoute: () => GuestRoute,
+} as any)
+const GuestZusagenRoute = GuestZusagenRouteImport.update({
+  id: '/zusagen',
+  path: '/zusagen',
   getParentRoute: () => GuestRoute,
 } as any)
 const AdminShellRoute = AdminShellRouteImport.update({
@@ -65,25 +72,35 @@ const AdminShellHaushalteHouseholdIdRoute =
     path: '/haushalte/$householdId',
     getParentRoute: () => AdminShellRoute,
   } as any)
+const AdminShellHaushalteHouseholdIdRsvpRoute =
+  AdminShellHaushalteHouseholdIdRsvpRouteImport.update({
+    id: '/haushalte/$householdId_/rsvp',
+    path: '/haushalte/$householdId/rsvp',
+    getParentRoute: () => AdminShellRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/start': typeof GuestStartRoute
   '/willkommen': typeof GuestWillkommenRoute
+  '/zusagen': typeof GuestZusagenRoute
   '/admin': typeof AdminShellRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminShellIndexRoute
   '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
   '/admin/haushalte/': typeof AdminShellHaushalteIndexRoute
+  '/admin/haushalte/$householdId/rsvp': typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/start': typeof GuestStartRoute
   '/willkommen': typeof GuestWillkommenRoute
+  '/zusagen': typeof GuestZusagenRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminShellIndexRoute
   '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
   '/admin/haushalte': typeof AdminShellHaushalteIndexRoute
+  '/admin/haushalte/$householdId/rsvp': typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -91,11 +108,13 @@ export interface FileRoutesById {
   '/_guest': typeof GuestRouteWithChildren
   '/_guest/start': typeof GuestStartRoute
   '/_guest/willkommen': typeof GuestWillkommenRoute
+  '/_guest/zusagen': typeof GuestZusagenRoute
   '/admin/_shell': typeof AdminShellRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/admin/_shell/': typeof AdminShellIndexRoute
   '/admin/_shell/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
   '/admin/_shell/haushalte/': typeof AdminShellHaushalteIndexRoute
+  '/admin/_shell/haushalte/$householdId_/rsvp': typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,31 +122,37 @@ export interface FileRouteTypes {
     | '/'
     | '/start'
     | '/willkommen'
+    | '/zusagen'
     | '/admin'
     | '/admin/login'
     | '/admin/'
     | '/admin/haushalte/$householdId'
     | '/admin/haushalte/'
+    | '/admin/haushalte/$householdId/rsvp'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/start'
     | '/willkommen'
+    | '/zusagen'
     | '/admin/login'
     | '/admin'
     | '/admin/haushalte/$householdId'
     | '/admin/haushalte'
+    | '/admin/haushalte/$householdId/rsvp'
   id:
     | '__root__'
     | '/'
     | '/_guest'
     | '/_guest/start'
     | '/_guest/willkommen'
+    | '/_guest/zusagen'
     | '/admin/_shell'
     | '/admin/login'
     | '/admin/_shell/'
     | '/admin/_shell/haushalte/$householdId'
     | '/admin/_shell/haushalte/'
+    | '/admin/_shell/haushalte/$householdId_/rsvp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,6 +192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestWillkommenRouteImport
       parentRoute: typeof GuestRoute
     }
+    '/_guest/zusagen': {
+      id: '/_guest/zusagen'
+      path: '/zusagen'
+      fullPath: '/zusagen'
+      preLoaderRoute: typeof GuestZusagenRouteImport
+      parentRoute: typeof GuestRoute
+    }
     '/admin/_shell': {
       id: '/admin/_shell'
       path: '/admin'
@@ -202,17 +234,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminShellHaushalteHouseholdIdRouteImport
       parentRoute: typeof AdminShellRoute
     }
+    '/admin/_shell/haushalte/$householdId_/rsvp': {
+      id: '/admin/_shell/haushalte/$householdId_/rsvp'
+      path: '/haushalte/$householdId/rsvp'
+      fullPath: '/admin/haushalte/$householdId/rsvp'
+      preLoaderRoute: typeof AdminShellHaushalteHouseholdIdRsvpRouteImport
+      parentRoute: typeof AdminShellRoute
+    }
   }
 }
 
 interface GuestRouteChildren {
   GuestStartRoute: typeof GuestStartRoute
   GuestWillkommenRoute: typeof GuestWillkommenRoute
+  GuestZusagenRoute: typeof GuestZusagenRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
   GuestStartRoute: GuestStartRoute,
   GuestWillkommenRoute: GuestWillkommenRoute,
+  GuestZusagenRoute: GuestZusagenRoute,
 }
 
 const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
@@ -221,12 +262,15 @@ interface AdminShellRouteChildren {
   AdminShellIndexRoute: typeof AdminShellIndexRoute
   AdminShellHaushalteHouseholdIdRoute: typeof AdminShellHaushalteHouseholdIdRoute
   AdminShellHaushalteIndexRoute: typeof AdminShellHaushalteIndexRoute
+  AdminShellHaushalteHouseholdIdRsvpRoute: typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
 
 const AdminShellRouteChildren: AdminShellRouteChildren = {
   AdminShellIndexRoute: AdminShellIndexRoute,
   AdminShellHaushalteHouseholdIdRoute: AdminShellHaushalteHouseholdIdRoute,
   AdminShellHaushalteIndexRoute: AdminShellHaushalteIndexRoute,
+  AdminShellHaushalteHouseholdIdRsvpRoute:
+    AdminShellHaushalteHouseholdIdRsvpRoute,
 }
 
 const AdminShellRouteWithChildren = AdminShellRoute._addFileChildren(

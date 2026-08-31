@@ -69,7 +69,7 @@ function HouseholdDetailPage() {
       <HouseholdFields household={household} />
       <CodeSection household={household} />
       <MemberSection household={household} />
-      <RSVPSummary household={household} />
+      <RSVPSection household={household} />
       <DeleteSection household={household} />
     </div>
   );
@@ -562,13 +562,13 @@ function AddMemberForm({ household }: { household: AdminHousehold }) {
 }
 
 /**
- * The household's answers, read-only.
+ * Whether the household has answered, and the way to their form.
  *
- * F3-F06 puts the *same* RSVP form component the guests use behind
- * /api/admin/households/{id}/rsvp and links from here. A second form here would be a
- * second field set to keep in step, which is the one thing Gate 1 exists to prevent.
+ * A link and not a form: the answers are edited on the *same* component the guests use,
+ * behind /api/admin/households/{id}/rsvp. A second form here would be a second field
+ * set to keep in step, which is the one thing Gate 1 exists to prevent.
  */
-function RSVPSummary({ household }: { household: AdminHousehold }) {
+function RSVPSection({ household }: { household: AdminHousehold }) {
   return (
     <Section title={householdLabels.rsvpHeading}>
       <p className="text-ink-muted">
@@ -576,7 +576,13 @@ function RSVPSummary({ household }: { household: AdminHousehold }) {
           ? householdLabels.rsvpAnsweredAt(formatShortDate(household.rsvp_submitted_at))
           : householdLabels.rsvpNotAnswered}
       </p>
-      <p className="text-ink-muted text-small">{householdLabels.rsvpComingSoon}</p>
+      <Link
+        to="/admin/haushalte/$householdId/rsvp"
+        params={{ householdId: String(household.id) }}
+        className={buttonVariants({ variant: "outline", className: "self-start" })}
+      >
+        {householdLabels.rsvpOpenForm}
+      </Link>
     </Section>
   );
 }

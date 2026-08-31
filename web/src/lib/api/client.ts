@@ -126,6 +126,21 @@ export function patchJson<T>(path: string, payload: unknown): Promise<T> {
   });
 }
 
+/**
+ * PUT sends a complete replacement: every field the endpoint owns, every time.
+ *
+ * Used by the RSVP form, which is one screen with one save button — so there is no
+ * partial body a client could produce, and a full replace is idempotent on a phone
+ * that retries a request it is not sure went through.
+ */
+export function putJson<T>(path: string, payload: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PUT",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+}
+
 /** DELETE answers 204 with no body, which `request` maps to undefined. */
 export function deleteRequest(path: string): Promise<void> {
   return request<void>(path, { method: "DELETE" });
