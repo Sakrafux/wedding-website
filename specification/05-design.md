@@ -118,7 +118,7 @@ Built on shadcn/ui (Radix primitives, copied into the repo).
 
 | Component | Purpose |
 |---|---|
-| `CodeInput` | Login. Big monospaced-feel field, auto-uppercase, strips whitespace as you type. **A dash the guest types is kept, never inserted by us**: the card prints `ABC-234`, and a dash that vanishes under the cursor reads as rejected input, while auto-formatting would move the caret on every keystroke. The submitted value is normalised (dash removed) on submit. `inputmode="text"` `autocapitalize="characters"`, no autocorrect, `ABC-234` as placeholder and hint. |
+| `CodeInput` | Login. Big monospaced-feel field, auto-uppercase, strips whitespace and dashes as you type, so the value in the field is the value that gets sent. The card prints the code ungrouped (`ABC234`), which is what removed the dash problem rather than solving it. `inputmode="text"` `autocapitalize="characters"`, no autocorrect. The hint sits outside the field, never as a placeholder. |
 | `HouseholdConfirmCard` | "Willkommen, Familie Müller — bist das du?" with a clear "Nein, zurück". |
 | `HeroSection` | Photo, names, date, countdown. |
 | `CountdownBadge` | Days until the wedding. Hidden after the day. |

@@ -111,7 +111,7 @@ func run(households, guests int, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(out, "  #%d  %-28s  %s\n", id, name, domain.FormatCode(code))
+		fmt.Fprintf(out, "  #%d  %-28s  %s\n", id, name, code)
 	}
 	return nil
 }

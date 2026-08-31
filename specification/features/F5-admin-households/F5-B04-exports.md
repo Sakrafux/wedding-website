@@ -28,7 +28,7 @@ As an admin, I want the guest list as CSV, so that the print shop can do variabl
 2. **Encoding: UTF-8 with a BOM, semicolon-delimited, CRLF.** This is a decision about Excel, not about correctness. German Excel splits on the list separator, which is `;` in a German locale, so a comma-delimited file lands entirely in column A; and without a BOM it reads UTF-8 as Latin-1, so `Müller` becomes `MÃ¼ller`. Both of these are silent, both would be discovered by the print shop rather than by us, and one of them ends up on eighty cards. Record the trade-off: the file is then not RFC 4180 and not what `pandas.read_csv` expects by default.
 3. Quote every field. Cheap, and it removes the class of bug where a name containing a semicolon splits a row.
 4. `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment; filename="codes.csv"`. A CSV that renders in the browser instead of downloading is a CSV somebody copies out of the page by hand.
-5. `codes.csv` columns: `haushalt;code`. The code goes in the **printed** form (`ABC-234`) — that is the string that must appear on the card, and asking the print shop to insert a dash is asking for the one they forget. German column headers here, uniquely, because a print shop reads them.
+5. `codes.csv` columns: `haushalt;code`. The code goes in exactly the form that must appear on the card: the six stored characters, ungrouped (`ABC234`). There is no separator for the print shop to get wrong. German column headers here, uniquely, because a print shop reads them.
 6. `guests.csv` is a **database output**: every column of `guest`, plus every column of the household that owns it, one row per guest. Not a curated subset — this file is the release valve, and the point of a release valve is that it does not require anyone to have guessed correctly in advance which field would be wanted.
    Headers are the column names verbatim, English, prefixed `household_` where they come from the household — `guest_id`, `household_id`, `household_display_name`, `household_code`, `first_name`, … The prefix is what stops `created_at` from being ambiguous, and matching the schema exactly means a question about a value is answered by reading `03-data-model` rather than by guessing what a friendly header meant.
 7. Include **soft-deleted guests**, with `deleted_at` as the third column so it cannot be missed while scanning. Excluding them would make the file disagree with the database it claims to dump, and a removed plus-one is exactly the row somebody eventually wants to see.
@@ -48,7 +48,7 @@ Response `200`, `text/csv`:
 
 ```csv
 "haushalt";"code"
-"Familie Müller";"ABC-234"
+"Familie Müller";"ABC234"
 ```
 
 ```http

@@ -43,7 +43,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [x] **Admin-entered RSVP answers: yes, and as the same page.** Rather than a second form in admin, the admin gets the guest RSVP page addressed by household id. One form component and one use case, parameterised by *which* household instead of by *how you authenticated*. Recorded as `F3-B06` / `F3-F06`; the constraints it puts on the rest of F3 are under "Carried into F3" below.
 - [x] **Regenerating a code revokes that household's sessions.**
 - [x] **CSV encoding: UTF-8 BOM, semicolon-delimited, quoted.**
-- [x] **`codes.csv` stays `haushalt;code` with the code as `ABC-234`.** Still worth confirming with the print shop before `E-OPS-06`.
+- [x] **`codes.csv` stays `haushalt;code`, with the code ungrouped (`ABC234`).** The dash was dropped entirely on 2026-08-31 — see `02-features` — so there is no separator for the print shop to get wrong. Still worth confirming the column names with them before `E-OPS-06`.
 - [x] **Households hard-delete, guests soft-delete.** The asymmetry has a reason: only we delete a household, whereas a household removes its own plus-ones, and a person who was once counted has to stay explicable.
 - [x] **`guests.csv` is a full dump** — every column of `guest` and of its household, soft-deleted rows included with `deleted_at` visible. It is therefore not a headcount, and both the story and the download label say so.
 - [x] **German admin URLs.**
@@ -54,7 +54,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [ ] **Admin settings endpoint.** The admin login response deliberately carries no flags, but the admin needs to *flip* `rsvp_open`, `seating_published`, `gallery_visible` and `uploads_open`. That is a read/write endpoint (`GET`/`PATCH /api/admin/settings`) and wants a story in F6 — not a read-only copy smuggled into the login body.
 - [ ] **Split `internal/application` into `application/auth`, `application/rsvp`, …** once the second use case exists. It is what makes `auth.Bootstrap` possible instead of `application.Bootstrap`; doing it with one use case in the package buys nothing.
 - [ ] **`web.Dependencies` growth.** Added 2026-08-31 with config, database and auth. Every new use case is a field there and a line in `main`, never a new `NewRouter` parameter.
-- [ ] **Dash in `CodeInput`:** a typed dash is now kept but never inserted. Whether the printed form needs the dash at all — six characters may be short enough to want no grouping — is a print-shop-era question, and `E-OPS-04` (proof-read a physical card) is where it gets answered by looking at one.
+- [x] **Dash dropped entirely, 2026-08-31.** Six characters need no grouping, and the separator was paying for a display format, a `FormatCode` function and an input field that had to decide what to do with a dash the guest typed. Codes are printed, exported and displayed as `ABC234`; input still strips dashes, because habit and word processors produce them.
 
 ### Dynatrace / F12 — open questions
 

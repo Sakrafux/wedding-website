@@ -25,7 +25,7 @@ As an admin, I want one screen listing every household with its code and whether
 
 1. Consume the `F5-B01` contract exactly. Invent no fields.
 2. A real `<table>`, not a grid of `<div>`s. This is tabular data, the admin will sort and scan it, and a screen reader announcing row and column headers is worth more here than any layout convenience.
-3. Columns: Haushalt, Code, Personen, Letzte Anmeldung, RSVP. Codes render in printed form (`ABC-234`) and in a monospaced-feel style, because their only use on this screen is being read aloud or compared against a card.
+3. Columns: Haushalt, Code, Personen, Letzte Anmeldung, RSVP. Codes render exactly as printed (`ABC234`) in a monospaced-feel style, because their only use on this screen is being read aloud or compared against a card.
 4. `last_login_at` empty renders as a visible marker, not a blank cell — a blank reads as "not loaded". This column is the answer to "did they even see it?", which is what drives the nudge calls before send-out.
 5. Colour is never the only signal (`05-design`): "nie angemeldet" carries a text label or an icon as well as its colour.
 6. Dates in German short form, and a relative hint for recent ones ("vor 3 Tagen"). The absolute date is what gets read out on the phone; the relative one is what makes the column scannable.

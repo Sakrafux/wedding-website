@@ -173,7 +173,7 @@ make seed                                # one household, two members
 make seed SEED_ARGS='-households 5 -guests 3'
 ```
 
-It prints each household's id, name and login code in display form (`ABC-234`) — type one into the login screen. Codes are freshly generated, never fixed, so what you test with is shaped exactly like what gets printed on an invite.
+It prints each household's id, name and login code — type one into the login screen. Codes are freshly generated, never fixed, so what you test with is shaped exactly like what gets printed on an invite.
 
 **`cmd/seed` is a development tool only.** It writes obviously synthetic households to whatever `DB_PATH` points at and prints login codes — the app's only secret — in plain text. It is not in the image: the `Dockerfile` builds `./cmd/wedding` alone, and that absence is the whole guard. Real households come from the admin UI (`F5-B01`, `F5-B03`).
 

@@ -141,9 +141,7 @@ export const loginLabels = {
   codeLabel: "Dein Code von der Einladungskarte",
   /** Help text under the field. Never a placeholder inside it: a placeholder is not
       a label, and it disappears at the moment it would be most useful. */
-  codeHint: "Sechs Zeichen, zum Beispiel ABC-234. Groß- und Kleinschreibung ist egal, der Bindestrich ist freiwillig.",
-  /** Shown in the empty field: the printed form, so the card is recognisable in it. */
-  codePlaceholder: "ABC-234",
+  codeHint: "Sechs Zeichen, genau wie auf der Karte. Groß- und Kleinschreibung ist egal.",
   submit: "Anmelden",
   submitting: "Wird geprüft …",
   /** Revealed after two failures — the point at which a person starts to feel

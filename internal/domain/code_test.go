@@ -69,13 +69,13 @@ func TestNormalizeCode(t *testing.T) {
 		input    string
 		expected string
 	}{
-		"already canonical":  {"ABC234", "ABC234"},
-		"lower case":         {"abc234", "ABC234"},
-		"printed form":       {"ABC-234", "ABC234"},
-		"lower printed form": {"abc-234", "ABC234"},
-		"spaced":             {"ABC 234", "ABC234"},
-		"surrounding space":  {" abc234 ", "ABC234"},
-		"lower and spaced":   {"abc 234", "ABC234"},
+		"already canonical": {"ABC234", "ABC234"},
+		"lower case":        {"abc234", "ABC234"},
+		"typed dash":        {"ABC-234", "ABC234"},
+		"lower with dash":   {"abc-234", "ABC234"},
+		"spaced":            {"ABC 234", "ABC234"},
+		"surrounding space": {" abc234 ", "ABC234"},
+		"lower and spaced":  {"abc 234", "ABC234"},
 		// What a word processor makes of a typed hyphen, and what copying out of
 		// the invitation PDF produces. Both reach us from a guest's clipboard.
 		"en dash":            {"ABC–234", "ABC234"},
@@ -92,7 +92,6 @@ func TestNormalizeCode(t *testing.T) {
 
 			assert.Equal(t, test.expected, normalized)
 			require.NoError(t, ValidateCode(normalized))
-			assert.Equal(t, "ABC-234", FormatCode(normalized))
 		})
 	}
 }
@@ -132,21 +131,4 @@ func TestValidateCodeRejectsMalformedCodes(t *testing.T) {
 			assert.ErrorIs(t, ValidateCode(code), ErrMalformedCode)
 		})
 	}
-}
-
-func TestFormatCode(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "ABC-234", FormatCode("ABC234"))
-	assert.Equal(t, "234-ABC", FormatCode("234ABC"))
-}
-
-// Formatting is presentation, and presentation must not be able to crash a
-// request. Anything of the wrong length comes back untouched.
-func TestFormatCodeLeavesUnexpectedLengthsAlone(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "", FormatCode(""))
-	assert.Equal(t, "ABC23", FormatCode("ABC23"))
-	assert.Equal(t, "ABC2345", FormatCode("ABC2345"))
 }

@@ -22,7 +22,7 @@ Private wedding web app. Currently in **specification phase** — no code yet. S
 - Audience: ~80 guests / ~60 households. German only. Mobile-first.
 - Wide age range, low tech confidence → accessibility and "log in once" matter more than usual.
 - Auth: per-household code, printed individually on the invite card (variable-data printing). Generic QR on the card points at the site root. Code is the only secret; no username, no password, no email.
-- Code format: 6 chars from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no ambiguous glyphs), printed as `ABC-234`. Input normalized: uppercase, strip spaces/dashes.
+- Code format: 6 chars from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no ambiguous glyphs), printed **ungrouped** as `ABC234` — a group separator was rejected as unnecessary at six characters, and it was the source of every awkward case in the input field. Input normalized: uppercase, strip spaces/dashes; dashes stay accepted because guests type them out of habit.
 - Session: `HttpOnly`, `Secure`, `SameSite=Lax` cookie, 365-day lifetime.
 - RSVP unit is the **household**, not the individual.
 - Households **can** add plus-ones and children themselves. Guest-added members are flagged as such and shown separately to admins. Soft cap, not a hard wall.

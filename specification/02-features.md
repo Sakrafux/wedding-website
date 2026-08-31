@@ -29,7 +29,7 @@ Card carries a **generic** QR code (identical on all cards, points at site root)
 Key decisions:
 
 - Code is the only secret. No username, no password, no email.
-- Alphabet excludes ambiguous glyphs: `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`. 6 characters, printed as `ABC-234`.
+- Alphabet excludes ambiguous glyphs: `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`. 6 characters, printed ungrouped as `ABC234`. **Rejected: a dash after the third character.** Grouping earns its keep on long strings; six characters are checkable against a card without it, and the separator cost a display format, a formatting function and an input field that had to decide what to do with a dash the guest typed. Dashes are still stripped on input, because habit and word processors both produce them.
 - Input normalized: uppercased, whitespace and dashes stripped.
 - After redeem, a confirmation screen names the household ("Willkommen, Familie Müller — bist das du?") so a mistyped-but-valid code is caught immediately.
 - Session cookie: `HttpOnly`, `Secure`, `SameSite=Lax`, 365 days, rolling refresh.

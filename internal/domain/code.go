@@ -26,11 +26,6 @@ const codeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 // specification/06-privacy-security.md for the arithmetic against the rate limit.
 const codeLength = 6
 
-// codeGroupLength is where the display dash goes: ABC-234 rather than ABC234.
-// Grouping is what makes a six-character string checkable against a card at a
-// glance. It is presentation only; storage is always ungrouped.
-const codeGroupLength = 3
-
 // ErrMalformedCode reports a login code that cannot be a code at all — wrong
 // length, or a character outside codeAlphabet.
 //
@@ -74,8 +69,14 @@ func GenerateCode() string {
 // malformed code and an unknown one alike.
 //
 // Whitespace covers the non-breaking space, because that is what copying the code
-// out of the invitation PDF produces. Dashes cover the en and em dash for the same
-// reason: a word processor turns the printed ABC-234 into ABC–234 on its own.
+// out of the invitation PDF produces.
+//
+// Dashes are stripped even though nothing prints one any more: the code is printed
+// as six ungrouped characters (a group separator was dropped as unnecessary at this
+// length, and it was the source of every awkward case in the input field). Guests
+// still type dashes out of habit and word processors still turn a typed hyphen into
+// an en or em dash, so accepting all three costs one character class and spares
+// somebody a rejected code they typed correctly.
 //
 // Lookalike folding (0→O, 1→I) is deliberately *not* done. It was rejected because
 // it widens the accepted set — two different strings would resolve to one code —
@@ -112,18 +113,4 @@ func ValidateCode(code string) error {
 		}
 	}
 	return nil
-}
-
-// FormatCode returns code grouped for display: ABC234 becomes ABC-234. This is the
-// only form that is ever printed or shown; the database never sees the dash.
-//
-// A code of unexpected length is returned unchanged rather than sliced, so a
-// formatting call can never panic on data that reached us from somewhere this
-// package did not vet. Such a value is a bug elsewhere, and a wrong-looking code
-// on screen is a better symptom of it than a crashed request.
-func FormatCode(code string) string {
-	if len(code) != codeLength {
-		return code
-	}
-	return code[:codeGroupLength] + "-" + code[codeGroupLength:]
 }

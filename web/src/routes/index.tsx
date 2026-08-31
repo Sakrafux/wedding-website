@@ -4,7 +4,6 @@ import { useState } from "react";
 import { CodeInput } from "@/components/CodeInput";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
-import { normalizeCode } from "@/lib/code";
 import { contactPhoneNumber, loginLabels } from "@/lib/labels";
 import { safeInternalPath } from "@/lib/routing/navigation";
 import { meQueryOptions, useLogin } from "@/lib/api/session";
@@ -60,9 +59,7 @@ function LoginPage() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     try {
-      // Normalized here rather than in the field: what the guest sees keeps the
-      // dash they typed, what the API is asked about never has one.
-      await login.mutateAsync(normalizeCode(code));
+      await login.mutateAsync(code);
       await navigate({ href: safeInternalPath(intendedPath, defaultDestination) });
     } catch (error) {
       // Only a rejection by the server counts towards revealing the phone number;
@@ -93,12 +90,7 @@ function LoginPage() {
         {/* Disabled while in flight, because a silent second press on a slow
             connection is how a guest ends up submitting twice. The label changes
             too: a spinner alone reads as "broken" to someone unsure of the app. */}
-        <Button
-          type="submit"
-          size="lg"
-          className="h-14 w-full text-lg"
-          disabled={login.isPending || normalizeCode(code).length === 0}
-        >
+        <Button type="submit" size="lg" className="h-14 w-full text-lg" disabled={login.isPending || code.length === 0}>
           {login.isPending ? loginLabels.submitting : loginLabels.submit}
         </Button>
       </form>

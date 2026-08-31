@@ -53,7 +53,7 @@ Response `200`:
       "id": 12,
       "display_name": "Familie Müller",
       "code": "ABC234",
-      "formatted_code": "ABC-234",
+      "code": "ABC234",
       "member_count": 4,
       "last_login_at": "2026-11-03T18:22:00Z",
       "rsvp_submitted_at": null

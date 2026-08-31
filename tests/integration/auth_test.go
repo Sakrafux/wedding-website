@@ -122,7 +122,7 @@ func TestSecureCookieAttributeFollowsTheConfiguration(t *testing.T) {
 	})
 }
 
-// Everything a guest might plausibly type, given a card printed as ABC-234 and a
+// Everything a guest might plausibly type, given a card printed as ABC234 and a
 // phone that capitalises whatever it likes.
 func TestLoginAcceptsEveryFormOfTheSameCode(t *testing.T) {
 	t.Parallel()

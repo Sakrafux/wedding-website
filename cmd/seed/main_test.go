@@ -53,21 +53,21 @@ func TestRunSeedsRequestedHouseholdsAndMembers(t *testing.T) {
 	require.Equal(t, 3, households)
 	require.Equal(t, 6, guests)
 
-	// Every code must be storable and loginable as printed. A code stored dashed or
+	// Every code must be storable and loginable exactly as printed. A code stored
 	// lower case would let the tool report something POST /api/auth/login rejects.
 	var codes []string
 	require.NoError(t, database.Read.Select(&codes, `SELECT code FROM household`))
 	for _, code := range codes {
 		require.NoError(t, domain.ValidateCode(code))
-		require.Contains(t, out.String(), domain.FormatCode(code))
+		require.Contains(t, out.String(), code)
 	}
 
 	require.Contains(t, out.String(), "DEVELOPMENT ONLY")
 }
 
-// The printed code must survive the round trip the login endpoint puts it through:
-// what the terminal shows is dashed, what the column holds is not, and a store that
-// cannot find the code back is a tool that prints unusable output.
+// A printed code must resolve back to its household through the same normalisation
+// the login endpoint applies — including the dash a guest may add out of habit,
+// which nothing prints but everything accepts.
 func TestPrintedCodesResolveToTheirHousehold(t *testing.T) {
 	path := withDevEnvironment(t)
 	require.NoError(t, run(2, 1, new(bytes.Buffer)))
@@ -80,7 +80,7 @@ func TestPrintedCodesResolveToTheirHousehold(t *testing.T) {
 	require.Len(t, codes, 2)
 
 	for _, code := range codes {
-		typedByAGuest := domain.NormalizeCode(domain.FormatCode(code))
+		typedByAGuest := domain.NormalizeCode(code[:3] + "-" + code[3:])
 		require.NoError(t, domain.ValidateCode(typedByAGuest))
 
 		household, err := households.FindByCode(context.Background(), typedByAGuest)
