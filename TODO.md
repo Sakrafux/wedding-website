@@ -134,3 +134,7 @@ Small things I know are loose, worth a pass before implementation:
   - **An admin edit is audited as `actor_type = 'admin'`** (`F3-B05`). The audit log settles "but I said we were coming", and recording our own edit as the household's answer would mislead at the one moment it matters.
   - An admin edit sets `rsvp_submitted_at`, so the household drops off the nudge list. If we took it down on the phone, they have answered.
 - [ ] No decision recorded on what a guest sees between "RSVP deadline passed" and "seating published" — a period where the site has little to say. Roughly five weeks in late spring 2027; [07-roadmap](specification/07-roadmap.md) wants this decided during M5.
+
+## Miscellaneous
+
+- [ ] On the `/start` page we differentiate between single and multi person households for the greeting singular and plural. However, on the `/willkommen` page, we do not. On that page, only show seeded data and differentiate between singular and plural as well.
