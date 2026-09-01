@@ -23,6 +23,19 @@ export const maxDietaryNoteLength = 500;
     an empty field reads as a limit on what you are allowed to say. */
 export const noteCounterThreshold = 200;
 
+/**
+ * The transport answer as one question: nothing, we need seats, or we can offer them.
+ *
+ * Derived from the two counts and never stored beside them — `needed > 0` *is* "we
+ * need". A third piece of state would be a third thing to keep in step with a request
+ * body that has two numbers in it (F3-F07).
+ */
+export type TransportDirection = "none" | "needed" | "offered";
+
+/** The count a chosen direction starts at. Not zero: a household that just said it
+    needs seats, looking at a zero, has been told its answer does not count. */
+const firstTransportSeat = 1;
+
 /** One member's answer as the form holds it. `null` in `attending` is "not answered". */
 export interface MemberDraft {
   id: number;
@@ -48,7 +61,7 @@ export interface RSVPDraft {
 export function draftFrom(answer: RSVPResponse): RSVPDraft {
   const members: Record<number, MemberDraft> = {};
   for (const member of answer.members) {
-    members[member.id] = {
+    members[member.id] = withMealDefault({
       id: member.id,
       attending: member.attending,
       meal_choice: member.meal_choice,
@@ -57,7 +70,7 @@ export function draftFrom(answer: RSVPResponse): RSVPDraft {
       seating_need: member.seating_need,
       dietary_note: member.dietary_note,
       age: member.age,
-    };
+    });
   }
 
   return {
@@ -128,6 +141,64 @@ export function toRequest(draft: RSVPDraft, members: RSVPMember[]): RSVPSaveRequ
     }),
   };
 }
+
+/**
+ * withMealDefault pre-answers the meal with `all` once a scope covers the party.
+ *
+ * Applied both when the draft is seeded and when a scope changes, so the default
+ * reaches the request body rather than only the radio group — a control defaulted in
+ * its `value` prop submits whatever the state still says, which is null.
+ *
+ * The accepted cost: we can no longer tell "said: eats everything" from "did not look
+ * at the field". The caterer numbers are unaffected — a plate is ordered either way —
+ * and three quarters of the guest list would have tapped this option.
+ */
+export function withMealDefault(member: MemberDraft): MemberDraft {
+  if (!coversParty(member.attending) || member.meal_choice !== null) {
+    return member;
+  }
+  return { ...member, meal_choice: "all" };
+}
+
+/** transportDirection reads the household's transport answer out of the two counts. */
+export function transportDirection(draft: RSVPDraft): TransportDirection {
+  if (draft.transport_seats_needed > 0) {
+    return "needed";
+  }
+  if (draft.transport_seats_offered > 0) {
+    return "offered";
+  }
+  return "none";
+}
+
+/**
+ * withTransportDirection is the change a direction card makes: one count set, the
+ * other zeroed.
+ *
+ * Zeroing the other one is the whole point — a household that both needs and offers
+ * seats is refused by the server (F3-B07), and this is what makes that state
+ * unreachable from the form rather than merely unsaved.
+ */
+export function withTransportDirection(draft: RSVPDraft, direction: TransportDirection): Partial<RSVPDraft> {
+  switch (direction) {
+    case "needed":
+      return {
+        transport_seats_needed: Math.max(draft.transport_seats_needed, firstTransportSeat),
+        transport_seats_offered: 0,
+      };
+    case "offered":
+      return {
+        transport_seats_needed: 0,
+        transport_seats_offered: Math.max(draft.transport_seats_offered, firstTransportSeat),
+      };
+    case "none":
+      return { transport_seats_needed: 0, transport_seats_offered: 0 };
+  }
+}
+
+/** The lowest count a chosen direction may hold. Going back to zero is what the
+    "we need nothing" card is for, and it says so in words. */
+export const minChosenTransportSeats = firstTransportSeat;
 
 /** Members the household has not answered for yet, in the order they are shown. */
 export function missingAnswers(draft: RSVPDraft, members: RSVPMember[]): RSVPMember[] {

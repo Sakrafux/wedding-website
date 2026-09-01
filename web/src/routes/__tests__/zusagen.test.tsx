@@ -152,10 +152,32 @@ describe("the RSVP form", () => {
     const anna = card("Anna Müller");
 
     await user.click(anna.getByRole("radio", { name: /Nur zur Feier/ }));
-    expect(screen.queryByText("Plätze gesucht")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radiogroup", { name: /Fahrt aus/ })).not.toBeInTheDocument();
 
     await user.click(anna.getByRole("radio", { name: /Kirche und Feier/ }));
-    expect(screen.getByText("Plätze gesucht")).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: /Fahrt aus/ })).toBeInTheDocument();
+  });
+
+  // F3-F07: needing seats and offering them are one question with a direction, so the
+  // state the server refuses (both above zero) cannot be expressed here at all.
+  it("asks for the transport direction once, and only ever counts one side of it", async () => {
+    stubRSVP({ members: [rsvpMember({ attending: "both" })] });
+
+    const { user } = await openForm();
+    const direction = within(screen.getByRole("radiogroup", { name: /Fahrt aus/ }));
+
+    // Nothing needed is the default, and it asks for no count at all.
+    expect(direction.getByRole("radio", { name: /Wir brauchen nichts/ })).toBeChecked();
+    expect(screen.queryByRole("button", { name: /Einen mehr/ })).not.toBeInTheDocument();
+
+    await user.click(direction.getByRole("radio", { name: /Wir bräuchten Plätze/ }));
+    expect(screen.getByRole("button", { name: /Einen mehr: Wie viele Plätze braucht ihr\?/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /anbieten/ })).not.toBeInTheDocument();
+
+    await user.click(direction.getByRole("radio", { name: /Wir können Plätze anbieten/ }));
+    expect(
+      screen.getByRole("button", { name: /Einen mehr: Wie viele Plätze könnt ihr anbieten\?/ }),
+    ).toBeInTheDocument();
   });
 
   // A number that vanishes without explanation is exactly the thing that gets phoned
@@ -173,17 +195,85 @@ describe("the RSVP form", () => {
     expect(screen.getByText(/Angaben zur Fahrt gelten nicht mehr/)).toBeInTheDocument();
   });
 
-  it("steps the transport seats without going below zero or above the cap", async () => {
+  // A chosen direction starts at one and stops there: going back to nothing is what
+  // the "wir brauchen nichts" card is for, and it says so in words.
+  it("steps the transport seats without going below one or above the cap", async () => {
     stubRSVP({ members: [rsvpMember({ attending: "both" })] });
 
     const { user } = await openForm();
+    await user.click(
+      within(screen.getByRole("radiogroup", { name: /Fahrt aus/ })).getByRole("radio", {
+        name: /Wir bräuchten Plätze/,
+      }),
+    );
 
-    const decrease = screen.getByRole("button", { name: "Einen weniger: Plätze gesucht" });
-    const increase = screen.getByRole("button", { name: "Einen mehr: Plätze gesucht" });
-    expect(decrease).toBeDisabled();
+    const seatLabel = "Wie viele Plätze braucht ihr?";
+    expect(screen.getByRole("button", { name: `Einen weniger: ${seatLabel}` })).toBeDisabled();
 
-    await user.click(increase);
-    expect(screen.getByRole("button", { name: "Einen weniger: Plätze gesucht" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: `Einen mehr: ${seatLabel}` }));
+    expect(screen.getByRole("button", { name: `Einen weniger: ${seatLabel}` })).toBeEnabled();
+  });
+
+  // F3-F08: three quarters of the guest list eats everything, so the common answer
+  // costs no tap. Asserted on the request body, not on the radio group: a default
+  // written only into `value` submits whatever the state still says, which is null.
+  it("pre-answers the meal with „Isst alles“ once a scope covers the party", async () => {
+    const { api } = stubRSVP({ members: [rsvpMember()] });
+    api.set("PUT /api/rsvp", ok(rsvpAnswer()));
+
+    const { user } = await openForm();
+    const anna = card("Anna Müller");
+
+    await user.click(anna.getByRole("radio", { name: /Kirche und Feier/ }));
+    expect(anna.getByRole("radio", { name: "Isst alles" })).toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(() => expect(api.calls.some((call) => call.method === "PUT")).toBe(true));
+    expect(api.calls.find((call) => call.method === "PUT")?.body).toMatchObject({
+      members: [{ id: 30, meal_choice: "all" }],
+    });
+  });
+
+  it("keeps „Isst alles“ selected for an answer that arrived without a meal choice", async () => {
+    stubRSVP({ members: [rsvpMember({ attending: "party_only", meal_choice: null })] });
+
+    await openForm();
+
+    expect(card("Anna Müller").getByRole("radio", { name: "Isst alles" })).toBeChecked();
+  });
+
+  // F3-B08 refuses a lap seat or a high chair for an adult, so the form does not offer
+  // them. Filtered, never disabled: a disabled radio fails contrast and reads as broken.
+  it("offers the child-only seating options for children only", async () => {
+    stubRSVP({
+      members: [
+        rsvpMember({ attending: "both" }),
+        rsvpMember({ id: 31, name: "Emil Müller", kind: "child", age: 4, attending: "both" }),
+      ],
+    });
+
+    await openForm();
+
+    const adultSeating = within(card("Anna Müller").getByRole("radiogroup", { name: /Platz für Anna Müller/ }));
+    expect(adultSeating.getByRole("radio", { name: "Normaler Platz" })).toBeInTheDocument();
+    expect(adultSeating.getByRole("radio", { name: /Rollstuhl/ })).toBeInTheDocument();
+    expect(adultSeating.queryByRole("radio", { name: "Hochstuhl" })).not.toBeInTheDocument();
+    expect(adultSeating.queryByRole("radio", { name: /bei den Eltern/ })).not.toBeInTheDocument();
+
+    const childSeating = within(card("Emil Müller").getByRole("radiogroup", { name: /Platz für Emil Müller/ }));
+    expect(childSeating.getByRole("radio", { name: "Hochstuhl" })).toBeInTheDocument();
+    expect(childSeating.getByRole("radio", { name: /bei den Eltern/ })).toBeInTheDocument();
+  });
+
+  // The option raises a question the label cannot answer: there are no high chairs in
+  // a church pew.
+  it("says in the seating help that a high chair is a party matter", async () => {
+    stubRSVP({ members: [rsvpMember({ attending: "both" })] });
+
+    const { user } = await openForm();
+    await user.click(screen.getByRole("button", { name: "Hilfe zu Platz für Anna Müller" }));
+
+    expect(await screen.findByText(/in der Kirche sitzt euer Kind normal in der Bank/i)).toBeInTheDocument();
   });
 
   it("names the field in every help button and closes the popover with Escape", async () => {
@@ -199,6 +289,42 @@ describe("the RSVP form", () => {
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByText(/Kirche und Feier sind getrennt/)).not.toBeInTheDocument());
     expect(help).toHaveFocus();
+  });
+
+  /**
+   * F3-F09: the summary is a view of the stored answer, not a screen that appears once
+   * after saving and can never be found again — which was also why a household could
+   * not tell whether their last edit had gone in.
+   */
+  it("shows the stored answer to a household that has already answered, and the form on request", async () => {
+    stubRSVP({
+      members: [rsvpMember({ attending: "both", meal_choice: "vegan" })],
+      household: {
+        ...rsvpAnswer().household,
+        rsvp_submitted_at: "2026-11-09T19:04:00Z",
+        rsvp_updated_at: "2026-11-09T19:04:00Z",
+      },
+    });
+
+    const { user } = await openForm();
+
+    expect(screen.getByRole("heading", { name: "Danke, wir haben es notiert" })).toBeInTheDocument();
+    expect(screen.getByText("Vegan")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Speichern" })).not.toBeInTheDocument();
+    // Arriving by navigation is not an event, so nothing steals focus.
+    expect(screen.getByRole("heading", { name: "Danke, wir haben es notiert" })).not.toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Antwort ändern" }));
+    expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();
+  });
+
+  it("opens on the form for a household that has not answered", async () => {
+    stubRSVP();
+
+    await openForm();
+
+    expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Danke, wir haben es notiert" })).not.toBeInTheDocument();
   });
 
   it("submits exactly the form state and shows the saved answer instead of a toast", async () => {

@@ -107,6 +107,31 @@ func TestAnAgeOnAnAdultIsAFieldErrorAndNotADriverError(t *testing.T) {
 	assert.Contains(t, envelope.Fields["age"], "Kinder")
 }
 
+// F3-B08: a lap seat and a high chair feed counts we buy things with, so an adult
+// cannot carry either — on the create or on the patch.
+func TestAChildOnlySeatingNeedIsRefusedForAnAdult(t *testing.T) {
+	t.Parallel()
+
+	app := newAdminApp(t)
+	household := seedHousehold(t, app.Database.Write, withChild("Emil Müller", 4))
+
+	created := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
+		"name":         "Anna Müller",
+		"kind":         "adult",
+		"seating_need": "high_chair",
+	})
+	require.Equal(t, http.StatusBadRequest, created.Status)
+	assert.Contains(t, created.errorEnvelope().Fields, "seating_need")
+	assert.Contains(t, created.errorEnvelope().Fields["seating_need"], "Kinder")
+
+	// The patch is judged against the kind it leaves behind, not the stored one: this
+	// asks for an adult who sits on somebody's lap, in one request.
+	patched := app.patchJSON(fmt.Sprintf("/api/admin/guests/%d", household.Guests[0].ID),
+		map[string]any{"kind": "adult", "seating_need": "with_parent"})
+	require.Equal(t, http.StatusBadRequest, patched.Status)
+	assert.Contains(t, patched.errorEnvelope().Fields, "seating_need")
+}
+
 func TestAChildsAgeMustBeInRange(t *testing.T) {
 	t.Parallel()
 

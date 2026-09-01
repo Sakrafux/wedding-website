@@ -115,7 +115,7 @@ func TestRSVPReadsBackWhatWasSaved(t *testing.T) {
 
 	saved := app.putJSON("/api/rsvp", map[string]any{
 		"transport_seats_needed":  1,
-		"transport_seats_offered": 2,
+		"transport_seats_offered": 0,
 		"has_stroller":            true,
 		"rsvp_note":               "Wir kommen erst nach der Zeremonie.",
 		"members": []map[string]any{
@@ -136,7 +136,7 @@ func TestRSVPReadsBackWhatWasSaved(t *testing.T) {
 
 	body := reloaded.rsvp()
 	assert.Equal(t, 1, body.Household.TransportSeatsNeeded)
-	assert.Equal(t, 2, body.Household.TransportSeatsOffered)
+	assert.Zero(t, body.Household.TransportSeatsOffered)
 	assert.True(t, body.Household.HasStroller)
 	assert.Equal(t, "Wir kommen erst nach der Zeremonie.", body.Household.RSVPNote)
 
@@ -409,7 +409,7 @@ func TestRSVPZeroesTransportSeatsWithoutAMemberAttendingBoth(t *testing.T) {
 
 	response := app.putJSON("/api/rsvp", map[string]any{
 		"transport_seats_needed":  2,
-		"transport_seats_offered": 2,
+		"transport_seats_offered": 0,
 		"has_stroller":            false,
 		"rsvp_note":               "",
 		"members":                 []map[string]any{answerFor(anna.ID, "church_only")},
@@ -436,6 +436,71 @@ func TestRSVPRejectsSeatCountsAboveTheBound(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
 	assert.Contains(t, response.errorEnvelope().Fields, "transport_seats_needed")
+}
+
+// F3-B07: the pair of counts is one subtraction, so a household on both sides of it
+// is refused. Both keys carry the sentence, because the form shows one stepper at a
+// time and the message has to reach whichever one is on screen.
+func TestRSVPRefusesNeedingAndOfferingSeatsAtOnce(t *testing.T) {
+	t.Parallel()
+
+	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
+
+	response := app.putJSON("/api/rsvp", map[string]any{
+		"transport_seats_needed":  2,
+		"transport_seats_offered": 3,
+		"has_stroller":            false,
+		"rsvp_note":               "",
+		"members":                 []map[string]any{answerFor(household.Guests[0].ID, "both")},
+	})
+
+	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
+	fields := response.errorEnvelope().Fields
+	assert.Contains(t, fields, "transport_seats_needed")
+	assert.Contains(t, fields, "transport_seats_offered")
+	assert.Nil(t, app.get("/api/rsvp").rsvp().Household.RSVPSubmittedAt, "nothing was stored")
+}
+
+// Refused even where normalization would have zeroed both counts anyway: otherwise
+// the same body would be accepted or rejected depending on the scopes that came with
+// it (F3-B07).
+func TestRSVPRefusesBothDirectionsEvenWhenNobodyAttendsBoth(t *testing.T) {
+	t.Parallel()
+
+	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
+
+	response := app.putJSON("/api/rsvp", map[string]any{
+		"transport_seats_needed":  2,
+		"transport_seats_offered": 3,
+		"has_stroller":            false,
+		"rsvp_note":               "",
+		"members":                 []map[string]any{answerFor(household.Guests[0].ID, "church_only")},
+	})
+
+	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
+}
+
+// F3-B08 through the API: the form hides the two child-only options (F3-F08), and the
+// error is keyed to the member so the message lands on the right card.
+func TestRSVPRefusesAChildOnlySeatingNeedForAnAdult(t *testing.T) {
+	t.Parallel()
+
+	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
+	anna := household.Guests[0]
+
+	answer := answerFor(anna.ID, "both")
+	answer["seating_need"] = "high_chair"
+
+	response := app.putJSON("/api/rsvp", map[string]any{
+		"transport_seats_needed":  0,
+		"transport_seats_offered": 0,
+		"has_stroller":            false,
+		"rsvp_note":               "",
+		"members":                 []map[string]any{answer},
+	})
+
+	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
+	assert.Contains(t, response.errorEnvelope().Fields, keyFor(anna.ID, "seating_need"))
 }
 
 func TestRSVPResponseLeaksNothing(t *testing.T) {

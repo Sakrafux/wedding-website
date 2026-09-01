@@ -1,7 +1,11 @@
 import { screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { QueryClient } from "@tanstack/react-query";
+
 import { getJson } from "@/lib/api/client";
+import { meQueryKey } from "@/lib/api/session";
+import { Route as guestRoute } from "@/routes/_guest";
 import { ok, stubApi, unauthenticated } from "@/test/api";
 import { adminSession, bootstrap, rsvpAnswer } from "@/test/fixtures";
 import { currentPath, renderApp } from "@/test/render";
@@ -10,6 +14,41 @@ import { currentPath, renderApp } from "@/test/render";
 function confirmHousehold(householdId = 12) {
   window.localStorage.setItem("wedding.confirmed-households", JSON.stringify([householdId]));
 }
+
+/**
+ * F11-04: the guard resolves **synchronously** when the session is already cached.
+ *
+ * Asserted on the return value rather than through a rendered navigation, because that
+ * is the property that matters and it is invisible afterwards: an async `beforeLoad`
+ * puts the router into its pending state for a tick, and with `defaultPendingMs: 0`
+ * that rendered a full-screen, login-shaped skeleton over every navigation between two
+ * hardcoded content pages. By the time a test can query the DOM, the frame is gone.
+ */
+describe("the guest guard's timing", () => {
+  function runGuard(queryClient: QueryClient) {
+    // The router hands `beforeLoad` far more than this guard reads; the cast is the
+    // narrowing, not a stub of the thing under test.
+    return (guestRoute.options.beforeLoad as (arguments_: unknown) => unknown)({
+      context: { queryClient },
+      location: { pathname: "/ablauf", href: "/ablauf" },
+    });
+  }
+
+  it("returns nothing at all when `me` is in the cache", () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(meQueryKey, bootstrap());
+    confirmHousehold();
+
+    expect(runGuard(queryClient)).toBeUndefined();
+  });
+
+  it("waits, and only then, on a cold load", () => {
+    stubApi({ "GET /api/me": ok(bootstrap()) });
+    confirmHousehold();
+
+    expect(runGuard(new QueryClient())).toBeInstanceOf(Promise);
+  });
+});
 
 describe("route guards", () => {
   it("sends an unauthenticated visit to a guarded route to the login screen", async () => {

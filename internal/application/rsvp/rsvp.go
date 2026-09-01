@@ -111,21 +111,22 @@ func AdminOptions() SaveOptions {
 	return SaveOptions{EnforceDeadline: false, ActorType: domain.ActorTypeAdmin}
 }
 
-// MemberAgeError reports a rejected age together with the member it belongs to, so
-// the web layer can key the field error to the right card.
+// MemberAnswerError reports a rejected field of one member's answer together with the
+// member it belongs to, so the web layer can key the field error to the right card.
 //
-// The rule itself is the domain's (domain.ResolveAge) and the wording is the web
-// layer's; the member id is the only part that is this layer's to add.
-type MemberAgeError struct {
+// The rules themselves are the domain's (domain.ResolveAge, domain.ResolveSeatingNeed)
+// and the wording is the web layer's; the member id is the only part that is this
+// layer's to add.
+type MemberAnswerError struct {
 	MemberID int64
 	Err      error
 }
 
-func (e MemberAgeError) Error() string {
+func (e MemberAnswerError) Error() string {
 	return fmt.Sprintf("member %d: %s", e.MemberID, e.Err)
 }
 
-func (e MemberAgeError) Unwrap() error {
+func (e MemberAnswerError) Unwrap() error {
 	return e.Err
 }
 
@@ -204,12 +205,21 @@ func (useCase *UseCase) Save(ctx context.Context, householdID int64, submission 
 		return Answer{}, err
 	}
 
+	// Checked against the submission rather than against the normalized household,
+	// because normalization zeroes both counts when nobody attends both — a
+	// conflicting pair would otherwise be refused or stored depending on the scopes
+	// that happened to come with it (F3-B07).
+	if err := domain.ValidateTransportSeats(
+		submission.Household.TransportSeatsNeeded, submission.Household.TransportSeatsOffered); err != nil {
+		return Answer{}, err
+	}
+
 	updatedMembers := make([]domain.Guest, 0, len(members))
 	memberChanges := make(map[int64]domain.Changes, len(members))
 	for _, member := range members {
 		updated, changes, err := domain.ApplyGuestAnswer(member, answers[member.ID])
 		if err != nil {
-			return Answer{}, MemberAgeError{MemberID: member.ID, Err: err}
+			return Answer{}, MemberAnswerError{MemberID: member.ID, Err: err}
 		}
 		updatedMembers = append(updatedMembers, updated)
 		memberChanges[member.ID] = changes

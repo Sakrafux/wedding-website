@@ -299,3 +299,30 @@ func TestApplyHouseholdAnswerRecordsTheNote(t *testing.T) {
 	assert.Equal(t, map[string]any{"rsvp_note": "Oma braucht einen Platz nah am Ausgang."}, changes.Before)
 	assert.Equal(t, map[string]any{"rsvp_note": ""}, changes.After)
 }
+
+// The pair of counts feeds one subtraction, so a household on both sides of it is
+// refused rather than normalized into whichever side we picked (F3-B07).
+func TestValidateTransportSeatsRefusesBothDirectionsAtOnce(t *testing.T) {
+	t.Parallel()
+
+	require.ErrorIs(t, domain.ValidateTransportSeats(2, 3), domain.ErrTransportSeatsConflict)
+
+	require.NoError(t, domain.ValidateTransportSeats(0, 0))
+	require.NoError(t, domain.ValidateTransportSeats(2, 0))
+	require.NoError(t, domain.ValidateTransportSeats(0, 3))
+}
+
+// The seating-need rule reaches the RSVP path too: the form hides the options
+// (F3-F08), and this is why it does not matter if it does not.
+func TestApplyGuestAnswerRejectsAChildOnlySeatingNeedOnAnAdult(t *testing.T) {
+	t.Parallel()
+
+	adult := domain.Guest{ID: 7, Kind: domain.GuestKindAdult, SeatingNeed: domain.SeatingNeedNormal}
+	_, _, err := domain.ApplyGuestAnswer(adult, domain.GuestAnswer{
+		Attending:   domain.AttendingBoth,
+		Portion:     domain.PortionFull,
+		SeatingNeed: domain.SeatingNeedHighChair,
+	})
+
+	require.ErrorIs(t, err, domain.ErrSeatingNeedOnAdult)
+}

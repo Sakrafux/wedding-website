@@ -4,6 +4,34 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-09-01
+
+Done:
+
+- Round of UI feedback from trying the running app, turned into thirteen stories and all of them built. Nothing was deferred.
+- `F4-F03` — the reported plus-one bug, root-caused: `DialogContent` is a Radix portal, which moves the DOM node but not the React tree, so the sheet's submit bubbled into the RSVP form and saved it. The `PUT` carried the pre-addition member list and its response overwrote the new member out of the query cache. That single bug produced all four symptoms (unbidden summary, missing card, add-button still there, 409 on the second try). Fixed with `stopPropagation` plus a `target !== currentTarget` guard on the form; the regression test fails without either.
+- `F3-B07`/`F3-F07` — transport is one question with a direction: `domain.ValidateTransportSeats`, refused on both RSVP write paths as a field error on both counts, and a three-card selector with one stepper in the form.
+- `F3-B08`/`F3-F08` — `domain.ResolveSeatingNeed`: `with_parent` and `high_chair` are children only, enforced on the RSVP save, the admin guest create and the admin guest patch (judged against the kind the patch leaves behind). Hidden from an adult's card and from the admin select. Also: `meal_choice` defaults to `all` once a scope covers the party, and the deadline sentence above the form carries weight.
+- `F3-F09` — `/zusagen` shows the stored answer when a household has answered, form on "Antwort ändern", save returns to the summary; the admin page stays form-first.
+- `F5-B05`/`F5-F05` — the RSVP-answered household fields left the admin household create and patch bodies (`AdminHouseholdCreateRequest`, `AdminHouseholdPatchRequest`); the detail page shows them read-only in the RSVP section, and every save block says "Zuletzt gespeichert um HH:MM" and keeps saying it.
+- `F5-F04` — household list reordered: create form above the table, filters above the table, table last with a sticky header, exports below it. New "nur ohne Antwort" filter, ANDed with the never-logged-in one.
+- `F2-F08` — start page says one thing about the RSVP, and addresses the household in the number we seeded it with (`startAddressLabels`, keyed `singular`/`plural`).
+- `F2-F09` — Location split into `/location`, `/location/kirche` and `/location/feier`, with a shared `VenueDetail` component; Übernachtung on the party page, the transfer on the overview.
+- `F11-04` — the skeleton on every guest navigation was `/_guest`'s `beforeLoad` awaiting a session it already had, not code splitting. Cache-first and synchronous when warm, same for `/zusagen`'s loader, plus an in-chrome `SectionPending` for the routes that really do fetch. Asserted on the guard's return value, since the frame is gone by the time a test can query the DOM.
+- `F11-05` — `Input`, `Textarea` and `NativeSelect` are filled `surface` with one radius, one height and no `md:text-sm`; the shadcn defaults were transparent, which on `paper` reads as disabled.
+- Specs updated where the rules live: `02-features`, `03-data-model`, `04-architecture`, `05-design` (five new form-behaviour rules), `features/README.md`, `TODO.md`.
+- Suites: 149 frontend tests, `go test ./...` green. Both new regression tests were checked by reverting the fix and watching them fail.
+
+Decisions:
+
+- Transport direction exclusive, one `seating_need` field kept for both venues, summary-first `/zusagen`, and Location as overview plus one page per venue — all four chosen with the user before building; recorded in `TODO.md`'s 2026-09-01 section and in the story files.
+- No pagination on the household list, and no artificial minimum duration on the saving state — both rejected in favour of the cheaper fix (table last; a confirmation that persists). `F5-F04`, `F5-F05`.
+- Skeleton kept, spinner rejected: the flash was a guard bug, and a spinner on every navigation would be the same interruption with less information. `F11-04`.
+- Meal default `all` accepted with its cost stated: "eats everything" and "did not answer" are no longer distinguishable. `F3-F08`.
+
+Time: <h>
+Cost: $<x>
+
 ## 2026-08-31
 
 Done:

@@ -201,8 +201,14 @@ func (useCase *UseCase) AddGuest(ctx context.Context, householdID int64, draft d
 		return domain.Guest{}, err
 	}
 
+	seatingNeed, err := domain.ResolveSeatingNeed(draft.Kind, draft.SeatingNeed)
+	if err != nil {
+		return domain.Guest{}, err
+	}
+
 	draft.HouseholdID = householdID
 	draft.Age = age
+	draft.SeatingNeed = seatingNeed
 	draft.Origin = domain.GuestOriginSeeded
 
 	created, err := useCase.guests.Create(ctx, draft)

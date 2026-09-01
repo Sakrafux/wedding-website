@@ -12,6 +12,7 @@
 const locale = "de-DE";
 
 const shortDate = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
+const shortTime = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
 const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
 /** Days within which a relative hint ("vor 3 Tagen") is worth showing. Beyond a
@@ -23,6 +24,17 @@ const millisecondsPerDay = 24 * 60 * 60 * 1000;
 /** formatShortDate renders an RFC3339 timestamp as `03.11.2026`. */
 export function formatShortDate(timestamp: string): string {
   return shortDate.format(new Date(timestamp));
+}
+
+/**
+ * formatClockTime renders a moment as `14:32`, in local time.
+ *
+ * Local and not UTC on purpose: its only use is "zuletzt gespeichert um …" on an admin
+ * screen, which answers "was that just now?" for the person looking at the clock on
+ * their own wall (F5-F05).
+ */
+export function formatClockTime(moment: Date): string {
+  return shortTime.format(moment);
 }
 
 /**

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { rsvpQueryOptions } from "@/lib/api/rsvp";
 import { meQueryOptions } from "@/lib/api/session";
 import { formatShortDate } from "@/lib/dates";
-import { startLabels } from "@/lib/labels";
+import { type Address, startAddressLabels, startLabels } from "@/lib/labels";
 import { daysUntilWedding, weddingDateLong } from "@/lib/wedding";
 
 export const Route = createFileRoute("/_guest/_chrome/start")({
@@ -36,13 +36,15 @@ function StartPage() {
     return null;
   }
 
+  const copy = startAddressLabels[addressFor(me.members)];
+
   return (
     <div className="flex flex-col gap-8">
       <HeroSection />
 
       <div className="flex flex-col gap-3">
-        <p className="text-h3">{startLabels.greeting(me.household.display_name)}</p>
-        <p className="text-ink-muted">{startLabels.intro}</p>
+        <p className="text-h3">{copy.greeting(me.household.display_name)}</p>
+        <p className="text-ink-muted">{copy.intro}</p>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -50,18 +52,34 @@ function StartPage() {
           <Link to="/zusagen">{hasAnswered ? startLabels.rsvpCallToActionAnswered : startLabels.rsvpCallToAction}</Link>
         </Button>
 
-        {/* The deadline is a written-out date beside the answer link, never a second
-            countdown: two counters compete for the same attention and the urgent one
-            loses to the bigger number. */}
+        {/* One sentence, not two: thanking a household for answering *and* asking them
+            to answer was the page contradicting itself (F2-F08). Once they have
+            answered, the deadline is the date the answer can still be changed until.
+            Either way a written-out date and never a second countdown — two counters
+            compete for the same attention and the urgent one loses to the bigger
+            number. */}
         <p className="text-ink-muted text-small">
-          {hasAnswered ? `${startLabels.rsvpAnswered} ` : ""}
-          {/* From `me`, which every guest page already has: moving the setting moves
-              this sentence, and the page does not wait on the RSVP request to say it. */}
-          {startLabels.rsvpDeadline(formatShortDate(me.rsvp_deadline))}
+          {/* The deadline comes from `me`, which every guest page already has: moving
+              the setting moves this sentence, and the page does not wait on the RSVP
+              request to say it. */}
+          {hasAnswered
+            ? copy.rsvpAnsweredUntil(formatShortDate(me.rsvp_deadline))
+            : copy.rsvpDeadline(formatShortDate(me.rsvp_deadline))}
         </p>
       </div>
     </div>
   );
+}
+
+/**
+ * Singular or plural, from the people we seeded into the household.
+ *
+ * `origin === "seeded"` and not the current member count: a guest invited alone who
+ * adds a companion is still the person we wrote to, and switching to "ihr" the moment
+ * they name somebody reads as the site correcting them (F2-F08).
+ */
+function addressFor(members: { origin: string }[]): Address {
+  return members.filter((member) => member.origin === "seeded").length > 1 ? "plural" : "singular";
 }
 
 /**

@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-08-31 · Building. E0 (setup), F1 (login), F5 (admin households & guests), F3 (RSVP) and F4 (plus-one) are done, and F2 (content) is built except for the facts it needs; see [specification/features/README.md](specification/features/README.md).
+Status: as of 2026-09-01 · Building. E0 (setup), F1 (login), F5 (admin households & guests), F3 (RSVP) and F4 (plus-one) are done, and F2 (content) is built except for the facts it needs; see [specification/features/README.md](specification/features/README.md). A round of UI feedback on 2026-09-01 added thirteen stories across F3, F4, F5, F2 and F11 — all built the same day.
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -17,9 +17,10 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 ### Wedding facts (block content, seating, and the roadmap)
 
 - [x] Wedding date: **2027-07-17** assumed as the working date. Set by venue availability, so it becomes firm when the venue is booked — expected early September 2026. Alternatives were 07-16, 07-23, 07-24, all within nine days.
-- [ ] Church and reception venues — names, addresses, travel notes. Being fixed within ~2 weeks of 2026-08-22; this also fixes the wedding date. **Now blocking a built page:** `/location` renders the address block, the anchors and the transfer text, and says "steht noch nicht fest" where the facts go (`locationLabels` in `web/src/lib/labels.ts`). `F2-F04` refuses to ship in that state, so this is the one content gap that blocks send-out.
+- [ ] Church and reception venues — names, addresses, travel notes. Being fixed within ~2 weeks of 2026-08-22; this also fixes the wedding date. **Now blocking three built pages:** `/location` teases both venues and carries the transfer text, and `/location/kirche` and `/location/feier` carry the address, the map link and the arrival section each — all saying "steht noch nicht fest" where the facts go (`locationLabels` in `web/src/lib/labels.ts`). The split landed 2026-09-01 (`F2-F09`); the facts are still the one content gap that blocks send-out, and `F2-F04` refuses to ship in that state.
 - [ ] Schedule of the day for the Ablauf page. `/ablauf` ships thin, as 07-roadmap allows: four entries (Trauung, Empfang, Abendessen, Feier) with no times, each rendering "Uhrzeit steht noch nicht fest" rather than a guessed one. Entries live in `scheduleLabels`.
 - [ ] Room/table layout for the reception, enough to draw the floor-plan SVG.
+- [ ] Hotel and pension list for `/location/feier`. Part of the venue facts above, but it hangs off the party venue rather than the church — that is where the section now lives.
 - [ ] Dress code wording; gift wishes and bank details. `/dresscode` and `/geschenke` are built with placeholder copy in `dresscodeLabels` / `giftLabels`; the gift page hides the IBAN block until the account is real, which it detects from the placeholder value.
 - [ ] Caterer age brackets for children's pricing (e.g. 0–3 free / 4–12 reduced / 13+ full) — derived at read time, so this can land late, but the caterer decides the numbers.
 - [x] Print shop does variable-data printing for the household codes — confirmed. F1 stands as specified; the code-slip fallback is not needed.
@@ -56,6 +57,23 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [x] **German admin URLs.**
 - [x] **F3 stories are written after F5 is built.** F5 is now built — F3's story files are the next planning work.
 - [x] **No `formatted_code` field.** The reissue response returns `code` alone: the dash is gone, so the stored form is the printed form, and a second field would be the same six characters under another name. `F5-B03` updated on 2026-08-31.
+
+### Answered in the 2026-09-01 UI feedback round
+
+Decisions taken with the thirteen stories built that day. Each one is recorded where it belongs — this list is the index, not the reasoning.
+
+- [x] **Transport is one question with a direction.** Needing seats and offering them are mutually exclusive: the form asks nothing / we need / we can offer, and the server refuses a body claiming both. `F3-B07`, `F3-F07`; also `02-features`, `03-data-model`.
+- [x] **`with_parent` and `high_chair` are children only**, refused server-side on every write, and hidden from an adult's card. One `seating_need` field for both venues was kept — a high chair being a party matter is copy, not a second column. `F3-B08`, `F3-F08`.
+- [x] **`meal_choice` defaults to `all`** once a scope covers the party. Accepted cost: "said: eats everything" and "did not look at the field" are no longer distinguishable. `F3-F08`.
+- [x] **`/zusagen` shows the stored answer when a household has answered**, with the form one tap away; the admin page stays form-first. `F3-F09`.
+- [x] **The plus-one sheet was submitting the RSVP form** — a Radix portal keeps the React tree, so the synthetic submit bubbled. That one bug produced all four reported symptoms. `F4-F03`.
+- [x] **The RSVP-answered household fields have one writer.** Transport counts and `has_stroller` left the admin household create and patch bodies; the detail page shows them read-only. `F5-B05`, `F5-F05`.
+- [x] **"Zuletzt gespeichert um HH:MM", persistent**, instead of a transient "Gespeichert." — and therefore **no artificial minimum duration** on the saving state, which was the alternative. `F5-F05`.
+- [x] **No pagination on the household list.** Sixty rows with a search box and two filters is a screen you scan; the table moved to the bottom of the page instead, so no control drifts as households are added, and a filter for "ohne Antwort" was added beside the never-logged-in one. `F5-F04`.
+- [x] **The start page says one thing about the RSVP**, and addresses a household in the number we **seeded** it with — a plus-one does not turn "du" into "ihr". `F2-F08`.
+- [x] **Location is an overview plus one page per venue**, with Übernachtung on the party page and the transfer on the overview. `F2-F09`.
+- [x] **The navigation skeleton was a guard awaiting a cached session**, not code splitting. Fixed at the cause; the full-screen skeleton is now the cold load's only. No spinner. `F11-04`.
+- [x] **Editable fields are filled white.** The shadcn defaults were transparent, which on `paper` reads as disabled; radius and type size unified across `Input`, `Textarea` and `Select`. `F11-05` — the code is done, the side-by-side look is still worth one manual pass.
 
 ### Raised in the 2026-08-31 code review
 

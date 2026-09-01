@@ -286,21 +286,22 @@ func rsvpMember(member domain.Guest) dto.RSVPMember {
 
 // respondRSVPError answers a failure from the RSVP use case.
 //
-// Two translations beyond RespondError: the use case's "no such row" into the API's
-// 404, and a rejected age into a field error on the member it belongs to.
+// Three translations beyond RespondError: the use case's "no such row" into the API's
+// 404, a rejected age or seating need into a field error on the member it belongs to,
+// and a contradictory transport answer into a field error on both counts (F3-B07).
 func respondRSVPError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, application.ErrNotFound) {
 		httpio.RespondError(w, r, httpio.ErrNotFound)
 		return
 	}
 
-	if ageError, isAgeError := errors.AsType[rsvp.MemberAgeError](err); isAgeError {
-		httpio.RespondError(w, r, httpio.AgeValidationErrorAt(
-			fmt.Sprintf("members.%d.age", ageError.MemberID), ageError.Err))
+	if memberError, isMemberError := errors.AsType[rsvp.MemberAnswerError](err); isMemberError {
+		httpio.RespondError(w, r, httpio.GuestFieldValidationErrorUnder(
+			fmt.Sprintf("members.%d.", memberError.MemberID), memberError.Err))
 		return
 	}
 
-	httpio.RespondError(w, r, err)
+	httpio.RespondError(w, r, httpio.TransportSeatsValidationError(err))
 }
 
 // enumString renders a nullable domain enum for the wire: a JSON null for "not

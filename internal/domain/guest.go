@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
 // GuestKind separates adults from children. It is not derived from age: age is
 // recorded for children only, and a household that skips it must still produce a
@@ -35,6 +38,13 @@ const (
 	SeatingNeedHighChair  SeatingNeed = "high_chair"
 	SeatingNeedWheelchair SeatingNeed = "wheelchair"
 )
+
+// childOnlySeatingNeeds are the needs that only make sense for a child.
+//
+// with_parent means the person consumes no seat of their own, and high_chair means a
+// chair we hire per child; both feed counts we buy things with. An adult who needs
+// something at the seat is what wheelchair and the household note are for.
+var childOnlySeatingNeeds = []SeatingNeed{SeatingNeedWithParent, SeatingNeedHighChair}
 
 // maxChildAge is the highest age still recorded as a child's. Eighteen is an
 // adult, and the caterer's brackets are all drawn below that — the exact
@@ -85,6 +95,13 @@ var ErrAgeOnAdult = errors.New("age is recorded for children only")
 // ErrAgeOutOfRange reports a child's age outside 0..maxChildAge.
 var ErrAgeOutOfRange = errors.New("a child's age must be between 0 and 17")
 
+// ErrSeatingNeedOnAdult reports a child-only seating need recorded against an adult.
+//
+// A sentinel for the same reason ErrAgeOnAdult is one: the answer has to land next to
+// the seating-need field of a form, and field names are a shape the domain does not
+// know.
+var ErrSeatingNeedOnAdult = errors.New("with_parent and high_chair are recorded for children only")
+
 // ResolveAge returns the age to store for a guest of this kind.
 //
 // An adult's age is refused rather than silently dropped: a stale age would feed a
@@ -103,6 +120,21 @@ func ResolveAge(kind GuestKind, age *int) (*int, error) {
 		return nil, ErrAgeOutOfRange
 	}
 	return age, nil
+}
+
+// ResolveSeatingNeed returns the seating need to store for a guest of this kind.
+//
+// Refused rather than silently reset, exactly like ResolveAge: a request that asks
+// for a high chair for an adult has said something that cannot be true, and quietly
+// storing `normal` instead would answer a question nobody asked. The case this bites
+// in practice is a child being turned into an adult while a high chair is still
+// recorded — and the person who just made that change is the only one who can say
+// what that guest now needs.
+func ResolveSeatingNeed(kind GuestKind, need SeatingNeed) (SeatingNeed, error) {
+	if kind == GuestKindChild || !slices.Contains(childOnlySeatingNeeds, need) {
+		return need, nil
+	}
+	return "", ErrSeatingNeedOnAdult
 }
 
 // GuestPatch is a partial update of a guest: a nil field is one the request did not
@@ -160,6 +192,14 @@ func ApplyGuestPatch(current Guest, patch GuestPatch) (Guest, Changes, error) {
 		return Guest{}, Changes{}, err
 	}
 	updated.Age = age
+
+	// Also after the kind is settled: turning a child with a high chair into an adult
+	// is the case this refuses, and it can only be seen once both fields are known.
+	seatingNeed, err := ResolveSeatingNeed(updated.Kind, updated.SeatingNeed)
+	if err != nil {
+		return Guest{}, Changes{}, err
+	}
+	updated.SeatingNeed = seatingNeed
 
 	changes.compare("name", current.Name, updated.Name)
 	changes.compare("kind", current.Kind, updated.Kind)

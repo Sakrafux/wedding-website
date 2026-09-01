@@ -38,10 +38,51 @@ describe("admin household detail", () => {
     const household = group("Haushalt");
     expect(household.getByLabelText("Name")).toHaveValue("Familie Müller");
     expect(household.getByLabelText("Interne Notiz (nur für uns)")).toHaveValue("Kommen mit dem Zug");
-    expect(household.getByLabelText("Plätze angeboten (Kirche → Feier)")).toHaveValue(4);
+    // The transport counts and the pram are answers, not settings: shown here, and
+    // editable only through the RSVP form (F5-B05, F5-F05).
+    expect(household.queryByLabelText(/Plätze angeboten/)).not.toBeInTheDocument();
     expect(screen.getByText("ABC234")).toBeInTheDocument();
     expect(group("Anna Müller").getByLabelText("Name")).toHaveValue("Anna Müller");
     expect(group("Emil Müller").getByLabelText("Alter am Hochzeitstag")).toHaveValue(4);
+  });
+
+  // F5-F05: shown next to the link that edits them properly. They are answers, not
+  // settings, and editing them beside `display_name` bypassed the RSVP rules.
+  it("shows the household's own RSVP answers as text", async () => {
+    stubHousehold({ transport_seats_needed: 3, transport_seats_offered: 0, has_stroller: true });
+
+    await renderApp("/admin/haushalte/12");
+
+    await screen.findByRole("heading", { name: "Familie Müller", level: 1 });
+    const rsvp = within(screen.getByRole("heading", { name: "Rückmeldung" }).closest("section") as HTMLElement);
+    expect(rsvp.getByText("Plätze gesucht (Kirche → Feier)")).toBeInTheDocument();
+    expect(rsvp.getByText("3")).toBeInTheDocument();
+    expect(rsvp.getByText("Kinderwagen")).toBeInTheDocument();
+    expect(rsvp.getByText("Ja")).toBeInTheDocument();
+  });
+
+  // "Gespeichert." left us wondering whether it meant *these* changes, and locally the
+  // request finishes fast enough that the button's own state was a flash.
+  it("says when it last saved, and keeps saying it", async () => {
+    const stub = stubHousehold();
+    stub.api.set("PATCH /api/admin/households/12", ok({ ...stub.household, display_name: "Familie Müller-Schmidt" }));
+
+    const { user } = await renderApp("/admin/haushalte/12");
+    await screen.findByRole("group", { name: "Haushalt" });
+    const household = group("Haushalt");
+
+    await user.type(household.getByLabelText("Name"), "-Schmidt");
+    await user.click(household.getByRole("button", { name: "Speichern" }));
+
+    const status = await within(
+      screen.getByRole("group", { name: "Haushalt" }).parentElement as HTMLElement,
+    ).findByRole("status");
+    expect(status).toHaveTextContent(/^Zuletzt gespeichert um \d{2}:\d{2}$/);
+
+    // Still there after the next keystroke: a confirmation that persists needs no
+    // minimum duration to be seen.
+    await user.type(group("Haushalt").getByLabelText("Name"), "!");
+    expect(status).toBeInTheDocument();
   });
 
   it("saves the household fields and reports a validation error next to its field", async () => {

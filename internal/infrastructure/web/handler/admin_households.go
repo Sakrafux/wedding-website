@@ -71,11 +71,8 @@ func (handler *AdminHouseholds) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	created, err := handler.households.Create(r.Context(), domain.Household{
-		DisplayName:           request.DisplayName,
-		AdminNote:             request.AdminNote,
-		TransportSeatsNeeded:  request.TransportSeatsNeeded,
-		TransportSeatsOffered: request.TransportSeatsOffered,
-		HasStroller:           request.HasStroller,
+		DisplayName: request.DisplayName,
+		AdminNote:   request.AdminNote,
 	})
 	if err != nil {
 		respondAdminError(w, r, err)
@@ -101,12 +98,11 @@ func (handler *AdminHouseholds) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// domain.HouseholdPatch keeps its transport fields — PUT /rsvp patches through
+	// them — so the three left nil here are the ones this endpoint no longer owns.
 	detail, err := handler.households.Update(r.Context(), id, domain.HouseholdPatch{
-		DisplayName:           request.DisplayName,
-		AdminNote:             request.AdminNote,
-		TransportSeatsNeeded:  request.TransportSeatsNeeded,
-		TransportSeatsOffered: request.TransportSeatsOffered,
-		HasStroller:           request.HasStroller,
+		DisplayName: request.DisplayName,
+		AdminNote:   request.AdminNote,
 	})
 	if err != nil {
 		respondAdminError(w, r, err)
@@ -268,7 +264,7 @@ func respondAdminError(w http.ResponseWriter, r *http.Request, err error) {
 		httpio.RespondError(w, r, httpio.ErrNotFound)
 		return
 	}
-	httpio.RespondError(w, r, httpio.AgeValidationError(err))
+	httpio.RespondError(w, r, httpio.GuestFieldValidationError(err))
 }
 
 // seatingNeedOrDefault maps an omitted seating need onto the column's default, so a

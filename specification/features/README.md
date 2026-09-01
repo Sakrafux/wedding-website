@@ -72,6 +72,9 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F5-F01` Household list with last-login column
 - [x] `F5-F02` Household detail and member editing
 - [x] `F5-F03` Export actions
+- [x] `F5-B05` Transport counts and the pram leave the admin household write path
+- [x] `F5-F04` Household list: actions above, table last, filter for unanswered
+- [x] `F5-F05` Household detail: answered fields read-only, save timestamp
 
 ## F3 — RSVP · M2 · P0
 
@@ -89,6 +92,11 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F3-F05` Read-only rendering after the deadline
 - [x] `F3-B06` `GET|PUT /api/admin/households/{id}/rsvp` — the same use case, addressed by id
 - [x] `F3-F06` Admin RSVP page at `/admin/haushalte/{id}/rsvp`, reusing the guest form
+- [x] `F3-B07` Transport: a household needs seats or offers them, never both
+- [x] `F3-B08` `with_parent` and `high_chair` are children only
+- [x] `F3-F07` Transport as one question with a direction
+- [x] `F3-F08` Member card: meal default `all`, seating options per `kind`
+- [x] `F3-F09` The stored answer is what `/zusagen` shows once answered
 
 ## F4 — Plus-one · M2 · P0
 
@@ -97,6 +105,7 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F4-B03` `DELETE /api/rsvp/members/{id}`
 - [x] `F4-F01` Add-plus-one sheet, and the hint for everyone else
 - [x] `F4-F02` Remove member, pre-deadline only
+- [x] `F4-F03` The plus-one sheet must not submit the RSVP form
 
 ## F2 — Informational content · M3 · P0
 
@@ -105,16 +114,20 @@ Frontend only — content is hardcoded in components.
 - [x] `F2-F01` Layout, navigation, bottom bar
 - [x] `F2-F02` Start: hero, greeting, countdown
 - [x] `F2-F03` Ablauf
-- [ ] `F2-F04` Location, Anreise & Übernachtung — page, address block and section anchors built; **the venue facts are still open** (TODO.md), and the story refuses a placeholder Location page because it blocks send-out
+- [ ] `F2-F04` Location, Anreise & Übernachtung — pages, address blocks and section anchors built (split by `F2-F09`); **the venue facts are still open** (TODO.md), and the story refuses a placeholder Location page because it blocks send-out
 - [x] `F2-F05` Dresscode, Geschenke
 - [x] `F2-F06` FAQ, Kontakt
 - [x] `F2-F07` Datenschutz
+- [x] `F2-F08` Start: one sentence about the answer, singular/plural address
+- [x] `F2-F09` Location: an overview, and a page per venue
 
 ## F11 — Cross-cutting quality · M3 · P1
 
 - [ ] `F11-01` Accessibility pass: keyboard, focus, contrast, 200% zoom
 - [ ] `F11-02` German error messages end to end, request ID surfaced
 - [ ] `F11-03` Mobile device QA on real hardware
+- [x] `F11-04` A navigation between pages is not a page load
+- [x] `F11-05` Form controls look editable, and look alike — code done 2026-09-01; the side-by-side look is a manual check
 
 ## F6 — Admin: RSVP dashboard · M4 or M5 · P1
 

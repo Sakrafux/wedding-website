@@ -94,6 +94,12 @@ function AddPlusOneSheet({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    // The RSVP form is this component's React ancestor, and DialogContent is a Radix
+    // **portal**: it moves the DOM node but not the React tree, so React's synthetic
+    // submit bubbles from this form into that one. Without this line, adding a
+    // companion also saved the RSVP — with the member list from before the addition,
+    // whose response then overwrote the new member out of the query cache (F4-F03).
+    event.stopPropagation();
     setError(null);
     setIsAdding(true);
 

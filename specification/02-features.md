@@ -48,7 +48,7 @@ One RSVP per household, editable until a deadline, then read-only.
 - Per member: attendance scope (`no` / `church_only` / `party_only` / `both`), meal choice (`all` / `vegetarian` / `vegan`), portion (`none` / `kids` / `full`), midnight snack yes/no, seating need, allergies. Children also give an age.
 - Scope is per member because the exceptions live inside households — a grandmother at the ceremony but not the party, children only at the church. To avoid extra clicking, the form offers a household-level "Wir kommen zu: Kirche / Feier / beidem" selector that sets everyone at once, with per-member overrides beneath.
 - Catering questions are only asked of guests who are coming to the party. A church-only guest is never asked about meals, snacks or seating — and never counted for them.
-- Per household: transport seats **needed** and seats **offered** for the church → reception trip. This gives us a capacity gap, which tells us whether to organise extra cars or a shuttle. The app does not match riders to drivers; we do that ourselves.
+- Per household: transport seats **needed** or seats **offered** for the church → reception trip — one direction, never both. The pair of counts feeds one subtraction, the capacity gap, which tells us whether to organise extra cars or a shuttle; a household on both sides of it inflates the demand and the supply at once. Tightened 2026-09-01: the form asks one question with three answers (nothing / we need / we can offer) and the server refuses a body claiming both (`F3-B07`). The app does not match riders to drivers; we do that ourselves.
 - Per household: a general free-text note. This is the intentional catch-all — no structured field set will anticipate everything, so guests always have somewhere to write "wir kommen erst nach der Zeremonie" or "Oma braucht einen Platz nah am Ausgang". Notes are shown prominently in the admin dashboard, and a household with an unread note is flagged.
 - No "maybe" — it makes catering numbers unusable.
 - Attendance and scope are one field, so "declined, but coming to the party" cannot be expressed.
@@ -73,7 +73,7 @@ CRUD households and their members. Generate/regenerate codes. Export a print-sho
 
 ## F6 — Admin: RSVP dashboard (P1)
 
-Headcounts split by scope (church / party / both — three numbers, three different vendors), meal and portion counts, midnight snack count, children by caterer age bracket, special needs (high chairs and wheelchair space per guest, prams per household), consolidated allergy list, transport seats needed vs. offered and the resulting gap, list of guest-added members, unread household notes, nudge list, CSV export for the caterer. No SQL needed to get the headcount.
+Headcounts split by scope (church / party / both — three numbers, three different vendors), meal and portion counts, midnight snack count, children by caterer age bracket, special needs (high chairs and wheelchair space per guest, prams per household — a high chair and a lap seat are recordable for children only, `F3-B08`), consolidated allergy list, transport seats needed vs. offered and the resulting gap, list of guest-added members, unread household notes, nudge list, CSV export for the caterer. No SQL needed to get the headcount.
 
 ## F7 — Seating chart (P1)
 

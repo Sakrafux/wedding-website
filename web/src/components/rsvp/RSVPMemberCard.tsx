@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card-group";
 import type { RSVPMember } from "@/lib/api/dto";
-import type { Attending, MealChoice, Portion, SeatingNeed } from "@/lib/api/enums";
+import type { Attending, GuestKind, MealChoice, Portion, SeatingNeed } from "@/lib/api/enums";
 import {
   attendingLabels,
   mealChoiceLabels,
@@ -27,6 +27,21 @@ import {
 
 /** The age range for a child, matching the server's rule (domain.ResolveAge). */
 const maxChildAge = 17;
+
+/**
+ * The seating needs a guest of this kind can have, matching domain.ResolveSeatingNeed.
+ *
+ * A lap seat and a high chair are children's, and the server refuses either for an
+ * adult (`F3-B08`). Filtered rather than disabled: a disabled radio fails contrast and
+ * reads as broken (`05-design`).
+ */
+function seatingNeedsFor(kind: GuestKind): SeatingNeed[] {
+  const needs = Object.keys(seatingNeedLabels) as SeatingNeed[];
+  if (kind === "child") {
+    return needs;
+  }
+  return needs.filter((need) => need !== "with_parent" && need !== "high_chair");
+}
 
 /**
  * One person's answer.
@@ -188,7 +203,7 @@ export function RSVPMemberCard({
               value={draft.seating_need}
               onValueChange={(value) => onChange({ seating_need: value as SeatingNeed })}
             >
-              {(Object.keys(seatingNeedLabels) as SeatingNeed[]).map((need) => (
+              {seatingNeedsFor(member.kind).map((need) => (
                 <RadioCard key={need} value={need} label={seatingNeedLabels[need]} />
               ))}
             </RadioCardGroup>

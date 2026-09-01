@@ -77,9 +77,8 @@ func TestAdminCreatesReadsUpdatesAndDeletesAHousehold(t *testing.T) {
 	app := newAdminApp(t)
 
 	created := app.postJSON("/api/admin/households", map[string]any{
-		"display_name":            "Familie Müller",
-		"admin_note":              "Kommen mit dem Zug",
-		"transport_seats_offered": 4,
+		"display_name": "Familie Müller",
+		"admin_note":   "Kommen mit dem Zug",
 	})
 	require.Equal(t, http.StatusCreated, created.Status)
 
@@ -87,7 +86,7 @@ func TestAdminCreatesReadsUpdatesAndDeletesAHousehold(t *testing.T) {
 	assert.Positive(t, household.ID)
 	assert.Equal(t, "Familie Müller", household.DisplayName)
 	assert.Equal(t, "Kommen mit dem Zug", household.AdminNote)
-	assert.Equal(t, 4, household.TransportSeatsOffered)
+	assert.Zero(t, household.TransportSeatsOffered, "an answer, not a setting — see F5-B05")
 	assert.Empty(t, household.Members, "a fresh household has an empty member list, not a null one")
 	assert.Nil(t, household.LastLoginAt)
 
@@ -163,14 +162,13 @@ func TestAdminHouseholdPatchLeavesAbsentFieldsAloneAndClearsEmptyOnes(t *testing
 		withDisplayName("Familie Müller"), withAdminNote("Kommen mit dem Zug"))
 	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
 
-	patched := app.patchJSON(path, map[string]any{"has_stroller": true}).adminHousehold()
-	assert.True(t, patched.HasStroller)
-	assert.Equal(t, "Familie Müller", patched.DisplayName)
-	assert.Equal(t, "Kommen mit dem Zug", patched.AdminNote)
+	patched := app.patchJSON(path, map[string]any{"display_name": "Familie Müller-Schmidt"}).adminHousehold()
+	assert.Equal(t, "Familie Müller-Schmidt", patched.DisplayName)
+	assert.Equal(t, "Kommen mit dem Zug", patched.AdminNote, "absent means leave alone")
 
 	cleared := app.patchJSON(path, map[string]any{"admin_note": ""}).adminHousehold()
 	assert.Empty(t, cleared.AdminNote)
-	assert.True(t, cleared.HasStroller, "the earlier change survives the next patch")
+	assert.Equal(t, "Familie Müller-Schmidt", cleared.DisplayName, "the earlier change survives the next patch")
 }
 
 // A code changed by a stray field in a form body is a code nobody knows changed. The
@@ -195,8 +193,8 @@ func TestAdminHouseholdValidationFailuresNameTheirFieldsInGerman(t *testing.T) {
 	app := newAdminApp(t)
 
 	response := app.postJSON("/api/admin/households", map[string]any{
-		"display_name":           "",
-		"transport_seats_needed": 40,
+		"display_name": "",
+		"admin_note":   strings.Repeat("x", 2001),
 	})
 	require.Equal(t, http.StatusBadRequest, response.Status)
 
@@ -204,8 +202,31 @@ func TestAdminHouseholdValidationFailuresNameTheirFieldsInGerman(t *testing.T) {
 	assert.Equal(t, "validation_failed", envelope.Code)
 	assert.Contains(t, envelope.Message, "Felder")
 	assert.Contains(t, envelope.Fields, "display_name", "keyed by the JSON name, not the Go one")
-	assert.Contains(t, envelope.Fields, "transport_seats_needed")
+	assert.Contains(t, envelope.Fields, "admin_note")
 	assert.Contains(t, envelope.Fields["display_name"], "Bitte")
+}
+
+// The three fields a household answers have one writer, and it is the RSVP endpoint
+// that runs the RSVP rules (F5-B05). Sending them here is a caller using the wrong
+// endpoint, and DecodeJSON says so rather than writing them.
+func TestAdminHouseholdWriteRoutesRefuseTheRSVPAnsweredFields(t *testing.T) {
+	t.Parallel()
+
+	app := newAdminApp(t)
+	household := seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"))
+	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
+
+	for _, field := range []string{"transport_seats_needed", "transport_seats_offered", "has_stroller"} {
+		patched := app.patchJSON(path, map[string]any{field: 1})
+		assert.Equalf(t, http.StatusBadRequest, patched.Status, "PATCH with %q", field)
+		assert.Equal(t, "validation_failed", patched.errorEnvelope().Code)
+
+		created := app.postJSON("/api/admin/households", map[string]any{"display_name": "X", field: 1})
+		assert.Equalf(t, http.StatusBadRequest, created.Status, "POST with %q", field)
+	}
+
+	// Still readable on the detail body, which is what F5-F05 renders.
+	assert.Equal(t, 0, app.get(path).adminHousehold().TransportSeatsNeeded)
 }
 
 // Deleting a household takes its guests and their seats with it, by foreign key. What

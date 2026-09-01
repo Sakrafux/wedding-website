@@ -227,6 +227,67 @@ describe("the start page", () => {
     expect(await screen.findAllByRole("link", { name: "Antwort ändern" })).toHaveLength(3);
   });
 
+  /**
+   * F2-F08: thanking a household for answering *and* asking them to answer was the page
+   * contradicting itself. One sentence, and once answered it is the date the answer can
+   * still be changed until.
+   */
+  it("says one thing about the answer, not two", async () => {
+    stubGuest();
+
+    await renderApp("/start");
+    expect(screen.getByText(/Bitte antwortet bis zum 17\.05\.2027/)).toBeInTheDocument();
+    expect(screen.queryByText(/Danke/)).not.toBeInTheDocument();
+  });
+
+  it("turns the deadline into a changeable-until date once they have answered", async () => {
+    stubGuest({ answer: answeredHousehold() });
+
+    await renderApp("/start");
+
+    expect(
+      await screen.findByText(/Danke für eure Antwort! Ändern könnt ihr sie noch bis zum 17\.05\.2027/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Bitte antwortet bis/)).not.toBeInTheDocument();
+  });
+
+  // The address follows the people we **seeded**: a guest invited alone who adds a
+  // companion is still the person we wrote to, and switching to "ihr" the moment they
+  // name somebody reads as the site correcting them.
+  it("addresses a household we invited alone in the singular", async () => {
+    stubGuest({
+      me: bootstrap({ members: [{ id: 30, name: "Marcus Müller", kind: "adult", origin: "seeded" }] }),
+    });
+
+    await renderApp("/start");
+
+    expect(screen.getByText(/Schön, dass du da bist, Familie Müller\./)).toBeInTheDocument();
+    expect(screen.getByText(/Bitte antworte bis zum/)).toBeInTheDocument();
+  });
+
+  it("keeps the singular after a companion has been added", async () => {
+    stubGuest({
+      me: bootstrap({
+        members: [
+          { id: 30, name: "Marcus Müller", kind: "adult", origin: "seeded" },
+          { id: 44, name: "Isabella Michelbacher", kind: "adult", origin: "guest_added" },
+        ],
+      }),
+    });
+
+    await renderApp("/start");
+
+    expect(screen.getByText(/Schön, dass du da bist/)).toBeInTheDocument();
+  });
+
+  it("addresses a household we seeded with two or more in the plural", async () => {
+    stubGuest();
+
+    await renderApp("/start");
+
+    expect(screen.getByText(/Schön, dass ihr da seid, Familie Müller\./)).toBeInTheDocument();
+  });
+
   it("carries the hero photo as decoration, not as content", async () => {
     stubGuest();
 
@@ -259,16 +320,38 @@ describe("the content pages", () => {
     expect(within(entries[1] as HTMLElement).getByText("Feier")).toBeInTheDocument();
   });
 
-  it("renders both venues and every section anchor on the location page", async () => {
+  // F2-F09: an overview with one line per venue, and the facts on the venue's own
+  // page. Two addresses and two car parks in one scroll were what got mixed up.
+  it("teases both venues on the location overview and links to their pages", async () => {
     stubGuest();
 
     await renderApp("/location");
 
-    expect(screen.getByRole("heading", { name: "Kirche", level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Trauung in der Kirche", level: 3 })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Feier", level: 3 })).toBeInTheDocument();
-    for (const anchor of ["orte", "anreise", "fahrt", "uebernachtung"]) {
+    expect(screen.getByRole("link", { name: /Zur Trauung/ })).toHaveAttribute("href", "/location/kirche");
+    expect(screen.getByRole("link", { name: /Zur Feier/ })).toHaveAttribute("href", "/location/feier");
+
+    // The transfer belongs to neither venue, so it stays on the overview — and the
+    // accommodation list does not.
+    expect(document.getElementById("fahrt")).not.toBeNull();
+    expect(document.getElementById("uebernachtung")).toBeNull();
+  });
+
+  it("renders each venue page with its own address and arrival sections", async () => {
+    stubGuest();
+
+    await renderApp("/location/kirche");
+    expect(screen.getByRole("heading", { name: "Trauung in der Kirche", level: 1 })).toBeInTheDocument();
+    for (const anchor of ["adresse", "anreise"]) {
       expect(document.getElementById(anchor)).not.toBeNull();
     }
+    // Hotels belong beside the place the evening ends, which is the other page.
+    expect(document.getElementById("uebernachtung")).toBeNull();
+
+    await renderApp("/location/feier");
+    expect(screen.getByRole("heading", { name: "Feier", level: 1 })).toBeInTheDocument();
+    expect(document.getElementById("uebernachtung")).not.toBeNull();
   });
 
   it("renders the dress code and the gift pages", async () => {

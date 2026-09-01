@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 
+import type { BootstrapResponse } from "@/lib/api/dto";
 import { isHouseholdConfirmed, meQueryOptions } from "@/lib/api/session";
 
 /** The route that asks a freshly logged-in household whether the code was theirs. */
@@ -13,27 +14,50 @@ export const confirmationPath = "/willkommen";
  * inherits it. A per-page check is how one page eventually ships without one.
  */
 export const Route = createFileRoute("/_guest")({
-  beforeLoad: async ({ context, location }) => {
-    // Awaited, so the redirect happens before anything renders. A guard that
-    // resolved during render would flash the guest's own content at somebody who
-    // turns out not to be logged in.
-    const me = await context.queryClient.ensureQueryData(meQueryOptions);
-
-    if (!me) {
-      // The intended path travels along, so logging in lands the guest where they
-      // were going rather than on a generic start page.
-      throw redirect({ to: "/", search: { redirect: location.href } });
+  beforeLoad: ({ context, location }) => {
+    // Cache first, and **synchronously** when it answers. An async guard puts the
+    // router into its pending state for at least a tick even when the value is
+    // already in hand, and with defaultPendingMs: 0 that rendered a full-screen
+    // skeleton on every navigation between two hardcoded content pages (F11-04).
+    //
+    // `undefined` is "never fetched"; a cached `null` is "not logged in", which is an
+    // answer and must not send us back to the network.
+    const cached = context.queryClient.getQueryData(meQueryOptions.queryKey);
+    if (cached !== undefined) {
+      guardHousehold(cached, location.pathname, location.href);
+      return;
     }
 
-    // Shown once per household, not once per visit: a year-long session must not
-    // ask this daily. The check lives here rather than in a component so that a
-    // deep link cannot skip it.
-    if (!isHouseholdConfirmed(me.household.id) && location.pathname !== confirmationPath) {
-      throw redirect({ to: confirmationPath });
-    }
+    // Only the cold load waits. Awaited rather than resolved during render, so a
+    // caller who turns out not to be logged in never sees a flash of guest content.
+    return context.queryClient.ensureQueryData(meQueryOptions).then((me) => {
+      guardHousehold(me, location.pathname, location.href);
+    });
   },
   component: GuestLayout,
 });
+
+/**
+ * The two redirects every guest route inherits, in one place so that both the cached
+ * and the fetched path apply exactly the same rules.
+ *
+ * Throws rather than returns: a redirect from `beforeLoad` is a thrown value in
+ * TanStack Router, and returning one here would guard nothing at all.
+ */
+function guardHousehold(me: BootstrapResponse | null, pathname: string, href: string) {
+  if (!me) {
+    // The intended path travels along, so logging in lands the guest where they were
+    // going rather than on a generic start page.
+    throw redirect({ to: "/", search: { redirect: href } });
+  }
+
+  // Shown once per household, not once per visit: a year-long session must not ask
+  // this daily. The check lives here rather than in a component so that a deep link
+  // cannot skip it.
+  if (!isHouseholdConfirmed(me.household.id) && pathname !== confirmationPath) {
+    throw redirect({ to: confirmationPath });
+  }
+}
 
 /**
  * Renders the page, and leaves the moment the session stops existing.

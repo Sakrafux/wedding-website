@@ -84,6 +84,70 @@ describe("admin household list", () => {
     expect(screen.queryByRole("link", { name: "Familie Müller" })).not.toBeInTheDocument();
   });
 
+  it("filters down to the households that have not answered", async () => {
+    stubApi({
+      "GET /api/admin/me": ok(adminSession),
+      "GET /api/admin/households": householdList(
+        adminHouseholdOverview({ rsvp_submitted_at: "2026-12-01T10:00:00Z" }),
+        adminHouseholdOverview({ id: 13, display_name: "Familie Albrecht", rsvp_submitted_at: null }),
+      ),
+    });
+
+    const { user } = await renderApp("/admin/haushalte");
+    await screen.findByRole("table");
+
+    await user.click(screen.getByLabelText("Nur die ohne Antwort"));
+
+    expect(screen.getByRole("link", { name: "Familie Albrecht" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Familie Müller" })).not.toBeInTheDocument();
+  });
+
+  // An AND, not an OR: two filters that quietly ORed would produce a list nobody can
+  // explain.
+  it("combines the two filters", async () => {
+    stubApi({
+      "GET /api/admin/me": ok(adminSession),
+      "GET /api/admin/households": householdList(
+        // Never logged in, but has answered — we took it down the phone.
+        adminHouseholdOverview({ last_login_at: null, rsvp_submitted_at: "2026-12-01T10:00:00Z" }),
+        // Never logged in and never answered: the household to chase.
+        adminHouseholdOverview({
+          id: 13,
+          display_name: "Familie Albrecht",
+          last_login_at: null,
+          rsvp_submitted_at: null,
+        }),
+      ),
+    });
+
+    const { user } = await renderApp("/admin/haushalte");
+    await screen.findByRole("table");
+
+    await user.click(screen.getByLabelText("Nur die, die sich nie angemeldet haben"));
+    await user.click(screen.getByLabelText("Nur die ohne Antwort"));
+
+    expect(screen.getByRole("link", { name: "Familie Albrecht" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Familie Müller" })).not.toBeInTheDocument();
+  });
+
+  // F5-F04: the table is the only element on this page that grows, so every control
+  // above it keeps its position for the life of the project.
+  it("puts the create form above the table and the exports below it", async () => {
+    stubApi({
+      "GET /api/admin/me": ok(adminSession),
+      "GET /api/admin/households": householdList(adminHouseholdOverview()),
+    });
+
+    await renderApp("/admin/haushalte");
+
+    const table = await screen.findByRole("table");
+    const createField = screen.getByLabelText("Name des Haushalts");
+    const exportLink = screen.getByRole("link", { name: /Codes für die Druckerei/ });
+
+    expect(createField.compareDocumentPosition(table)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(table.compareDocumentPosition(exportLink)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   // Creating and then hunting for the row you just created is the flow to avoid.
   it("creates a household and goes straight to its detail page", async () => {
     const api = stubApi({

@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 // Attending carries attendance *and* scope in one value, so that "declined but
 // coming to the party" is unrepresentable rather than merely invalid.
 //
@@ -143,8 +145,9 @@ type GuestAnswer struct {
 // ApplyGuestAnswer returns the guest with the answer stored on them, normalized, plus
 // the changed fields for the audit log.
 //
-// The age rules are F5-B02's (ErrAgeOnAdult, ErrAgeOutOfRange) against the guest's
-// stored kind, which the answer cannot change.
+// The age rules are F5-B02's (ErrAgeOnAdult, ErrAgeOutOfRange) and the seating-need
+// rule is F3-B08's (ErrSeatingNeedOnAdult), both against the guest's stored kind,
+// which the answer cannot change.
 func ApplyGuestAnswer(current Guest, answer GuestAnswer) (Guest, Changes, error) {
 	updated := current
 	updated.Attending = &answer.Attending
@@ -160,6 +163,12 @@ func ApplyGuestAnswer(current Guest, answer GuestAnswer) (Guest, Changes, error)
 	}
 	updated.Age = age
 
+	seatingNeed, err := ResolveSeatingNeed(current.Kind, answer.SeatingNeed)
+	if err != nil {
+		return Guest{}, Changes{}, err
+	}
+	updated.SeatingNeed = seatingNeed
+
 	updated = NormalizeGuestAnswer(updated)
 
 	var changes Changes
@@ -172,6 +181,28 @@ func ApplyGuestAnswer(current Guest, answer GuestAnswer) (Guest, Changes, error)
 	changes.compareOptionalInt("age", current.Age, updated.Age)
 
 	return updated, changes, nil
+}
+
+// ErrTransportSeatsConflict reports a household that both needs seats and offers them.
+//
+// A sentinel rather than a domain.Error, because the answer belongs next to the two
+// fields that produced it — see httpio.GuestAnswerValidationError.
+var ErrTransportSeatsConflict = errors.New("a household needs seats or offers them, never both")
+
+// ValidateTransportSeats refuses a transport answer that points both ways.
+//
+// The pair of counts feeds one subtraction — the shuttle capacity gap in F6 — and a
+// household on both sides of it inflates the demand and the supply at once. Refused
+// rather than normalized: the body said two things that cannot both be true, and
+// picking one of them for the household would be answering for them.
+//
+// There is no direction field, and deliberately so: the pair of counts *is* the
+// direction, and a third column would be a second way to say the same thing.
+func ValidateTransportSeats(needed, offered int) error {
+	if needed > 0 && offered > 0 {
+		return ErrTransportSeatsConflict
+	}
+	return nil
 }
 
 // HouseholdAnswer is the household's own half of an RSVP submission: the fields that

@@ -116,6 +116,55 @@ describe("adding a plus-one", () => {
     expect(await screen.findByText("Isabella Michelbacher — Antwort fehlt")).toBeInTheDocument();
   });
 
+  /**
+   * F4-F03, the regression this bug earned: `DialogContent` is a Radix portal, which
+   * moves the DOM node but not the React tree, so the sheet's submit used to bubble
+   * into the RSVP form and save it. The PUT carried the member list from before the
+   * addition and its response overwrote the new member out of the query cache — the
+   * unbidden summary, the missing card and the 409 on the second attempt were all this
+   * one bug.
+   *
+   * Asserted as the sequence and not as a unit: a test rendering the sheet on its own
+   * would have passed throughout.
+   */
+  it("adds the companion without saving the form, for a household that has already answered", async () => {
+    const answered = soloAnswer({
+      household: { ...soloAnswer().household, rsvp_submitted_at: "2026-11-04T10:00:00Z" },
+      members: [rsvpMember({ attending: "both", meal_choice: "all" })],
+    });
+    const api = stubRSVP(answered, { "POST /api/rsvp/members": ok({ member: companion, can_add_plus_one: false }) });
+
+    const { user } = await renderApp("/zusagen");
+    // Summary-first for an answered household (F3-F09), so the form is one tap away.
+    await user.click(await screen.findByRole("button", { name: "Antwort ändern" }));
+
+    await user.click(screen.getByRole("button", { name: /Begleitung hinzufügen/ }));
+    await user.type(await screen.findByRole("textbox", { name: "Name der Begleitung" }), "Isabella Michelbacher");
+    await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
+
+    expect(await screen.findByRole("heading", { name: "Isabella Michelbacher", level: 3 })).toBeInTheDocument();
+    expect(api.calls.filter((call) => call.method === "PUT")).toHaveLength(0);
+    // Still the form, not the summary: nothing was saved, so nothing was confirmed.
+    expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();
+  });
+
+  // Enter inside the sheet is the same event by another route, and it went the same way.
+  it("adds the companion on Enter in the name field, and still does not save the form", async () => {
+    const api = stubRSVP(soloAnswer(), {
+      "POST /api/rsvp/members": ok({ member: companion, can_add_plus_one: false }),
+    });
+
+    const { user } = await openForm();
+    await user.click(screen.getByRole("button", { name: /Begleitung hinzufügen/ }));
+    await user.type(
+      await screen.findByRole("textbox", { name: "Name der Begleitung" }),
+      "Isabella Michelbacher{Enter}",
+    );
+
+    expect(await screen.findByRole("heading", { name: "Isabella Michelbacher", level: 3 })).toBeInTheDocument();
+    expect(api.calls.filter((call) => call.method === "PUT")).toHaveLength(0);
+  });
+
   // Most households see this from the first render. Never a disabled button: it fails
   // contrast and reads as broken, and the answer here is yes.
   it("explains the way to add somebody to every other household", async () => {

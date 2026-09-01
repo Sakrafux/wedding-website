@@ -31,6 +31,7 @@ function HouseholdListPage() {
 
   const [search, setSearch] = useState("");
   const [onlyNeverLoggedIn, setOnlyNeverLoggedIn] = useState(false);
+  const [onlyUnanswered, setOnlyUnanswered] = useState(false);
 
   if (isPending) {
     return (
@@ -51,9 +52,13 @@ function HouseholdListPage() {
   const neverLoggedIn = households.filter((household) => !household.last_login_at).length;
 
   // Filtered in the browser: sixty rows are already in memory, and a round trip per
-  // keystroke would be latency for nothing.
+  // keystroke would be latency for nothing. The two filters are an AND — two filters
+  // that quietly ORed would produce a list nobody can explain.
   const visible = households.filter((household) => {
     if (onlyNeverLoggedIn && household.last_login_at) {
+      return false;
+    }
+    if (onlyUnanswered && household.rsvp_submitted_at) {
       return false;
     }
     return household.display_name.toLocaleLowerCase("de-DE").includes(search.toLocaleLowerCase("de-DE"));
@@ -65,6 +70,13 @@ function HouseholdListPage() {
 
       <p className="text-ink-muted text-small">{householdLabels.summary(households.length, neverLoggedIn)}</p>
 
+      {/* Above the table, because the table is the only element on this page that
+          grows: everything above it keeps its position for the life of the project
+          (F5-F04). */}
+      <CreateHouseholdForm />
+
+      {/* Directly above the table they filter, not up in the action strip: "what I do"
+          and "what I see" are different rows. */}
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex min-w-56 flex-col gap-2">
           <Label htmlFor="household-search">{householdLabels.searchLabel}</Label>
@@ -77,7 +89,7 @@ function HouseholdListPage() {
           />
         </div>
 
-        <Label className="h-9 items-center gap-2">
+        <Label className="min-h-12 items-center gap-2">
           <input
             type="checkbox"
             checked={onlyNeverLoggedIn}
@@ -86,6 +98,16 @@ function HouseholdListPage() {
           />
           {householdLabels.onlyNeverLoggedIn}
         </Label>
+
+        <Label className="min-h-12 items-center gap-2">
+          <input
+            type="checkbox"
+            checked={onlyUnanswered}
+            onChange={(event) => setOnlyUnanswered(event.target.checked)}
+            className="size-5"
+          />
+          {householdLabels.onlyUnanswered}
+        </Label>
       </div>
 
       {visible.length === 0 ? (
@@ -93,7 +115,9 @@ function HouseholdListPage() {
       ) : (
         <Table>
           <TableCaption>{householdLabels.tableCaption}</TableCaption>
-          <TableHeader>
+          {/* Sticky, with the surface colour set: the table is the tail of the page
+              now, and a transparent sticky header shows rows sliding under the words. */}
+          <TableHeader className="bg-surface sticky top-0 z-10">
             <TableRow>
               <TableHead scope="col">{householdLabels.columnHousehold}</TableHead>
               <TableHead scope="col">{householdLabels.columnCode}</TableHead>
@@ -110,7 +134,6 @@ function HouseholdListPage() {
         </Table>
       )}
 
-      <CreateHouseholdForm />
       <ExportLinks households={households.length} />
     </div>
   );
@@ -174,6 +197,9 @@ function LastLoginCell({ lastLoginAt }: { lastLoginAt: string | null }) {
  * Creating a household asks for the name and nothing else, then goes straight to its
  * detail page — where the code is now visible and the members can be entered.
  * Creating and then hunting for the row you just created is the flow to avoid.
+ *
+ * An inline one-row form rather than a dialog: this is the control used sixty times in
+ * a single seeding sitting (E-OPS-01), and hiding it behind a tap buys nothing.
  */
 function CreateHouseholdForm() {
   const navigate = useNavigate();

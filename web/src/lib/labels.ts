@@ -34,6 +34,11 @@ import type {
   Portion,
   SeatingNeed,
 } from "./api/enums";
+// Type-only, and the one import here that points at a component: the transport
+// direction is form state rather than an API enum, so state.ts owns it and this file
+// only translates it.
+import type { TransportDirection } from "@/components/rsvp/state";
+
 import { weddingDateLong, weddingDateShort } from "./wedding";
 
 export const attendingLabels: Record<Attending, string> = {
@@ -87,6 +92,17 @@ export const seatingNeedLabels: Record<SeatingNeed, string> = {
   with_parent: "Sitzt bei den Eltern (kein eigener Platz)",
   high_chair: "Hochstuhl",
   wheelchair: "Platz für Rollstuhl",
+};
+
+/**
+ * The transport question's three answers. Not a database enum — the direction is
+ * derived from the two seat counts (`components/rsvp/state.ts`) — but it is a fixed
+ * set of options rendered from a `Record`, so it belongs with the other maps.
+ */
+export const transportDirectionLabels: Record<TransportDirection, string> = {
+  none: "Wir brauchen nichts",
+  needed: "Wir bräuchten Plätze",
+  offered: "Wir können Plätze anbieten",
 };
 
 export const guestKindLabels: Record<GuestKind, string> = {
@@ -244,7 +260,7 @@ export const rsvpLabels = {
   midnightSnackHint: "Kleine Stärkung spät am Abend",
   seatingNeedLabel: (name: string) => `Platz für ${name}`,
   seatingNeedHelp:
-    "Damit planen wir die Plätze in der Kirche und am Tisch: Rollstuhl, Hochstuhl, oder ein Kind, das bei den Eltern sitzt.",
+    "Damit planen wir die Plätze in der Kirche und am Tisch: Rollstuhl, Hochstuhl, oder ein Kind, das bei den Eltern sitzt. Der Hochstuhl gilt für die Feier — in der Kirche sitzt euer Kind normal in der Bank.",
   dietaryNoteLabel: (name: string) => `Allergien oder Unverträglichkeiten von ${name}`,
   dietaryNoteHelp:
     "Was die Küche wissen muss, zum Beispiel „Nussallergie“ oder „laktosefrei“. Kurz reicht — wir fragen nach, wenn etwas unklar ist.",
@@ -255,12 +271,15 @@ export const rsvpLabels = {
   ageHelp: `Gemeint ist das Alter am ${weddingDateLong}, nicht heute. Das Catering rechnet nach Alter am Tag der Feier.`,
 
   transportHeading: "Fahrt von der Kirche zur Feier",
-  transportNeededLabel: "Plätze gesucht",
-  transportNeededHelp:
-    "Wie viele von euch bräuchten eine Mitfahrgelegenheit von der Kirche zur Feier? Wir sehen daran, ob sich ein Shuttle lohnt — wir vermitteln keine Fahrgemeinschaften.",
-  transportOfferedLabel: "Plätze angeboten",
-  transportOfferedHelp:
-    "Wie viele freie Plätze hättet ihr im Auto von der Kirche zur Feier? Auch das ist nur für die Planung; wer mitfährt, klärt sich vor Ort.",
+  /** One question with a direction, not two counts: needing und anbieten schließen
+      sich aus, und nebeneinander lasen sie sich wie dieselbe Frage zweimal (F3-F07). */
+  transportDirectionLabel: "Wie sieht es bei euch mit der Fahrt aus?",
+  transportDirectionHelp:
+    "Gemeint ist die kurze Fahrt von der Kirche zur Feier. Wir sehen daran, ob sich ein Shuttle lohnt — Fahrgemeinschaften vermitteln wir nicht, das klärt sich vor Ort.",
+  transportNeededLabel: "Wie viele Plätze braucht ihr?",
+  transportOfferedLabel: "Wie viele Plätze könnt ihr anbieten?",
+  transportSeatsHelp:
+    "Nur eine Zahl für die Planung. Wenn sich das noch ändert, könnt ihr die Antwort jederzeit anpassen.",
   /** Said rather than silently discarded: a number that vanishes without explanation
       is exactly the kind of thing that gets phoned in about. */
   transportDropped:
@@ -397,6 +416,7 @@ export const householdLabels = {
   columnRSVP: "RSVP",
   searchLabel: "Haushalt suchen",
   onlyNeverLoggedIn: "Nur die, die sich nie angemeldet haben",
+  onlyUnanswered: "Nur die ohne Antwort",
   /** Not a stat tile: two numbers do not need a component, and the tiles are F6's. */
   summary: (households: number, neverLoggedIn: number) =>
     `${households} Haushalte, davon ${neverLoggedIn} nie angemeldet`,
@@ -420,12 +440,12 @@ export const householdLabels = {
   displayNameLabel: "Name",
   adminNoteLabel: "Interne Notiz (nur für uns)",
   adminNoteHint: "Der Haushalt sieht diese Notiz nie.",
-  transportNeededLabel: "Plätze gesucht (Kirche → Feier)",
-  transportOfferedLabel: "Plätze angeboten (Kirche → Feier)",
-  strollerLabel: "Bringt einen Kinderwagen",
   save: "Speichern",
   saving: "Wird gespeichert …",
-  saved: "Gespeichert.",
+  /** The time, not just the fact: a chip reading "Gespeichert." left us wondering
+      whether it meant *these* changes, and locally the save is fast enough that the
+      button's own state was a flash (F5-F05). */
+  savedAt: (time: string) => `Zuletzt gespeichert um ${time}`,
 
   codeHeading: "Login-Code",
   codeCopy: "Code kopieren",
@@ -465,6 +485,15 @@ export const householdLabels = {
 
   rsvpHeading: "Rückmeldung",
   rsvpNotAnswered: "Dieser Haushalt hat noch nicht geantwortet.",
+  /** Shown here, editable only through the RSVP form: these three are the household's
+      own answers, and their one writer is the endpoint that runs the RSVP rules
+      (F5-B05). */
+  rsvpTransportNeeded: "Plätze gesucht (Kirche → Feier)",
+  rsvpTransportOffered: "Plätze angeboten (Kirche → Feier)",
+  rsvpStroller: "Kinderwagen",
+  rsvpYes: "Ja",
+  rsvpNo: "Nein",
+  rsvpNothing: "—",
   rsvpAnsweredAt: (date: string) => `Beantwortet am ${date}.`,
   /** A link, not a second form: the same component the guests use, addressed by id. */
   rsvpOpenForm: "Rückmeldung bearbeiten",
@@ -537,21 +566,59 @@ export const moreLabels = {
   intro: "Alles Weitere zur Hochzeit — und wie du uns erreichst.",
 } as const;
 
+/**
+ * Whether a household is addressed as one person or as several.
+ *
+ * Chosen by how many people we **seeded**, never by how many there are now: a guest
+ * invited alone who adds a companion is still the person we wrote to, and switching to
+ * "ihr" the moment they name somebody reads as the site correcting them (`F2-F08`).
+ */
+export type Address = "singular" | "plural";
+
+/**
+ * The start page's copy, in both numbers.
+ *
+ * Two written-out variants rather than one sentence with a conjugation helper: German
+ * does not conjugate by find-and-replace, and a `Record` makes a missing variant a
+ * compile error.
+ *
+ * Only this page varies. The RSVP form stays plural throughout — it addresses a
+ * household, and a companion may have been added to it.
+ */
+export const startAddressLabels: Record<
+  Address,
+  {
+    greeting: (householdName: string) => string;
+    intro: string;
+    rsvpDeadline: (date: string) => string;
+    rsvpAnsweredUntil: (date: string) => string;
+  }
+> = {
+  singular: {
+    /** Built around the display name rather than glued in front of it: "Luki & Paddi"
+        is a valid display name, and "Liebe Luki & Paddi," would read wrong. */
+    greeting: (householdName) => `Schön, dass du da bist, ${householdName}.`,
+    intro: "Hier findest du alles zur Hochzeit — und hier sagst du uns, ob du kommst.",
+    rsvpDeadline: (date) => `Bitte antworte bis zum ${date}.`,
+    /** Once answered, the deadline stops being a request and becomes the date until
+        which the answer can still change — the only thing left worth knowing. */
+    rsvpAnsweredUntil: (date) => `Danke für deine Antwort! Ändern kannst du sie noch bis zum ${date}.`,
+  },
+  plural: {
+    greeting: (householdName) => `Schön, dass ihr da seid, ${householdName}.`,
+    intro: "Hier findet ihr alles zur Hochzeit — und hier sagt ihr uns, wer von euch kommt.",
+    rsvpDeadline: (date) => `Bitte antwortet bis zum ${date}.`,
+    rsvpAnsweredUntil: (date) => `Danke für eure Antwort! Ändern könnt ihr sie noch bis zum ${date}.`,
+  },
+};
+
 export const startLabels = {
-  /** Built around the display name rather than glued in front of it: "Luki & Paddi"
-      is a valid display name, and "Liebe Luki & Paddi," would read wrong. */
-  greeting: (householdName: string) => `Schön, dass ihr da seid, ${householdName}.`,
-  intro: "Hier findet ihr alles zur Hochzeit — und hier sagt ihr uns, wer von euch kommt.",
   names: "Isabella & Andreas",
   /** Days only, never a ticking clock: it is a badge, not a timer. */
   countdown: (days: number) => (days === 1 ? "Noch 1 Tag" : `Noch ${days} Tage`),
   countdownToday: "Heute ist es so weit",
   rsvpCallToAction: "Jetzt zusagen",
   rsvpCallToActionAnswered: "Antwort ändern",
-  /** Beside the answer link, spelled out — the deadline is a sentence, not a second
-      countdown competing with the big number above it. */
-  rsvpDeadline: (date: string) => `Bitte antwortet bis zum ${date}.`,
-  rsvpAnswered: "Ihr habt uns schon geantwortet. Danke!",
 } as const;
 
 /**
@@ -593,30 +660,45 @@ export const scheduleLabels = {
  * The two venues and how to get to them.
  *
  * PLACEHOLDER (TODO.md): names, addresses, parking and travel notes are open until
- * the venues are booked. This page must not ship to guests with these strings in it —
- * 07-roadmap accepts a thin Ablauf page at launch and explicitly does not accept an
- * empty Location page.
+ * the venues are booked. These pages must not ship to guests with these strings in
+ * them — 07-roadmap accepts a thin Ablauf page at launch and explicitly does not
+ * accept an empty Location page. Splitting the page into an overview and one page per
+ * venue (F2-F09) does not change that: it is now three pages waiting for the same
+ * facts.
  */
 export const locationLabels = {
   heading: "Location & Anreise",
-  intro: "Getraut wird in der Kirche, gefeiert wird danach. Beide Adressen stehen hier, sobald sie feststehen.",
+  intro:
+    "Getraut wird in der Kirche, gefeiert wird danach woanders. Hier findet ihr beide Orte — und auf der jeweiligen Seite alles, was ihr dazu braucht.",
   venuesHeading: "Die Orte",
-  churchHeading: "Kirche",
+  churchHeading: "Trauung in der Kirche",
   partyHeading: "Feier",
+  /** One line per venue on the overview; the facts live on the venue's own page. Two
+      addresses, two car parks and two arrival notes in one scroll were exactly what
+      got mixed up (F2-F09). */
+  churchTeaser: "Wo wir uns das Ja-Wort geben. Adresse, Parken und Anreise auf der Seite zur Trauung.",
+  partyTeaser: "Wo danach gefeiert wird. Adresse, Parken, Anreise und Tipps zum Übernachten auf der Seite zur Feier.",
+  churchDetailLink: "Zur Trauung",
+  partyDetailLink: "Zur Feier",
   addressOpen: "Die Adresse steht noch nicht fest. Sie kommt hier auf die Seite, sobald wir gebucht haben.",
   mapLink: "Auf der Karte ansehen",
   /** Said in the link text as well as by the icon: nobody in this audience should be
       surprised by a new tab. */
   externalHint: "(öffnet in einem neuen Tab)",
+  addressHeading: "Adresse",
   arrivalHeading: "Anreise & Parken",
-  arrivalOpen:
-    "Wie ihr am besten hinkommt und wo ihr parken könnt, schreiben wir hier auf, sobald die Orte feststehen.",
+  arrivalOpen: "Wie ihr am besten hinkommt und wo ihr parken könnt, schreiben wir hier auf, sobald der Ort feststeht.",
+  /** Stays on the overview: it belongs to neither venue — it is the bit between them,
+      and it is the paragraph a guest reads before answering the transport question. */
   transferHeading: "Von der Kirche zur Feier",
   transfer:
     "Zwischen Kirche und Feier liegt eine kurze Fahrt. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden — sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
+  /** On the party page, not the overview: somebody looking for a bed is looking for
+      one near where the evening ends. */
   accommodationHeading: "Übernachtung",
   accommodationOpen:
     "Eine Liste mit Hotels und Pensionen in der Nähe kommt hier auf die Seite. Zimmer reserviert haben wir nicht.",
+  backToOverview: "Zurück zu Location & Anreise",
 } as const;
 
 /**

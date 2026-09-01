@@ -26,6 +26,7 @@ import {
   type RSVPDraft,
   reseedDraft,
   toRequest,
+  withMealDefault,
 } from "./state";
 
 /**
@@ -49,6 +50,7 @@ export function RSVPForm({
   onAddMember,
   onRemoveMember,
   allowEditingAfterDeadline = false,
+  summaryFirst = false,
   dense = false,
 }: {
   answer: RSVPResponse;
@@ -69,12 +71,23 @@ export function RSVPForm({
    * explicitly, so that the shared default stays the safe one (F3-B06).
    */
   allowEditingAfterDeadline?: boolean;
+  /**
+   * Whether an already-answered household is shown its stored answer instead of the
+   * form (F3-F09). The guest page opts in; the admin page does not, because we open it
+   * mid-phone-call to change something and a recap would be one tap in the way.
+   */
+  summaryFirst?: boolean;
   /** Admin density: the same controls, without the guest page's decorative spacing. */
   dense?: boolean;
 }) {
   const [draft, setDraft] = useState<RSVPDraft>(() => draftFrom(answer));
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const [saved, setSaved] = useState<RSVPResponse | null>(null);
+  // The summary is a view of the stored answer, not a post-save screen: it is where an
+  // answered household lands, and where a save returns to (F3-F09). `justSaved` is the
+  // only difference between the two arrivals — it moves focus and shows the
+  // confirmation, because only one of them is an event.
+  const [showsSummary, setShowsSummary] = useState(summaryFirst && answer.household.rsvp_submitted_at !== null);
+  const [justSaved, setJustSaved] = useState(false);
   // Set when adding or removing a member is refused because the deadline passed while
   // this form was open — the same recovery a refused save gets, from a request that is
   // not a save.
@@ -111,19 +124,25 @@ export function RSVPForm({
 
   useEffect(() => {
     // Focus lands on the confirmation, so a screen-reader user is told the answer was
-    // saved instead of being left at the bottom of a form that has disappeared.
-    if (saved) {
+    // saved instead of being left at the bottom of a form that has disappeared. Only
+    // after a save: arriving at the summary by navigation is not an event, and moving
+    // focus for it would announce something that did not happen.
+    if (justSaved) {
       confirmationHeading.current?.focus();
     }
-  }, [saved]);
+  }, [justSaved]);
 
+  // withMealDefault runs on every member change rather than only on a scope change:
+  // the scope is what reveals the meal question, and pre-answering it here is what
+  // puts `all` in the request body instead of only in the radio group (F3-F08).
   function updateMember(memberId: number, change: Partial<RSVPDraft["members"][number]>) {
     setDraft((current) => {
       const member = current.members[memberId];
       if (!member) {
         return current;
       }
-      return { ...current, members: { ...current.members, [memberId]: { ...member, ...change } } };
+      const updated = withMealDefault({ ...member, ...change });
+      return { ...current, members: { ...current.members, [memberId]: updated } };
     });
   }
 
@@ -131,7 +150,7 @@ export function RSVPForm({
     setDraft((current) => {
       const updated: RSVPDraft["members"] = {};
       for (const [id, member] of Object.entries(current.members)) {
-        updated[Number(id)] = { ...member, attending: scope };
+        updated[Number(id)] = withMealDefault({ ...member, attending: scope });
       }
       return { ...current, members: updated };
     });
@@ -139,6 +158,12 @@ export function RSVPForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    // Belt and braces beside AddPlusOne's stopPropagation (F4-F03): React's synthetic
+    // submit bubbles out of a portal, so a dialog with a form in it is one refactor
+    // away from saving the RSVP as a side effect. Only this form's own submit saves.
+    if (event.target !== event.currentTarget) {
+      return;
+    }
     setSubmitAttempted(true);
     setSaveError(null);
 
@@ -156,7 +181,9 @@ export function RSVPForm({
 
     setIsSaving(true);
     try {
-      setSaved(await onSave(toRequest(draft, members)));
+      await onSave(toRequest(draft, members));
+      setJustSaved(true);
+      setShowsSummary(true);
     } catch (error) {
       // Every entered value stays on screen: losing a filled-in form to a dropped
       // connection in a village is the failure this audience will actually hit.
@@ -166,7 +193,7 @@ export function RSVPForm({
     }
   }
 
-  if (saved) {
+  if (showsSummary && !isReadOnly) {
     return (
       <div className="flex flex-col gap-6">
         <Alert>
@@ -180,9 +207,21 @@ export function RSVPForm({
           </AlertDescription>
         </Alert>
 
-        <RSVPSummary answer={saved} />
+        {/* The `answer` prop, never the save's own response: the save writes it into
+            the query cache, so this is the stored, normalized answer either way — and
+            it is also what a household arriving here from the navigation sees. */}
+        <RSVPSummary answer={answer} />
 
-        <Button type="button" variant="outline" size="lg" className="h-14" onClick={() => setSaved(null)}>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="h-14"
+          onClick={() => {
+            setShowsSummary(false);
+            setJustSaved(false);
+          }}
+        >
           {rsvpLabels.changeAnswer}
         </Button>
       </div>
@@ -202,7 +241,9 @@ export function RSVPForm({
       className={cn("flex flex-col", dense ? "gap-6" : "gap-12")}
       noValidate
     >
-      <p className="text-ink-muted">{rsvpLabels.deadlineNotice(formatShortDate(answer.deadline))}</p>
+      {/* Weight rather than colour: it is the one date on the page and it was the
+          quietest line on it (F3-F08). */}
+      <p className="text-ink font-medium">{rsvpLabels.deadlineNotice(formatShortDate(answer.deadline))}</p>
       {answer.household.rsvp_updated_at ? (
         <p className="text-ink-muted text-small">
           {rsvpLabels.lastChanged(formatShortDate(answer.household.rsvp_updated_at))}

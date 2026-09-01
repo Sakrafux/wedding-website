@@ -143,32 +143,56 @@ func isNumeric(fieldError validator.FieldError) bool {
 	}
 }
 
-// AgeValidationError translates the domain's age rules into a field error on `age`,
-// and passes anything else through unchanged.
+// GuestFieldValidationError translates the domain's per-guest field rules — the age
+// rules and the seating-need rule — into field errors, and passes anything else
+// through unchanged.
 //
-// The rule lives in the domain (domain.ResolveAge) because it is a business fact;
-// the field name and the German sentence live here because they are the shape of a
-// request and the wording of a response. A driver error from the column's CHECK
-// constraint would be neither — it is not a message a form can put next to a field,
-// which is why the pairing is enforced before the write.
-func AgeValidationError(err error) error {
-	return AgeValidationErrorAt("age", err)
+// The rules live in the domain (domain.ResolveAge, domain.ResolveSeatingNeed) because
+// they are business facts; the field names and the German sentences live here because
+// they are the shape of a request and the wording of a response. A driver error from
+// the column's CHECK constraint would be neither — it is not a message a form can put
+// next to a field, which is why the pairing is enforced before the write.
+func GuestFieldValidationError(err error) error {
+	return GuestFieldValidationErrorUnder("", err)
 }
 
-// AgeValidationErrorAt is AgeValidationError under a chosen field key, for a body that
-// carries more than one person's age: the RSVP endpoints key theirs
-// `members.<id>.age`, so the message lands on the right card.
-func AgeValidationErrorAt(field string, err error) error {
+// GuestFieldValidationErrorUnder is GuestFieldValidationError with every field key
+// prefixed, for a body that carries more than one person: the RSVP endpoints pass
+// "members.<id>." so the message lands on the right card.
+func GuestFieldValidationErrorUnder(prefix string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrAgeOnAdult):
-		return ValidationError{Fields: map[string]string{
-			field: "Ein Alter speichern wir nur für Kinder.",
-		}}
+		return fieldError(prefix+"age", "Ein Alter speichern wir nur für Kinder.")
 	case errors.Is(err, domain.ErrAgeOutOfRange):
-		return ValidationError{Fields: map[string]string{
-			field: "Bitte gib ein Alter zwischen 0 und 17 Jahren an.",
-		}}
+		return fieldError(prefix+"age", "Bitte gib ein Alter zwischen 0 und 17 Jahren an.")
+	case errors.Is(err, domain.ErrSeatingNeedOnAdult):
+		return fieldError(prefix+"seating_need",
+			"Hochstuhl und „sitzt bei den Eltern“ tragen wir nur für Kinder ein.")
 	default:
 		return err
 	}
+}
+
+// TransportSeatsValidationError translates domain.ErrTransportSeatsConflict into a
+// field error, and passes anything else through unchanged.
+//
+// The same sentence on **both** counts: the form shows one of the two at a time
+// (F3-F07), so keying only one field is how the message ends up attached to a control
+// that is not on screen.
+func TransportSeatsValidationError(err error) error {
+	if !errors.Is(err, domain.ErrTransportSeatsConflict) {
+		return err
+	}
+
+	const message = "Sagt uns bitte entweder, wie viele Plätze ihr braucht, oder wie viele ihr anbieten " +
+		"könnt — beides zusammen können wir nicht planen."
+	return ValidationError{Fields: map[string]string{
+		"transport_seats_needed":  message,
+		"transport_seats_offered": message,
+	}}
+}
+
+// fieldError is one field's rejection, in the shape RespondError renders.
+func fieldError(field, message string) error {
+	return ValidationError{Fields: map[string]string{field: message}}
 }

@@ -24,6 +24,25 @@ export function RoutePending() {
 }
 
 /**
+ * What a page inside the guest navigation shows while its own data loads.
+ *
+ * `RoutePending` centres a login-shaped column in the viewport, which is right at `/`
+ * and wrong under a navigation bar — it reads as the whole app reloading rather than as
+ * one page filling in. This one is content-shaped and sits in the page's own flow
+ * (F11-04).
+ */
+export function SectionPending() {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true">
+      <p className="sr-only">{shellLabels.loading}</p>
+      <div className="bg-surface-sunken h-10 w-1/2 animate-pulse rounded-lg" />
+      <div className="bg-surface-sunken h-32 w-full animate-pulse rounded-xl" />
+      <div className="bg-surface-sunken h-32 w-full animate-pulse rounded-xl" />
+    </div>
+  );
+}
+
+/**
  * The error boundary for a failed route load.
  *
  * A dropped connection and a broken server are both shown here with a retry, and

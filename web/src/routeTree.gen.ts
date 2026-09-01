@@ -21,11 +21,13 @@ import { Route as GuestChromeDresscodeRouteImport } from './routes/_guest/_chrom
 import { Route as GuestChromeFaqRouteImport } from './routes/_guest/_chrome/faq'
 import { Route as GuestChromeGeschenkeRouteImport } from './routes/_guest/_chrome/geschenke'
 import { Route as GuestChromeKontaktRouteImport } from './routes/_guest/_chrome/kontakt'
-import { Route as GuestChromeLocationRouteImport } from './routes/_guest/_chrome/location'
 import { Route as GuestChromeMehrRouteImport } from './routes/_guest/_chrome/mehr'
 import { Route as GuestChromeStartRouteImport } from './routes/_guest/_chrome/start'
 import { Route as GuestChromeZusagenRouteImport } from './routes/_guest/_chrome/zusagen'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
+import { Route as GuestChromeLocationIndexRouteImport } from './routes/_guest/_chrome/location/index'
+import { Route as GuestChromeLocationFeierRouteImport } from './routes/_guest/_chrome/location/feier'
+import { Route as GuestChromeLocationKircheRouteImport } from './routes/_guest/_chrome/location/kirche'
 import { Route as AdminShellHaushalteIndexRouteImport } from './routes/admin/_shell/haushalte/index'
 import { Route as AdminShellHaushalteHouseholdIdRouteImport } from './routes/admin/_shell/haushalte/$householdId'
 import { Route as AdminShellHaushalteHouseholdIdRsvpRouteImport } from './routes/admin/_shell/haushalte/$householdId_.rsvp'
@@ -88,11 +90,6 @@ const GuestChromeKontaktRoute = GuestChromeKontaktRouteImport.update({
   path: '/kontakt',
   getParentRoute: () => GuestChromeRoute,
 } as any)
-const GuestChromeLocationRoute = GuestChromeLocationRouteImport.update({
-  id: '/location',
-  path: '/location',
-  getParentRoute: () => GuestChromeRoute,
-} as any)
 const GuestChromeMehrRoute = GuestChromeMehrRouteImport.update({
   id: '/mehr',
   path: '/mehr',
@@ -113,6 +110,24 @@ const AdminShellIndexRoute = AdminShellIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminShellRoute,
 } as any)
+const GuestChromeLocationIndexRoute =
+  GuestChromeLocationIndexRouteImport.update({
+    id: '/location/',
+    path: '/location/',
+    getParentRoute: () => GuestChromeRoute,
+  } as any)
+const GuestChromeLocationFeierRoute =
+  GuestChromeLocationFeierRouteImport.update({
+    id: '/location/feier',
+    path: '/location/feier',
+    getParentRoute: () => GuestChromeRoute,
+  } as any)
+const GuestChromeLocationKircheRoute =
+  GuestChromeLocationKircheRouteImport.update({
+    id: '/location/kirche',
+    path: '/location/kirche',
+    getParentRoute: () => GuestChromeRoute,
+  } as any)
 const AdminShellHaushalteIndexRoute =
   AdminShellHaushalteIndexRouteImport.update({
     id: '/haushalte/',
@@ -143,12 +158,14 @@ export interface FileRoutesByFullPath {
   '/faq': typeof GuestChromeFaqRoute
   '/geschenke': typeof GuestChromeGeschenkeRoute
   '/kontakt': typeof GuestChromeKontaktRoute
-  '/location': typeof GuestChromeLocationRoute
   '/mehr': typeof GuestChromeMehrRoute
   '/start': typeof GuestChromeStartRoute
   '/zusagen': typeof GuestChromeZusagenRoute
   '/admin/': typeof AdminShellIndexRoute
+  '/location/feier': typeof GuestChromeLocationFeierRoute
+  '/location/kirche': typeof GuestChromeLocationKircheRoute
   '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
+  '/location/': typeof GuestChromeLocationIndexRoute
   '/admin/haushalte/': typeof AdminShellHaushalteIndexRoute
   '/admin/haushalte/$householdId/rsvp': typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
@@ -162,12 +179,14 @@ export interface FileRoutesByTo {
   '/faq': typeof GuestChromeFaqRoute
   '/geschenke': typeof GuestChromeGeschenkeRoute
   '/kontakt': typeof GuestChromeKontaktRoute
-  '/location': typeof GuestChromeLocationRoute
   '/mehr': typeof GuestChromeMehrRoute
   '/start': typeof GuestChromeStartRoute
   '/zusagen': typeof GuestChromeZusagenRoute
   '/admin': typeof AdminShellIndexRoute
+  '/location/feier': typeof GuestChromeLocationFeierRoute
+  '/location/kirche': typeof GuestChromeLocationKircheRoute
   '/admin/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
+  '/location': typeof GuestChromeLocationIndexRoute
   '/admin/haushalte': typeof AdminShellHaushalteIndexRoute
   '/admin/haushalte/$householdId/rsvp': typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
@@ -185,12 +204,14 @@ export interface FileRoutesById {
   '/_guest/_chrome/faq': typeof GuestChromeFaqRoute
   '/_guest/_chrome/geschenke': typeof GuestChromeGeschenkeRoute
   '/_guest/_chrome/kontakt': typeof GuestChromeKontaktRoute
-  '/_guest/_chrome/location': typeof GuestChromeLocationRoute
   '/_guest/_chrome/mehr': typeof GuestChromeMehrRoute
   '/_guest/_chrome/start': typeof GuestChromeStartRoute
   '/_guest/_chrome/zusagen': typeof GuestChromeZusagenRoute
   '/admin/_shell/': typeof AdminShellIndexRoute
+  '/_guest/_chrome/location/feier': typeof GuestChromeLocationFeierRoute
+  '/_guest/_chrome/location/kirche': typeof GuestChromeLocationKircheRoute
   '/admin/_shell/haushalte/$householdId': typeof AdminShellHaushalteHouseholdIdRoute
+  '/_guest/_chrome/location/': typeof GuestChromeLocationIndexRoute
   '/admin/_shell/haushalte/': typeof AdminShellHaushalteIndexRoute
   '/admin/_shell/haushalte/$householdId_/rsvp': typeof AdminShellHaushalteHouseholdIdRsvpRoute
 }
@@ -207,12 +228,14 @@ export interface FileRouteTypes {
     | '/faq'
     | '/geschenke'
     | '/kontakt'
-    | '/location'
     | '/mehr'
     | '/start'
     | '/zusagen'
     | '/admin/'
+    | '/location/feier'
+    | '/location/kirche'
     | '/admin/haushalte/$householdId'
+    | '/location/'
     | '/admin/haushalte/'
     | '/admin/haushalte/$householdId/rsvp'
   fileRoutesByTo: FileRoutesByTo
@@ -226,12 +249,14 @@ export interface FileRouteTypes {
     | '/faq'
     | '/geschenke'
     | '/kontakt'
-    | '/location'
     | '/mehr'
     | '/start'
     | '/zusagen'
     | '/admin'
+    | '/location/feier'
+    | '/location/kirche'
     | '/admin/haushalte/$householdId'
+    | '/location'
     | '/admin/haushalte'
     | '/admin/haushalte/$householdId/rsvp'
   id:
@@ -248,12 +273,14 @@ export interface FileRouteTypes {
     | '/_guest/_chrome/faq'
     | '/_guest/_chrome/geschenke'
     | '/_guest/_chrome/kontakt'
-    | '/_guest/_chrome/location'
     | '/_guest/_chrome/mehr'
     | '/_guest/_chrome/start'
     | '/_guest/_chrome/zusagen'
     | '/admin/_shell/'
+    | '/_guest/_chrome/location/feier'
+    | '/_guest/_chrome/location/kirche'
     | '/admin/_shell/haushalte/$householdId'
+    | '/_guest/_chrome/location/'
     | '/admin/_shell/haushalte/'
     | '/admin/_shell/haushalte/$householdId_/rsvp'
   fileRoutesById: FileRoutesById
@@ -351,13 +378,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestChromeKontaktRouteImport
       parentRoute: typeof GuestChromeRoute
     }
-    '/_guest/_chrome/location': {
-      id: '/_guest/_chrome/location'
-      path: '/location'
-      fullPath: '/location'
-      preLoaderRoute: typeof GuestChromeLocationRouteImport
-      parentRoute: typeof GuestChromeRoute
-    }
     '/_guest/_chrome/mehr': {
       id: '/_guest/_chrome/mehr'
       path: '/mehr'
@@ -385,6 +405,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminShellIndexRouteImport
       parentRoute: typeof AdminShellRoute
+    }
+    '/_guest/_chrome/location/': {
+      id: '/_guest/_chrome/location/'
+      path: '/location'
+      fullPath: '/location/'
+      preLoaderRoute: typeof GuestChromeLocationIndexRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/location/feier': {
+      id: '/_guest/_chrome/location/feier'
+      path: '/location/feier'
+      fullPath: '/location/feier'
+      preLoaderRoute: typeof GuestChromeLocationFeierRouteImport
+      parentRoute: typeof GuestChromeRoute
+    }
+    '/_guest/_chrome/location/kirche': {
+      id: '/_guest/_chrome/location/kirche'
+      path: '/location/kirche'
+      fullPath: '/location/kirche'
+      preLoaderRoute: typeof GuestChromeLocationKircheRouteImport
+      parentRoute: typeof GuestChromeRoute
     }
     '/admin/_shell/haushalte/': {
       id: '/admin/_shell/haushalte/'
@@ -417,10 +458,12 @@ interface GuestChromeRouteChildren {
   GuestChromeFaqRoute: typeof GuestChromeFaqRoute
   GuestChromeGeschenkeRoute: typeof GuestChromeGeschenkeRoute
   GuestChromeKontaktRoute: typeof GuestChromeKontaktRoute
-  GuestChromeLocationRoute: typeof GuestChromeLocationRoute
   GuestChromeMehrRoute: typeof GuestChromeMehrRoute
   GuestChromeStartRoute: typeof GuestChromeStartRoute
   GuestChromeZusagenRoute: typeof GuestChromeZusagenRoute
+  GuestChromeLocationFeierRoute: typeof GuestChromeLocationFeierRoute
+  GuestChromeLocationKircheRoute: typeof GuestChromeLocationKircheRoute
+  GuestChromeLocationIndexRoute: typeof GuestChromeLocationIndexRoute
 }
 
 const GuestChromeRouteChildren: GuestChromeRouteChildren = {
@@ -430,10 +473,12 @@ const GuestChromeRouteChildren: GuestChromeRouteChildren = {
   GuestChromeFaqRoute: GuestChromeFaqRoute,
   GuestChromeGeschenkeRoute: GuestChromeGeschenkeRoute,
   GuestChromeKontaktRoute: GuestChromeKontaktRoute,
-  GuestChromeLocationRoute: GuestChromeLocationRoute,
   GuestChromeMehrRoute: GuestChromeMehrRoute,
   GuestChromeStartRoute: GuestChromeStartRoute,
   GuestChromeZusagenRoute: GuestChromeZusagenRoute,
+  GuestChromeLocationFeierRoute: GuestChromeLocationFeierRoute,
+  GuestChromeLocationKircheRoute: GuestChromeLocationKircheRoute,
+  GuestChromeLocationIndexRoute: GuestChromeLocationIndexRoute,
 }
 
 const GuestChromeRouteWithChildren = GuestChromeRoute._addFileChildren(

@@ -29,8 +29,19 @@ import {
   useUpdateHousehold,
   useUpdateMember,
 } from "@/lib/api/households";
-import { formatShortDate } from "@/lib/dates";
+import { formatClockTime, formatShortDate } from "@/lib/dates";
 import { guestKindLabels, guestOriginLabels, householdLabels, seatingNeedLabels } from "@/lib/labels";
+
+/**
+ * The seating needs an adult may have, matching domain.ResolveSeatingNeed: a lap seat
+ * and a high chair are children's, and the server refuses either for an adult
+ * (F3-B08).
+ */
+const adultSeatingNeeds: SeatingNeed[] = ["normal", "wheelchair"];
+
+function seatingNeedsFor(kind: GuestKind): SeatingNeed[] {
+  return kind === "child" ? (Object.keys(seatingNeedLabels) as SeatingNeed[]) : adultSeatingNeeds;
+}
 
 export const Route = createFileRoute("/admin/_shell/haushalte/$householdId")({
   component: HouseholdDetailPage,
@@ -90,21 +101,14 @@ function HouseholdFields({ household }: { household: AdminHousehold }) {
 
   const [displayName, setDisplayName] = useState(household.display_name);
   const [adminNote, setAdminNote] = useState(household.admin_note);
-  const [seatsNeeded, setSeatsNeeded] = useState(String(household.transport_seats_needed));
-  const [seatsOffered, setSeatsOffered] = useState(String(household.transport_seats_offered));
-  const [hasStroller, setHasStroller] = useState(household.has_stroller);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
     try {
-      await update.mutateAsync({
-        display_name: displayName,
-        admin_note: adminNote,
-        transport_seats_needed: Number(seatsNeeded),
-        transport_seats_offered: Number(seatsOffered),
-        has_stroller: hasStroller,
-      });
+      await update.mutateAsync({ display_name: displayName, admin_note: adminNote });
+      setSavedAt(new Date());
     } catch {
       // Rendered per field below, from the error's `fields` map.
     }
@@ -134,57 +138,15 @@ function HouseholdFields({ household }: { household: AdminHousehold }) {
           <Textarea id="admin-note" value={adminNote} onChange={(event) => setAdminNote(event.target.value)} />
         </Field>
 
-        <div className="flex flex-wrap gap-4">
-          <Field
-            label={householdLabels.transportNeededLabel}
-            id="seats-needed"
-            error={fieldError(update.error, "transport_seats_needed")}
-          >
-            <Input
-              id="seats-needed"
-              type="number"
-              min={0}
-              max={20}
-              value={seatsNeeded}
-              onChange={(event) => setSeatsNeeded(event.target.value)}
-            />
-          </Field>
-
-          <Field
-            label={householdLabels.transportOfferedLabel}
-            id="seats-offered"
-            error={fieldError(update.error, "transport_seats_offered")}
-          >
-            <Input
-              id="seats-offered"
-              type="number"
-              min={0}
-              max={20}
-              value={seatsOffered}
-              onChange={(event) => setSeatsOffered(event.target.value)}
-            />
-          </Field>
-        </div>
-
-        <Label className="items-center gap-2">
-          <input
-            type="checkbox"
-            className="size-5"
-            checked={hasStroller}
-            onChange={(event) => setHasStroller(event.target.checked)}
-          />
-          {householdLabels.strollerLabel}
-        </Label>
+        {/* The transport counts and the pram are not here, and that is deliberate: they
+            are the household's own RSVP answers, their one writer is the RSVP endpoint
+            (F5-B05), and the RSVP section below shows what was answered. */}
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={update.isPending}>
             {update.isPending ? householdLabels.saving : householdLabels.save}
           </Button>
-          {update.isSuccess ? (
-            <span role="status" className="text-small text-ink-muted">
-              {householdLabels.saved}
-            </span>
-          ) : null}
+          <SavedAt at={savedAt} />
         </div>
       </fieldset>
     </form>
@@ -300,14 +262,19 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
   const [age, setAge] = useState(member.age === null ? "" : String(member.age));
   const [seatingNeed, setSeatingNeed] = useState<SeatingNeed>(member.seating_need);
   const [dietaryNote, setDietaryNote] = useState(member.dietary_note);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
 
-  // The server clears the age when a child becomes an adult. The form clears
-  // it visibly at the same moment, so the admin never builds a combination that will
-  // be rejected and then reads about it.
+  // The server clears the age when a child becomes an adult, and refuses a child-only
+  // seating need on an adult outright (F3-B08). The form follows visibly at the same
+  // moment, so the admin never builds a combination that will be rejected and then
+  // reads about it.
   function changeKind(next: GuestKind) {
     setKind(next);
     if (next !== "child") {
       setAge("");
+      if (!adultSeatingNeeds.includes(seatingNeed)) {
+        setSeatingNeed("normal");
+      }
     }
   }
 
@@ -322,6 +289,7 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
         seating_need: seatingNeed,
         dietary_note: dietaryNote,
       });
+      setSavedAt(new Date());
     } catch {
       // Rendered per field below.
     }
@@ -391,9 +359,9 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
               value={seatingNeed}
               onChange={(event) => setSeatingNeed(event.target.value as SeatingNeed)}
             >
-              {Object.entries(seatingNeedLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {seatingNeedsFor(kind).map((need) => (
+                <option key={need} value={need}>
+                  {seatingNeedLabels[need]}
                 </option>
               ))}
             </NativeSelect>
@@ -435,14 +403,29 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
             </AlertDialogContent>
           </AlertDialog>
 
-          {update.isSuccess ? (
-            <span role="status" className="text-small text-ink-muted">
-              {householdLabels.saved}
-            </span>
-          ) : null}
+          <SavedAt at={savedAt} />
         </div>
       </fieldset>
     </form>
+  );
+}
+
+/**
+ * When this block last saved.
+ *
+ * The browser's own clock at the moment the response arrived, and it stays until the
+ * next save. "Gespeichert." left us wondering whether it meant *these* changes, and
+ * locally the request finishes fast enough that the button's own state was a flash —
+ * a confirmation that persists needs no minimum duration to be seen (F5-F05).
+ */
+function SavedAt({ at }: { at: Date | null }) {
+  if (!at) {
+    return null;
+  }
+  return (
+    <span role="status" className="text-small text-ink-muted">
+      {householdLabels.savedAt(formatClockTime(at))}
+    </span>
   );
 }
 
@@ -576,6 +559,27 @@ function RSVPSection({ household }: { household: AdminHousehold }) {
           ? householdLabels.rsvpAnsweredAt(formatShortDate(household.rsvp_submitted_at))
           : householdLabels.rsvpNotAnswered}
       </p>
+
+      {/* Read-only, next to the link that edits them properly: these three are answers,
+          not settings, and editing them beside `display_name` bypassed the RSVP rules
+          (F5-B05). */}
+      <dl className="text-small flex flex-col gap-1">
+        <AnswerRow
+          label={householdLabels.rsvpTransportNeeded}
+          value={household.transport_seats_needed > 0 ? household.transport_seats_needed : householdLabels.rsvpNothing}
+        />
+        <AnswerRow
+          label={householdLabels.rsvpTransportOffered}
+          value={
+            household.transport_seats_offered > 0 ? household.transport_seats_offered : householdLabels.rsvpNothing
+          }
+        />
+        <AnswerRow
+          label={householdLabels.rsvpStroller}
+          value={household.has_stroller ? householdLabels.rsvpYes : householdLabels.rsvpNo}
+        />
+      </dl>
+
       <Link
         to="/admin/haushalte/$householdId/rsvp"
         params={{ householdId: String(household.id) }}
@@ -584,6 +588,15 @@ function RSVPSection({ household }: { household: AdminHousehold }) {
         {householdLabels.rsvpOpenForm}
       </Link>
     </Section>
+  );
+}
+
+function AnswerRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex flex-wrap gap-x-2">
+      <dt className="text-ink-muted after:content-[':']">{label}</dt>
+      <dd>{value}</dd>
+    </div>
   );
 }
 

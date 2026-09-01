@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { RSVPForm } from "@/components/rsvp/RSVPForm";
+import { SectionPending } from "@/components/RouteStates";
 import { rsvpQueryOptions, useAddPlusOne, useRemoveMember, useSaveRSVP } from "@/lib/api/rsvp";
 import { rsvpLabels } from "@/lib/labels";
 
@@ -14,7 +15,18 @@ import { rsvpLabels } from "@/lib/labels";
  * fills in later.
  */
 export const Route = createFileRoute("/_guest/_chrome/zusagen")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(rsvpQueryOptions),
+  loader: ({ context }) => {
+    // Cache first, so coming back to this page renders the answer immediately instead
+    // of flashing a pending state for data that is already in hand (F11-04). Only a
+    // cold visit returns a promise, and only that one shows the skeleton.
+    if (context.queryClient.getQueryData(rsvpQueryOptions.queryKey) !== undefined) {
+      return;
+    }
+    return context.queryClient.ensureQueryData(rsvpQueryOptions);
+  },
+  // Inside the navigation, not over it: this page is one page, and the full-screen
+  // skeleton belongs to the cold load at `/`.
+  pendingComponent: SectionPending,
   component: RSVPPage,
 });
 
@@ -33,6 +45,11 @@ function RSVPPage() {
           the admin route can hand it different ones (F3-F06). */}
       <RSVPForm
         answer={answer}
+        // The guest page opts into the summary-first view: a household that has already
+        // answered lands on what we have on record, not on a filled-in form they have
+        // to re-read to see whether it was saved (F3-F09).
+        summaryFirst
+
         onSave={save.mutateAsync}
         onReload={refetch}
         onAddMember={(name) => addPlusOne.mutateAsync({ name })}

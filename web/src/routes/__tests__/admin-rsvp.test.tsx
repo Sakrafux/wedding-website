@@ -40,6 +40,20 @@ describe("the admin RSVP page", () => {
     expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();
   });
 
+  // F3-F09: form-first here, deliberately. We open this page mid-phone-call to change
+  // something, and a recap of the stored answer would be one tap in the way.
+  it("renders the form even for a household that has already answered", async () => {
+    stubAdminRSVP({
+      members: [rsvpMember({ attending: "both", meal_choice: "vegan" })],
+      household: { ...rsvpAnswer().household, rsvp_submitted_at: "2026-11-09T19:04:00Z" },
+    });
+
+    await renderApp("/admin/haushalte/12/rsvp");
+
+    expect(await screen.findByRole("button", { name: "Speichern" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Danke, wir haben es notiert" })).not.toBeInTheDocument();
+  });
+
   it("posts to the admin endpoint with the household id from the path", async () => {
     const { api } = stubAdminRSVP({ members: [rsvpMember()] });
     api.set("PUT /api/admin/households/12/rsvp", ok(rsvpAnswer({ members: [rsvpMember({ attending: "both" })] })));

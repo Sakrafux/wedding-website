@@ -21,8 +21,8 @@ The unit of authentication and of RSVP.
 | `id` | INTEGER PK | |
 | `display_name` | TEXT | e.g. "Familie Müller", "Anna & Ben", "Oma Gertrud". Shown on the login confirmation screen. |
 | `code` | TEXT UNIQUE | The printed login code, normalized (uppercase, no dashes). |
-| `transport_seats_needed` | INTEGER | Default 0. Seats this household needs for the church → reception trip. Not derived from household size; some members drive themselves. |
-| `transport_seats_offered` | INTEGER | Default 0. Spare seats this household can offer others. |
+| `transport_seats_needed` | INTEGER | Default 0. Seats this household needs for the church → reception trip. Not derived from household size; some members drive themselves. Mutually exclusive with `transport_seats_offered` — enforced in the domain (`F3-B07`), not by a CHECK, so the refusal can be a field error rather than a driver error. |
+| `transport_seats_offered` | INTEGER | Default 0. Spare seats this household can offer others. Zero whenever `transport_seats_needed` is not. |
 | `has_stroller` | BOOLEAN | Default 0. Brings a pram, which needs floor space next to a unit rather than a seat. A flag, not a count: nobody brings two. |
 | `admin_note` | TEXT | Private note for us. Never sent to a guest session. |
 | `rsvp_note` | TEXT | Free-text note from the household to us. The deliberate escape hatch: anything the structured fields do not cover goes here. No length limit worth enforcing beyond a sane cap. Must be surfaced prominently in the admin dashboard — an unread note is a missed request. |
@@ -50,7 +50,7 @@ A person. Belongs to exactly one household.
 | `meal_choice` | TEXT NULL | `all` \| `vegetarian` \| `vegan`. `all` = eats everything. NULL when `portion = 'none'` or the guest is not at the party. |
 | `portion` | TEXT | `none` \| `kids` \| `full`. Defaults to `full`. `none` covers infants and adults not eating (e.g. arriving after dinner). |
 | `midnight_snack` | BOOLEAN | Wants the midnight snack. Independent of `portion` — someone skipping dinner may still want it. |
-| `seating_need` | TEXT | `normal` \| `with_parent` (no own seat) \| `high_chair` \| `wheelchair`. Defaults to `normal`; applies to adults as well as children. Prams are not here — they are parked rather than sat on, and belong to the household: `household.has_stroller`. |
+| `seating_need` | TEXT | `normal` \| `with_parent` (no own seat) \| `high_chair` \| `wheelchair`. Defaults to `normal`. `wheelchair` applies to adults as well as children; `with_parent` and `high_chair` are **children only** — both feed counts we buy things with, and an adult carrying either is refused rather than reset (`F3-B08`, enforced in the domain so the answer is a field error). One field for both venues: a high chair is a party matter and the church pew is a normal seat, which is copy on the form rather than a second column. Prams are not here — they are parked rather than sat on, and belong to the household: `household.has_stroller`. |
 | `dietary_note` | TEXT | Allergies and intolerances, free text. |
 | `created_at` | TEXT | |
 | `deleted_at` | TEXT NULL | Soft delete. |
@@ -199,7 +199,7 @@ Everything else that is genuinely static (page text, wedding date, venue) is har
 - Counts per meal choice and per portion — party attendees only.
 - Midnight snack count — party attendees only.
 - Children by caterer age bracket, computed from `age` (brackets configurable, since every caterer draws them differently).
-- Transport balance: total `transport_seats_needed` vs. total `transport_seats_offered` across households, and the resulting gap — the number that tells us whether to hire a shuttle. Matching individual riders to drivers is done by us offline, not by the app.
+- Transport balance: total `transport_seats_needed` vs. total `transport_seats_offered` across households — no household contributes to both sides (`F3-B07`), and the resulting gap — the number that tells us whether to hire a shuttle. Matching individual riders to drivers is done by us offline, not by the app.
 - Special needs list: high chairs and wheelchair space per guest, prams per household — the things that must be physically arranged.
 - Consolidated dietary list, grouped so the caterer gets one readable page.
 - Delta list: all `origin = 'guest_added'` guests, newest first.

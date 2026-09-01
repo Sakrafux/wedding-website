@@ -39,14 +39,18 @@ type AdminHouseholdOverview struct {
 }
 
 // AdminHousehold is one household in full: the overview fields plus everything the
-// detail page edits.
+// detail page shows.
 //
 // One shape for GET, POST and PATCH alike, so the frontend has a single type to
 // render from and cannot learn different things depending on which request it just
 // made. Members is empty rather than absent on a fresh household.
 type AdminHousehold struct {
 	AdminHouseholdOverview
-	AdminNote             string       `json:"admin_note"`
+	AdminNote string `json:"admin_note"`
+	// The three RSVP-answerable fields are read-only here: they are shown on the
+	// detail page and written only through PUT /api/admin/households/{id}/rsvp, which
+	// is the path that runs the RSVP rules (F5-B05). They are absent from the create
+	// and patch requests below for exactly that reason.
 	TransportSeatsNeeded  int          `json:"transport_seats_needed"`
 	TransportSeatsOffered int          `json:"transport_seats_offered"`
 	HasStroller           bool         `json:"has_stroller"`
@@ -77,14 +81,15 @@ type AdminGuest struct {
 //
 // Plain values rather than pointers: on a create an absent field means the column
 // default, and there is nothing to distinguish it from.
+//
+// The transport counts and has_stroller are deliberately absent, and not a gap to be
+// "completed" later: they are the household's own RSVP answers, and their one writer
+// is the RSVP endpoint (F5-B05). A create that could set them would be a second write
+// path that skips the RSVP rules — the transport direction rule (F3-B07) among them.
+// DecodeJSON refuses unknown fields, so a caller that still sends them is told so.
 type AdminHouseholdCreateRequest struct {
 	DisplayName string `json:"display_name" validate:"required,max=120"`
 	AdminNote   string `json:"admin_note" validate:"max=2000"`
-	// A household is not a coach: twenty seats is far past any real answer and
-	// catches a stray keystroke rather than a plausible one.
-	TransportSeatsNeeded  int  `json:"transport_seats_needed" validate:"gte=0,lte=20"`
-	TransportSeatsOffered int  `json:"transport_seats_offered" validate:"gte=0,lte=20"`
-	HasStroller           bool `json:"has_stroller"`
 }
 
 // AdminHouseholdPatchRequest is the body of PATCH /api/admin/households/{id}. Any
@@ -98,12 +103,13 @@ type AdminHouseholdCreateRequest struct {
 // Code is absent on purpose. Reissuing is its own endpoint, because it kills a
 // printed card and signs devices out; a code changed by a stray field in a form body
 // is a code nobody knows changed.
+//
+// The transport counts and has_stroller are absent for the reason
+// AdminHouseholdCreateRequest gives: one writer for the fields a household answers,
+// and it is the one that runs the RSVP rules (F5-B05).
 type AdminHouseholdPatchRequest struct {
-	DisplayName           *string `json:"display_name" validate:"omitnil,min=1,max=120"`
-	AdminNote             *string `json:"admin_note" validate:"omitnil,max=2000"`
-	TransportSeatsNeeded  *int    `json:"transport_seats_needed" validate:"omitnil,gte=0,lte=20"`
-	TransportSeatsOffered *int    `json:"transport_seats_offered" validate:"omitnil,gte=0,lte=20"`
-	HasStroller           *bool   `json:"has_stroller"`
+	DisplayName *string `json:"display_name" validate:"omitnil,min=1,max=120"`
+	AdminNote   *string `json:"admin_note" validate:"omitnil,max=2000"`
 }
 
 // AdminCodeReissueResponse is the body of POST /api/admin/households/{id}/code.
