@@ -2,7 +2,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { RSVPForm } from "@/components/rsvp/RSVPForm";
-import { SectionPending } from "@/components/RouteStates";
 import { rsvpQueryOptions, useAddPlusOne, useRemoveMember, useSaveRSVP } from "@/lib/api/rsvp";
 import { rsvpLabels } from "@/lib/labels";
 
@@ -24,9 +23,6 @@ export const Route = createFileRoute("/_guest/_chrome/zusagen")({
     }
     return context.queryClient.ensureQueryData(rsvpQueryOptions);
   },
-  // Inside the navigation, not over it: this page is one page, and the full-screen
-  // skeleton belongs to the cold load at `/`.
-  pendingComponent: SectionPending,
   component: RSVPPage,
 });
 

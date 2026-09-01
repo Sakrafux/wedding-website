@@ -73,6 +73,7 @@ Decisions taken with the thirteen stories built that day. Each one is recorded w
 - [x] **The start page says one thing about the RSVP**, and addresses a household in the number we **seeded** it with — a plus-one does not turn "du" into "ihr". `F2-F08`.
 - [x] **Location is an overview plus one page per venue**, with Übernachtung on the party page and the transfer on the overview. `F2-F09`.
 - [x] **The navigation skeleton was a guard awaiting a cached session**, not code splitting. Fixed at the cause; the full-screen skeleton is now the cold load's only. No spinner. `F11-04`.
+- [x] **Route chunks are preloaded**, and no pending state is drawn for a transition under 150 ms. The remaining flash after `F11-04` was the code-split chunk itself, which is real on a first visit; `autoCodeSplitting` stays on, since the alternative moves the RSVP form's Radix code onto the login screen. `F11-06`.
 - [x] **Editable fields are filled white.** The shadcn defaults were transparent, which on `paper` reads as disabled; radius and type size unified across `Input`, `Textarea` and `Select`. `F11-05` — the code is done, the side-by-side look is still worth one manual pass.
 
 ### Raised in the 2026-08-31 code review

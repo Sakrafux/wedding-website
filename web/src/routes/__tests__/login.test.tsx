@@ -7,9 +7,16 @@ import { currentPath, renderApp } from "@/test/render";
 
 describe("login screen", () => {
   it("logs a household in and moves on to the confirmation", async () => {
+    // `/api/me` starts as a 401 and answers with the household from the moment the
+    // login succeeds, because that is what the server does — and `useLogin`
+    // invalidates `me` after seeding it, so a stub that kept refusing would make the
+    // guard redirect straight back to the login screen.
     const api = stubApi({
       "GET /api/me": unauthenticated,
-      "POST /api/auth/login": ok(bootstrap()),
+      "POST /api/auth/login": () => {
+        api.set("GET /api/me", ok(bootstrap()));
+        return ok(bootstrap());
+      },
     });
 
     const { user, router } = await renderApp("/");

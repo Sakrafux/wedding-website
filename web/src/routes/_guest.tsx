@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Navigate, Outlet, redirect } from "@tanstack/react-router";
 
 import type { BootstrapResponse } from "@/lib/api/dto";
+import { RoutePending } from "@/components/RouteStates";
 import { isHouseholdConfirmed, meQueryOptions } from "@/lib/api/session";
 
 /** The route that asks a freshly logged-in household whether the code was theirs. */
@@ -34,6 +35,9 @@ export const Route = createFileRoute("/_guest")({
       guardHousehold(me, location.pathname, location.href);
     });
   },
+  // Full-screen, unlike the content routes below it: when this guard is pending the
+  // app is booting and there is no navigation to sit inside yet (F11-06).
+  pendingComponent: RoutePending,
   component: GuestLayout,
 });
 

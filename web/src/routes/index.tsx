@@ -2,6 +2,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { CodeInput } from "@/components/CodeInput";
+import { RoutePending } from "@/components/RouteStates";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import { contactPhoneNumber, loginLabels } from "@/lib/labels";
@@ -37,6 +38,9 @@ export const Route = createFileRoute("/")({
       throw redirect({ href: safeInternalPath(search.redirect, defaultDestination) });
     }
   },
+  // Full-screen: this is the first screen of a cold visit, and there is no navigation
+  // for a content-shaped skeleton to sit inside (F11-06).
+  pendingComponent: RoutePending,
   component: LoginPage,
 });
 

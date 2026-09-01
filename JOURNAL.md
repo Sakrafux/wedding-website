@@ -20,7 +20,10 @@ Done:
 - `F11-04` — the skeleton on every guest navigation was `/_guest`'s `beforeLoad` awaiting a session it already had, not code splitting. Cache-first and synchronous when warm, same for `/zusagen`'s loader, plus an in-chrome `SectionPending` for the routes that really do fetch. Asserted on the guard's return value, since the frame is gone by the time a test can query the DOM.
 - `F11-05` — `Input`, `Textarea` and `NativeSelect` are filled `surface` with one radius, one height and no `md:text-sm`; the shadcn defaults were transparent, which on `paper` reads as disabled.
 - Specs updated where the rules live: `02-features`, `03-data-model`, `04-architecture`, `05-design` (five new form-behaviour rules), `features/README.md`, `TODO.md`.
-- Suites: 149 frontend tests, `go test ./...` green. Both new regression tests were checked by reverting the fix and watching them fail.
+- Suites: 150 frontend tests, `go test ./...` green. Both new regression tests were checked by reverting the fix and watching them fail.
+- `F11-06`, after the first fix landed and the flash was still visible on a *first* visit to a page: that half was the code-split route chunk, which is real. `defaultPreload: "render"` (the nav links every page from every page, so the site warms itself after first paint), `defaultPendingMs: 150` so nothing is drawn for a transition a person would call instant, and `SectionPending` as the router default with `RoutePending` named explicitly on the three full-screen routes — pending components resolve per route and never from a parent layout.
+- `lib/routing/router.ts` — one `createAppRouter`, used by `main.tsx` and by the test harness, which until now kept its own copy of every router option.
+- Fixed a stub that was lying in `login.test.tsx`: `GET /api/me` kept answering 401 after a successful login, and `useLogin` invalidates `me` right after seeding it. The old `defaultPendingMs: 0` let the guard win that race; at 150 ms the refetch lands first and the guard correctly redirects to the login screen. The stub now flips to the household, as the server does.
 
 Decisions:
 
@@ -28,6 +31,7 @@ Decisions:
 - No pagination on the household list, and no artificial minimum duration on the saving state — both rejected in favour of the cheaper fix (table last; a confirmation that persists). `F5-F04`, `F5-F05`.
 - Skeleton kept, spinner rejected: the flash was a guard bug, and a spinner on every navigation would be the same interruption with less information. `F11-04`.
 - Meal default `all` accepted with its cost stated: "eats everything" and "did not answer" are no longer distinguishable. `F3-F08`.
+- `autoCodeSplitting` stays on. Turning it off would end the per-route fetch outright, but `RSVPForm`'s ~24 kB gzipped of Radix dialog code would move into the initial bundle and be paid on the login screen by every guest. `F11-06`.
 
 Time: <h>
 Cost: $<x>

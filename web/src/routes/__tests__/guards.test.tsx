@@ -5,6 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { getJson } from "@/lib/api/client";
 import { meQueryKey } from "@/lib/api/session";
+import { createAppRouter } from "@/lib/routing/router";
 import { Route as guestRoute } from "@/routes/_guest";
 import { ok, stubApi, unauthenticated } from "@/test/api";
 import { adminSession, bootstrap, rsvpAnswer } from "@/test/fixtures";
@@ -24,6 +25,23 @@ function confirmHousehold(householdId = 12) {
  * that rendered a full-screen, login-shaped skeleton over every navigation between two
  * hardcoded content pages. By the time a test can query the DOM, the frame is gone.
  */
+/**
+ * F11-06. Both settings are invisible until somebody reports a flash, and both were
+ * reported once already — so they are asserted rather than trusted.
+ */
+describe("the router's transition settings", () => {
+  it("preloads every rendered link's route, and draws nothing for a fast transition", () => {
+    const router = createAppRouter(new QueryClient());
+
+    // "render", not "intent": the guest navigation links to every page from every
+    // page, so this warms the whole site once the shell is up, while "intent" still
+    // races a fast tap.
+    expect(router.options.defaultPreload).toBe("render");
+    // Above zero, or a sub-kilobyte route chunk gets a skeleton drawn for it.
+    expect(router.options.defaultPendingMs).toBeGreaterThan(0);
+  });
+});
+
 describe("the guest guard's timing", () => {
   function runGuard(queryClient: QueryClient) {
     // The router hands `beforeLoad` far more than this guard reads; the cast is the

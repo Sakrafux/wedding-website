@@ -128,6 +128,7 @@ Frontend only — content is hardcoded in components.
 - [ ] `F11-03` Mobile device QA on real hardware
 - [x] `F11-04` A navigation between pages is not a page load
 - [x] `F11-05` Form controls look editable, and look alike — code done 2026-09-01; the side-by-side look is a manual check
+- [x] `F11-06` Route chunks preloaded, and no pending state for a fast transition
 
 ## F6 — Admin: RSVP dashboard · M4 or M5 · P1
 

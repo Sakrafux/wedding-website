@@ -1,6 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { RoutePending } from "@/components/RouteStates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,8 @@ export const Route = createFileRoute("/admin/login")({
       throw redirect({ to: "/admin" });
     }
   },
+  // Full-screen, like the guests' login screen and for the same reason (F11-06).
+  pendingComponent: RoutePending,
   component: AdminLoginPage,
 });
 
