@@ -33,8 +33,8 @@ Decisions:
 - Meal default `all` accepted with its cost stated: "eats everything" and "did not answer" are no longer distinguishable. `F3-F08`.
 - `autoCodeSplitting` stays on. Turning it off would end the per-route fetch outright, but `RSVPForm`'s ~24 kB gzipped of Radix dialog code would move into the initial bundle and be paid on the login screen by every guest. `F11-06`.
 
-Time: <h>
-Cost: $<x>
+Time: 2h
+Cost: $35.38
 
 ## 2026-08-31
 
