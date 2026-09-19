@@ -44,7 +44,7 @@ function ConfirmationPage() {
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-4 py-12">
       <header className="flex flex-col gap-3 text-center">
-        <h1 className="text-h1">{confirmationLabels.heading(me.household.display_name)}</h1>
+        <h1 className="text-h1">{confirmationLabels.heading(me.household.addressee)}</h1>
       </header>
 
       {/* The member list is what actually catches the error: two households with

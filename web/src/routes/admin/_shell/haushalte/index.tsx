@@ -61,7 +61,7 @@ function HouseholdListPage() {
     if (onlyUnanswered && household.rsvp_submitted_at) {
       return false;
     }
-    return household.display_name.toLocaleLowerCase("de-DE").includes(search.toLocaleLowerCase("de-DE"));
+    return household.name.toLocaleLowerCase("de-DE").includes(search.toLocaleLowerCase("de-DE"));
   });
 
   return (
@@ -148,7 +148,7 @@ function HouseholdRow({ household }: { household: AdminHouseholdOverview }) {
           params={{ householdId: String(household.id) }}
           className="underline underline-offset-4"
         >
-          {household.display_name}
+          {household.name}
         </Link>
       </TableCell>
       {/* Monospaced: the only use of a code on this screen is being read aloud or
@@ -194,7 +194,8 @@ function LastLoginCell({ lastLoginAt }: { lastLoginAt: string | null }) {
 }
 
 /**
- * Creating a household asks for the name and nothing else, then goes straight to its
+ * Creating a household asks for the internal name and nothing else — the server uses
+ * it as the addressee too until the detail form sets one — then goes straight to its
  * detail page — where the code is now visible and the members can be entered.
  * Creating and then hunting for the row you just created is the flow to avoid.
  *
@@ -204,13 +205,13 @@ function LastLoginCell({ lastLoginAt }: { lastLoginAt: string | null }) {
 function CreateHouseholdForm() {
   const navigate = useNavigate();
   const create = useCreateHousehold();
-  const [displayName, setDisplayName] = useState("");
+  const [name, setName] = useState("");
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
     try {
-      const household = await create.mutateAsync(displayName);
+      const household = await create.mutateAsync(name);
       await navigate({ to: "/admin/haushalte/$householdId", params: { householdId: String(household.id) } });
     } catch {
       // Shown from create.error below.
@@ -226,8 +227,8 @@ function CreateHouseholdForm() {
           <Label htmlFor="new-household-name">{householdLabels.createNameLabel}</Label>
           <Input
             id="new-household-name"
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
             aria-describedby="new-household-name-hint"
             aria-invalid={Boolean(create.error)}
             disabled={create.isPending}

@@ -36,7 +36,8 @@ export function householdQueryOptions(householdId: number) {
 
 /** The fields a household PATCH may carry. Absent means "leave alone", server-side. */
 export interface HouseholdPatch {
-  display_name?: string;
+  name?: string;
+  addressee?: string;
   admin_note?: string;
   transport_seats_needed?: number;
   transport_seats_offered?: number;
@@ -84,7 +85,9 @@ export function useCreateHousehold() {
   const invalidate = useHouseholdInvalidation();
 
   return useMutation({
-    mutationFn: (displayName: string) => postJson<AdminHousehold>("/admin/households", { display_name: displayName }),
+    // Only the name: the server falls back to it as the addressee, which the detail
+    // form is then where you change.
+    mutationFn: (name: string) => postJson<AdminHousehold>("/admin/households", { name }),
     onSuccess: (household) => invalidate(household.id),
   });
 }

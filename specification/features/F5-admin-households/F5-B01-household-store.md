@@ -27,15 +27,15 @@ The line this epic draws: an admin may edit anything **we** record, and nothing 
 
 1. Extend the existing `HouseholdStore`. `FindByID`, `FindByCode`, `ListMembers` and `TouchLastLogin` are already there and are not to be duplicated.
 2. `List` returns every household with the columns the list screen needs: id, display name, code, `last_login_at`, `rsvp_submitted_at`, and a member count. One query with a `LEFT JOIN` and a `COUNT`, not a query per row — sixty households is small, but a loop that issues sixty-one queries is a habit, not a size.
-3. Order by `display_name COLLATE NOCASE`. The admin scans this list looking for a name; insertion order is meaningless to that task.
+3. Order by `name COLLATE NOCASE`. The admin scans this list looking for a name; insertion order is meaningless to that task.
 4. Creating a household assigns a code in the same transaction, via `F5-B03`. A household without a code is a household nobody can log in as, and there is no screen that would show you that.
-5. `PATCH` updates `display_name`, `admin_note`, `transport_seats_needed`, `transport_seats_offered` and `has_stroller`. It does **not** update `code` — regeneration is its own endpoint with its own consequences, and a code changed by a stray field in a form body is a code nobody knows changed.
+5. `PATCH` updates `name`, `addressee`, `admin_note`, `transport_seats_needed`, `transport_seats_offered` and `has_stroller`. It does **not** update `code` — regeneration is its own endpoint with its own consequences, and a code changed by a stray field in a form body is a code nobody knows changed.
 6. Absent fields in a `PATCH` body leave the column alone; present-but-empty clears it. Use pointer fields in the request DTO so "not sent" and "sent as empty" are distinguishable — with a plain string they are the same value, and clearing an `admin_note` becomes impossible.
 7. `DELETE` removes the row. `guest` cascades by foreign key; `seat_assignment` cascades from `guest`. Sessions are not deleted here and do not need to be: `Auth.ResolveSession` already treats a session whose household is gone as anonymous and deletes it on sight.
 8. Deleting a household with answered RSVPs is allowed but must be deliberate — the frontend confirms (`F5-F02`), the API does not second-guess. `audit_log` keeps the record, which is the whole reason it outlives the row.
 9. Validation with `validator/v10`, mapped into `httpio.ValidationError` keyed by the JSON field name. This is the first endpoint in the app with per-field rules; the mapping helper lands here and everything later reuses it.
    **When this ships, update the comment in `httpio/respond.go`** — it currently names `F3-B03` as where the validator mapping arrives.
-10. Rules: `display_name` required, 1–120 characters. `admin_note` optional, max 2000. Transport seat counts 0–20 — a household is not a coach.
+10. Rules: `name` required, 1–120 characters. `addressee` the same on a `PATCH`; optional on a `POST`, where an absent one is filled from `name`. `admin_note` optional, max 2000. Transport seat counts 0–20 — a household is not a coach.
 11. Every mutation writes an audit row: `actor_type = 'admin'`, `entity = 'household'`, `entity_id`, action `create` / `update` / `delete`. `before` and `after` carry **only the changed fields**, per `F1-B06`. Never put `code` in an audit payload — the audit log must not become a second copy of the key list.
 
 ## Contract
@@ -51,7 +51,8 @@ Response `200`:
   "households": [
     {
       "id": 12,
-      "display_name": "Familie Müller",
+      "name": "Familie Müller",
+      "addressee": "Hans & Erika",
       "code": "ABC234",
       "member_count": 4,
       "last_login_at": "2026-11-03T18:22:00Z",
@@ -66,11 +67,12 @@ POST /api/admin/households
 PATCH /api/admin/households/{id}
 ```
 
-Request (`POST` requires `display_name`; `PATCH` takes any subset):
+Request (`POST` requires `name`; `PATCH` takes any subset):
 
 ```json
 {
-  "display_name": "Familie Müller",
+  "name": "Familie Müller",
+  "addressee": "Hans & Erika",
   "admin_note": "Kommen mit dem Zug",
   "transport_seats_needed": 0,
   "transport_seats_offered": 4,

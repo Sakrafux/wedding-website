@@ -74,7 +74,7 @@ function HouseholdDetailPage() {
         <Link to="/admin/haushalte" className="text-small underline underline-offset-4">
           {householdLabels.detailBack}
         </Link>
-        <h1 className="text-h2 font-body">{household.display_name}</h1>
+        <h1 className="text-h2 font-body">{household.name}</h1>
       </div>
 
       <HouseholdFields household={household} />
@@ -99,7 +99,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function HouseholdFields({ household }: { household: AdminHousehold }) {
   const update = useUpdateHousehold(household.id);
 
-  const [displayName, setDisplayName] = useState(household.display_name);
+  const [name, setName] = useState(household.name);
+  const [addressee, setAddressee] = useState(household.addressee);
   const [adminNote, setAdminNote] = useState(household.admin_note);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
 
@@ -107,7 +108,7 @@ function HouseholdFields({ household }: { household: AdminHousehold }) {
     event.preventDefault();
 
     try {
-      await update.mutateAsync({ display_name: displayName, admin_note: adminNote });
+      await update.mutateAsync({ name, addressee, admin_note: adminNote });
       setSavedAt(new Date());
     } catch {
       // Rendered per field below, from the error's `fields` map.
@@ -121,12 +122,26 @@ function HouseholdFields({ household }: { household: AdminHousehold }) {
     <form onSubmit={submit} className="border-line flex flex-col gap-4 border-t pt-6">
       <fieldset className="flex flex-col gap-4">
         <legend className="text-h3 font-body">{householdLabels.detailDataHeading}</legend>
+        {/* Two name fields, and the hints are what keep them apart: `name` is ours to
+            file by, `addressee` is what a guest reads and what gets printed on the
+            card. Entering the first names in the wrong one is the mistake this form
+            has to make hard. */}
         <Field
-          label={householdLabels.displayNameLabel}
-          id="display-name"
-          error={fieldError(update.error, "display_name")}
+          label={householdLabels.householdNameLabel}
+          id="household-name"
+          hint={householdLabels.householdNameHint}
+          error={fieldError(update.error, "name")}
         >
-          <Input id="display-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+          <Input id="household-name" value={name} onChange={(event) => setName(event.target.value)} />
+        </Field>
+
+        <Field
+          label={householdLabels.addresseeLabel}
+          id="household-addressee"
+          hint={householdLabels.addresseeHint}
+          error={fieldError(update.error, "addressee")}
+        >
+          <Input id="household-addressee" value={addressee} onChange={(event) => setAddressee(event.target.value)} />
         </Field>
 
         <Field
@@ -441,7 +456,7 @@ function AddMemberForm({ household }: { household: AdminHousehold }) {
   const nameField = useRef<HTMLInputElement>(null);
 
   // Nothing is prefilled from the household. "Household" is a flexible term here —
-  // one or more people who share an invitation — so display_name is free text like
+  // one or more people who share an invitation — so the household name is free text like
   // "Luki & Paddi" or a single person's name, and a name derived from it would be
   // wrong as often as right.
   const [name, setName] = useState("");
@@ -561,7 +576,7 @@ function RSVPSection({ household }: { household: AdminHousehold }) {
       </p>
 
       {/* Read-only, next to the link that edits them properly: these three are answers,
-          not settings, and editing them beside `display_name` bypassed the RSVP rules
+          not settings, and editing them beside the household name bypassed the RSVP rules
           (F5-B05). */}
       <dl className="text-small flex flex-col gap-1">
         <AnswerRow
@@ -630,7 +645,7 @@ function DeleteSection({ household }: { household: AdminHousehold }) {
         <AlertDialogContent>
           <AlertDialogTitle>{householdLabels.deleteConfirmTitle}</AlertDialogTitle>
           <AlertDialogDescription>
-            {householdLabels.deleteConfirmBody(household.display_name, household.members.length)}
+            {householdLabels.deleteConfirmBody(household.name, household.members.length)}
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>{householdLabels.cancel}</AlertDialogCancel>

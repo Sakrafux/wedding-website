@@ -47,7 +47,7 @@ const codeAssignmentAttempts = 5
 // zero value, and the caller cannot tell which read produced it. rsvp_note_seen_at is
 // the one column still missing, because nothing reads it yet — F6's note inbox is
 // what adds it, here and nowhere else.
-const householdColumns = `id, display_name, code, transport_seats_needed, transport_seats_offered,
+const householdColumns = `id, name, addressee, code, transport_seats_needed, transport_seats_offered,
 	has_stroller, admin_note, rsvp_note, rsvp_submitted_at, rsvp_updated_at, last_login_at`
 
 // FindByCode returns the household holding this login code, or ErrNotFound.
@@ -80,7 +80,7 @@ func (store *HouseholdStore) findHousehold(ctx context.Context, query string, ar
 // One query with a LEFT JOIN rather than a count per row: sixty households is
 // small, but a loop issuing sixty-one queries is a habit rather than a size.
 //
-// Ordered by display name, case-insensitively, because the admin scans this list
+// Ordered by household name, case-insensitively, because the admin scans this list
 // looking for a name — insertion order is meaningless to that task. NOCASE is
 // ASCII-only in SQLite, so "Ärzte" sorts after "Zimmer"; accepted, since the whole
 // list fits on one screen and the frontend's search is what actually finds a name.
@@ -91,7 +91,7 @@ func (store *HouseholdStore) List(ctx context.Context) ([]domain.HouseholdOvervi
 		FROM household h
 		LEFT JOIN guest g ON g.household_id = h.id AND g.deleted_at IS NULL
 		GROUP BY h.id
-		ORDER BY h.display_name COLLATE NOCASE`
+		ORDER BY h.name COLLATE NOCASE`
 
 	var rows []householdOverviewRow
 	if err := store.database.Read.SelectContext(ctx, &rows, selectHouseholds); err != nil {
@@ -120,13 +120,13 @@ func (store *HouseholdStore) List(ctx context.Context) ([]domain.HouseholdOvervi
 // would show you that — so there is no way to create one.
 func (store *HouseholdStore) Create(ctx context.Context, household domain.Household) (domain.Household, error) {
 	const insertHousehold = `
-		INSERT INTO household (display_name, code, transport_seats_needed, transport_seats_offered,
+		INSERT INTO household (name, addressee, code, transport_seats_needed, transport_seats_offered,
 		                       has_stroller, admin_note)
-		VALUES (?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	err := store.withGeneratedCode(func(code string) error {
 		result, err := store.database.Write.ExecContext(ctx, insertHousehold,
-			household.DisplayName, code, household.TransportSeatsNeeded, household.TransportSeatsOffered,
+			household.Name, household.Addressee, code, household.TransportSeatsNeeded, household.TransportSeatsOffered,
 			household.HasStroller, household.AdminNote)
 		if err != nil {
 			return err
@@ -150,12 +150,12 @@ func (store *HouseholdStore) Create(ctx context.Context, household domain.Househ
 func (store *HouseholdStore) Update(ctx context.Context, household domain.Household) error {
 	const updateHousehold = `
 		UPDATE household
-		SET display_name = ?, transport_seats_needed = ?, transport_seats_offered = ?,
+		SET name = ?, addressee = ?, transport_seats_needed = ?, transport_seats_offered = ?,
 		    has_stroller = ?, admin_note = ?
 		WHERE id = ?`
 
 	result, err := store.database.Write.ExecContext(ctx, updateHousehold,
-		household.DisplayName, household.TransportSeatsNeeded, household.TransportSeatsOffered,
+		household.Name, household.Addressee, household.TransportSeatsNeeded, household.TransportSeatsOffered,
 		household.HasStroller, household.AdminNote, household.ID)
 	if err != nil {
 		return fmt.Errorf("updating household: %w", err)
@@ -257,7 +257,8 @@ func (store *HouseholdStore) TouchLastLogin(ctx context.Context, householdID int
 
 type householdRow struct {
 	ID                    int64          `db:"id"`
-	DisplayName           string         `db:"display_name"`
+	Name                  string         `db:"name"`
+	Addressee             string         `db:"addressee"`
 	Code                  string         `db:"code"`
 	TransportSeatsNeeded  int            `db:"transport_seats_needed"`
 	TransportSeatsOffered int            `db:"transport_seats_offered"`
@@ -279,7 +280,8 @@ type householdOverviewRow struct {
 func (row householdRow) toDomain() (domain.Household, error) {
 	household := domain.Household{
 		ID:                    row.ID,
-		DisplayName:           row.DisplayName,
+		Name:                  row.Name,
+		Addressee:             row.Addressee,
 		Code:                  row.Code,
 		TransportSeatsNeeded:  row.TransportSeatsNeeded,
 		TransportSeatsOffered: row.TransportSeatsOffered,

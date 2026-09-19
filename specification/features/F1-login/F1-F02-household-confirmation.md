@@ -21,7 +21,7 @@ This screen exists for exactly one failure: two valid codes differing by one cha
 
 ## Instructions
 
-1. Headline names the household: "Willkommen, Familie Müller — seid ihr das?" Use `household.display_name` from the login response.
+1. Headline names the household: "Willkommen, Hans & Erika — seid ihr das?" Use `household.addressee` from the login response — the internal `household.name` is not in it.
 2. List the known members by first name underneath. Two households with adjacent codes will almost never have the same member names, so the list is what actually catches the error; the household name alone can be ambiguous ("Familie Müller" twice is entirely plausible).
 3. Two clear actions, equal weight, both large: **"Ja, das sind wir"** → continue. **"Nein"** → call logout, return to `/`, and show a calm message: "Kein Problem — bitte prüf den Code noch einmal."
 4. The "No" path must actually log out server-side, not merely navigate. A session left behind is the bug this screen is meant to prevent.

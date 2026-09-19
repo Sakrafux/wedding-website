@@ -43,7 +43,7 @@ function StartPage() {
       <HeroSection />
 
       <div className="flex flex-col gap-3">
-        <p className="text-h3">{copy.greeting(me.household.display_name)}</p>
+        <p className="text-h3">{copy.greeting(me.household.addressee)}</p>
         <p className="text-ink-muted">{copy.intro}</p>
       </div>
 

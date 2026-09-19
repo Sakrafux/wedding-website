@@ -34,7 +34,7 @@ PATCH /api/admin/households/{id}
 Request (both, any subset for `PATCH`):
 
 ```json
-{ "display_name": "Familie Müller", "admin_note": "" }
+{ "name": "Familie Müller", "addressee": "Hans & Erika", "admin_note": "" }
 ```
 
 Response: `AdminHousehold`, unchanged — transport counts and `has_stroller` still present, now read-only.
@@ -42,7 +42,7 @@ Response: `AdminHousehold`, unchanged — transport counts and `has_stroller` st
 ## Test plan
 
 - [ ] Integration: a `PATCH` carrying `transport_seats_needed` is refused as `validation_failed`.
-- [ ] Integration: a `PATCH` of `display_name` still works and leaves the transport counts alone.
+- [ ] Integration: a `PATCH` of `name` still works and leaves the transport counts alone.
 - [ ] Integration: the RSVP `PUT` still writes them, which is the point of removing the other path.
 
 ## Done when

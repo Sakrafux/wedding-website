@@ -11,7 +11,9 @@ describe("household confirmation", () => {
 
     await renderApp("/willkommen");
 
-    expect(screen.getByRole("heading")).toHaveTextContent("Willkommen, Familie Müller — seid ihr das?");
+    // The addressee, not the household name we file them under: this is the first
+    // sentence a guest reads.
+    expect(screen.getByRole("heading")).toHaveTextContent("Willkommen, Hans & Erika — seid ihr das?");
     // The member list is what actually catches a one-character-off code: two
     // households named Müller is plausible, two with the same members is not.
     expect(screen.getByText("Anna Müller")).toBeInTheDocument();

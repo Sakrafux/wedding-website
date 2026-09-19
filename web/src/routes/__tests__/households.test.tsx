@@ -16,7 +16,7 @@ describe("admin household list", () => {
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(
         adminHouseholdOverview(),
-        adminHouseholdOverview({ id: 13, display_name: "Familie Albrecht", code: "DEF567", member_count: 3 }),
+        adminHouseholdOverview({ id: 13, name: "Familie Albrecht", code: "DEF567", member_count: 3 }),
       ),
     });
 
@@ -37,7 +37,7 @@ describe("admin household list", () => {
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(
         adminHouseholdOverview({ last_login_at: "2026-11-03T18:22:00Z" }),
-        adminHouseholdOverview({ id: 13, display_name: "Familie Albrecht", last_login_at: null }),
+        adminHouseholdOverview({ id: 13, name: "Familie Albrecht", last_login_at: null }),
       ),
     });
 
@@ -53,7 +53,7 @@ describe("admin household list", () => {
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(
         adminHouseholdOverview(),
-        adminHouseholdOverview({ id: 13, display_name: "Familie Albrecht" }),
+        adminHouseholdOverview({ id: 13, name: "Familie Albrecht" }),
       ),
     });
 
@@ -71,7 +71,7 @@ describe("admin household list", () => {
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(
         adminHouseholdOverview({ last_login_at: "2026-11-03T18:22:00Z" }),
-        adminHouseholdOverview({ id: 13, display_name: "Familie Albrecht", last_login_at: null }),
+        adminHouseholdOverview({ id: 13, name: "Familie Albrecht", last_login_at: null }),
       ),
     });
 
@@ -89,7 +89,7 @@ describe("admin household list", () => {
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(
         adminHouseholdOverview({ rsvp_submitted_at: "2026-12-01T10:00:00Z" }),
-        adminHouseholdOverview({ id: 13, display_name: "Familie Albrecht", rsvp_submitted_at: null }),
+        adminHouseholdOverview({ id: 13, name: "Familie Albrecht", rsvp_submitted_at: null }),
       ),
     });
 
@@ -113,7 +113,7 @@ describe("admin household list", () => {
         // Never logged in and never answered: the household to chase.
         adminHouseholdOverview({
           id: 13,
-          display_name: "Familie Albrecht",
+          name: "Familie Albrecht",
           last_login_at: null,
           rsvp_submitted_at: null,
         }),
@@ -153,8 +153,8 @@ describe("admin household list", () => {
     const api = stubApi({
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(),
-      "POST /api/admin/households": ok(adminHousehold({ id: 77, display_name: "Familie Neu", members: [] })),
-      "GET /api/admin/households/77": ok(adminHousehold({ id: 77, display_name: "Familie Neu", members: [] })),
+      "POST /api/admin/households": ok(adminHousehold({ id: 77, name: "Familie Neu", members: [] })),
+      "GET /api/admin/households/77": ok(adminHousehold({ id: 77, name: "Familie Neu", members: [] })),
     });
 
     const { user, router } = await renderApp("/admin/haushalte");
@@ -166,7 +166,7 @@ describe("admin household list", () => {
     expect(api.calls).toContainEqual({
       method: "POST",
       path: "/api/admin/households",
-      body: { display_name: "Familie Neu" },
+      body: { name: "Familie Neu" },
     });
   });
 

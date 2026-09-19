@@ -4,6 +4,26 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-09-19
+
+Done:
+
+- `household.display_name` split into two columns, migration `0004`: `name` (internal — admin list, search, ordering, `guests.csv`) and `addressee` (guest-facing — every greeting, and `codes.csv`). Existing values became `name`; `addressee` seeded from it, so no read site has a fallback.
+- Guest DTOs (`dto.HouseholdSummary`, `dto.RSVPHousehold`) carry `addressee` only; the internal name never reaches a guest response. Admin DTOs carry both, and the detail form edits both with hints that say which is which — the list, its search and its heading show the `name`.
+- `codes.csv` prints `anschrift;code` instead of `haushalt;code`: it is the variable-data source for the cards. `guests.csv` gained `household_addressee`.
+- CSV quoting is now per field instead of unconditional. `POST /api/admin/households` may omit the addressee and gets the name; a `PATCH` may not clear it.
+- Specs updated where the rules live: `03-data-model`, `04-architecture`, `06-privacy-security`, `F1-B04`, `F1-F02`, `F2-F02`, `F3-B02`, `F5-B01`, `F5-B04`, `F5-B05`, `F5-F05`, plus `CLAUDE.md`.
+- Fixed `TestRateLimiterEvictsIdleKeys`, which had been failing since 2026-09-01 14:00 real time: `NewRateLimiter` seeded `lastEviction` from `time.Now()` while every caller passes its own clock, so a fixed test clock in the past never triggered a sweep. Unrelated to the rest of this entry.
+- Suites: 150 frontend tests, `make check` green.
+
+Decisions:
+
+- Field names `name`/`addressee` over `display_name`/`admin_name`, and both `NOT NULL` with the addressee seeded from the name rather than nullable with a coalesce — chosen with the user before building. Reasoning lives in migration `0004`'s header and `specification/03-data-model.md`.
+- The admin RSVP page shows the addressee, because it renders the guests' own RSVP body and that body carries no internal name; noted at the heading.
+
+Time: <h>
+Cost: $<x>
+
 ## 2026-09-01
 
 Done:

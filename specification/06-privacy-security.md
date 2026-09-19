@@ -10,7 +10,8 @@ The governing constraint is the threat model from [01-vision-scope](01-vision-sc
 
 | Data | Where | Why we need it | Visible to |
 |---|---|---|---|
-| Household display name | `household.display_name` | Login confirmation, addressing the RSVP | Own household, admin |
+| Household addressee | `household.addressee` | Login confirmation, greetings, the printed card | Own household, admin |
+| Household name (internal) | `household.name` | Filing, searching and ordering the admin guest list | **Admin only** — not in any guest response |
 | Household login code | `household.code` | The only authentication secret | **Admin only** — never in a guest response |
 | Guest first/last name | `guest` | Guest list, seating, place cards | Own household, admin. Tablemates' names only via the seating view, once published |
 | Attendance scope | `guest.attending` | Headcounts for church, party, caterer | Own household, admin |

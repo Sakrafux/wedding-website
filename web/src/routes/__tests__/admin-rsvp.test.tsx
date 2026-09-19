@@ -24,17 +24,17 @@ function card(name: string) {
 }
 
 describe("the admin RSVP page", () => {
-  // An admin with two tabs open must not write Familie Müller's answer into Familie
-  // Schmidt, so the household is named on the page and not only in the URL.
+  // An admin with two tabs open must not write one household's answer into another's,
+  // so the household is named on the page and not only in the URL. The name shown is
+  // the addressee: this page renders the guests' own RSVP body, which carries no
+  // internal household name.
   it("names the household it is answering for and renders the guests' own form", async () => {
     stubAdminRSVP();
 
     await renderApp("/admin/haushalte/12/rsvp");
 
-    expect(
-      await screen.findByRole("heading", { name: "Rückmeldung für Familie Müller", level: 1 }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Du beantwortest dieses Formular für Familie Müller.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Rückmeldung für Hans & Erika", level: 1 })).toBeInTheDocument();
+    expect(screen.getByText("Du beantwortest dieses Formular für Hans & Erika.")).toBeInTheDocument();
     // The same controls as the guest form, by construction: it is the same component.
     expect(screen.getByRole("radiogroup", { name: /Wozu kommt Anna Müller/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();

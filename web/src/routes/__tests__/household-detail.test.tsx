@@ -35,8 +35,11 @@ describe("admin household detail", () => {
     await renderApp("/admin/haushalte/12");
 
     expect(await screen.findByRole("heading", { name: "Familie Müller", level: 1 })).toBeInTheDocument();
-    const household = group("Haushalt");
-    expect(household.getByLabelText("Name")).toHaveValue("Familie Müller");
+    const household = group("Haushaltsdaten");
+    expect(household.getByLabelText("Haushalt")).toHaveValue("Familie Müller");
+    // The guest-facing name is its own field: the heading and the list show the
+    // internal one, and a guest never sees it.
+    expect(household.getByLabelText("Anschrift")).toHaveValue("Hans & Erika");
     expect(household.getByLabelText("Interne Notiz (nur für uns)")).toHaveValue("Kommen mit dem Zug");
     // The transport counts and the pram are answers, not settings: shown here, and
     // editable only through the RSVP form (F5-B05, F5-F05).
@@ -47,7 +50,7 @@ describe("admin household detail", () => {
   });
 
   // F5-F05: shown next to the link that edits them properly. They are answers, not
-  // settings, and editing them beside `display_name` bypassed the RSVP rules.
+  // settings, and editing them beside the household name bypassed the RSVP rules.
   it("shows the household's own RSVP answers as text", async () => {
     stubHousehold({ transport_seats_needed: 3, transport_seats_offered: 0, has_stroller: true });
 
@@ -65,23 +68,23 @@ describe("admin household detail", () => {
   // request finishes fast enough that the button's own state was a flash.
   it("says when it last saved, and keeps saying it", async () => {
     const stub = stubHousehold();
-    stub.api.set("PATCH /api/admin/households/12", ok({ ...stub.household, display_name: "Familie Müller-Schmidt" }));
+    stub.api.set("PATCH /api/admin/households/12", ok({ ...stub.household, name: "Familie Müller-Schmidt" }));
 
     const { user } = await renderApp("/admin/haushalte/12");
-    await screen.findByRole("group", { name: "Haushalt" });
-    const household = group("Haushalt");
+    await screen.findByRole("group", { name: "Haushaltsdaten" });
+    const household = group("Haushaltsdaten");
 
-    await user.type(household.getByLabelText("Name"), "-Schmidt");
+    await user.type(household.getByLabelText("Haushalt"), "-Schmidt");
     await user.click(household.getByRole("button", { name: "Speichern" }));
 
     const status = await within(
-      screen.getByRole("group", { name: "Haushalt" }).parentElement as HTMLElement,
+      screen.getByRole("group", { name: "Haushaltsdaten" }).parentElement as HTMLElement,
     ).findByRole("status");
     expect(status).toHaveTextContent(/^Zuletzt gespeichert um \d{2}:\d{2}$/);
 
     // Still there after the next keystroke: a confirmation that persists needs no
     // minimum duration to be seen.
-    await user.type(group("Haushalt").getByLabelText("Name"), "!");
+    await user.type(group("Haushaltsdaten").getByLabelText("Haushalt"), "!");
     expect(status).toBeInTheDocument();
   });
 
@@ -91,10 +94,10 @@ describe("admin household detail", () => {
 
     const { user } = await renderApp("/admin/haushalte/12");
 
-    await screen.findByRole("group", { name: "Haushalt" });
-    const household = group("Haushalt");
+    await screen.findByRole("group", { name: "Haushaltsdaten" });
+    const household = group("Haushaltsdaten");
 
-    await user.clear(household.getByLabelText("Name"));
+    await user.clear(household.getByLabelText("Haushalt"));
     await user.click(household.getByRole("button", { name: "Speichern" }));
 
     // The envelope carries no `fields` here, so the top-level message stands in —
@@ -111,17 +114,17 @@ describe("admin household detail", () => {
           code: "validation_failed",
           message: "Bitte prüfe die markierten Felder.",
           request_id: "TESTID1",
-          fields: { display_name: "Bitte fülle dieses Feld aus." },
+          fields: { name: "Bitte fülle dieses Feld aus." },
         },
       },
     });
 
     const { user } = await renderApp("/admin/haushalte/12");
 
-    await screen.findByRole("group", { name: "Haushalt" });
-    const household = group("Haushalt");
+    await screen.findByRole("group", { name: "Haushaltsdaten" });
+    const household = group("Haushaltsdaten");
 
-    await user.clear(household.getByLabelText("Name"));
+    await user.clear(household.getByLabelText("Haushalt"));
     await user.click(household.getByRole("button", { name: "Speichern" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Bitte fülle dieses Feld aus.");

@@ -28,7 +28,8 @@ func newAdminApp(t *testing.T, options ...testAppOption) *testApp {
 // silently.
 type adminHousehold struct {
 	ID                    int64        `json:"id"`
-	DisplayName           string       `json:"display_name"`
+	Name                  string       `json:"name"`
+	Addressee             string       `json:"addressee"`
 	Code                  string       `json:"code"`
 	MemberCount           int          `json:"member_count"`
 	LastLoginAt           *string      `json:"last_login_at"`
@@ -77,14 +78,16 @@ func TestAdminCreatesReadsUpdatesAndDeletesAHousehold(t *testing.T) {
 	app := newAdminApp(t)
 
 	created := app.postJSON("/api/admin/households", map[string]any{
-		"display_name": "Familie Müller",
-		"admin_note":   "Kommen mit dem Zug",
+		"name":       "Familie Müller",
+		"addressee":  "Hans & Erika",
+		"admin_note": "Kommen mit dem Zug",
 	})
 	require.Equal(t, http.StatusCreated, created.Status)
 
 	household := created.adminHousehold()
 	assert.Positive(t, household.ID)
-	assert.Equal(t, "Familie Müller", household.DisplayName)
+	assert.Equal(t, "Familie Müller", household.Name)
+	assert.Equal(t, "Hans & Erika", household.Addressee)
 	assert.Equal(t, "Kommen mit dem Zug", household.AdminNote)
 	assert.Zero(t, household.TransportSeatsOffered, "an answer, not a setting — see F5-B05")
 	assert.Empty(t, household.Members, "a fresh household has an empty member list, not a null one")
@@ -101,11 +104,15 @@ func TestAdminCreatesReadsUpdatesAndDeletesAHousehold(t *testing.T) {
 	assert.Equal(t, 0, listed[0].MemberCount)
 
 	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
-	assert.Equal(t, "Familie Müller", app.get(path).adminHousehold().DisplayName)
+	assert.Equal(t, "Familie Müller", app.get(path).adminHousehold().Name)
 
-	updated := app.patchJSON(path, map[string]any{"display_name": "Familie Müller-Schmidt"})
+	updated := app.patchJSON(path, map[string]any{
+		"name":      "Familie Müller-Schmidt",
+		"addressee": "Hans & Erika Müller-Schmidt",
+	})
 	require.Equal(t, http.StatusOK, updated.Status)
-	assert.Equal(t, "Familie Müller-Schmidt", updated.adminHousehold().DisplayName)
+	assert.Equal(t, "Familie Müller-Schmidt", updated.adminHousehold().Name)
+	assert.Equal(t, "Hans & Erika Müller-Schmidt", updated.adminHousehold().Addressee)
 
 	require.Equal(t, http.StatusNoContent, app.deleteRequest(path).Status)
 	assert.Equal(t, http.StatusNotFound, app.get(path).Status)
@@ -118,9 +125,9 @@ func TestAdminHouseholdListIsSortedByNameWithMemberCounts(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	seedHousehold(t, app.Database.Write, withDisplayName("Zimmermann"), withGuests(1))
-	seedHousehold(t, app.Database.Write, withDisplayName("albrecht"), withGuests(3))
-	müller := seedHousehold(t, app.Database.Write, withDisplayName("Müller"), withGuests(2))
+	seedHousehold(t, app.Database.Write, withName("Zimmermann"), withGuests(1))
+	seedHousehold(t, app.Database.Write, withName("albrecht"), withGuests(3))
+	müller := seedHousehold(t, app.Database.Write, withName("Müller"), withGuests(2))
 
 	// A soft-deleted member is nobody's member any more, and must not be counted.
 	require.NoError(t, app.guestStore().SoftDelete(t.Context(), müller.Guests[0].ID, time.Now()))
@@ -129,7 +136,7 @@ func TestAdminHouseholdListIsSortedByNameWithMemberCounts(t *testing.T) {
 	require.Len(t, listed, 3)
 
 	assert.Equal(t, []string{"albrecht", "Müller", "Zimmermann"}, []string{
-		listed[0].DisplayName, listed[1].DisplayName, listed[2].DisplayName,
+		listed[0].Name, listed[1].Name, listed[2].Name,
 	}, "sorted case-insensitively by name")
 	assert.Equal(t, []int{3, 1, 1}, []int{listed[0].MemberCount, listed[1].MemberCount, listed[2].MemberCount})
 }
@@ -159,16 +166,36 @@ func TestAdminHouseholdPatchLeavesAbsentFieldsAloneAndClearsEmptyOnes(t *testing
 
 	app := newAdminApp(t)
 	household := seedHousehold(t, app.Database.Write,
-		withDisplayName("Familie Müller"), withAdminNote("Kommen mit dem Zug"))
+		withName("Familie Müller"), withAdminNote("Kommen mit dem Zug"))
 	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
 
-	patched := app.patchJSON(path, map[string]any{"display_name": "Familie Müller-Schmidt"}).adminHousehold()
-	assert.Equal(t, "Familie Müller-Schmidt", patched.DisplayName)
+	patched := app.patchJSON(path, map[string]any{"name": "Familie Müller-Schmidt"}).adminHousehold()
+	assert.Equal(t, "Familie Müller-Schmidt", patched.Name)
 	assert.Equal(t, "Kommen mit dem Zug", patched.AdminNote, "absent means leave alone")
 
 	cleared := app.patchJSON(path, map[string]any{"admin_note": ""}).adminHousehold()
 	assert.Empty(t, cleared.AdminNote)
-	assert.Equal(t, "Familie Müller-Schmidt", cleared.DisplayName, "the earlier change survives the next patch")
+	assert.Equal(t, "Familie Müller-Schmidt", cleared.Name, "the earlier change survives the next patch")
+}
+
+// The addressee is what a guest is shown and what the card is printed from, so it may
+// not be empty in the database. On a create it is usually the name again and the admin
+// has nothing to add yet, which is the one place the fallback applies.
+func TestAdminHouseholdCreateFallsBackToTheNameAsAddressee(t *testing.T) {
+	t.Parallel()
+
+	app := newAdminApp(t)
+
+	created := app.postJSON("/api/admin/households", map[string]any{"name": "Familie Müller"})
+	require.Equal(t, http.StatusCreated, created.Status)
+	assert.Equal(t, "Familie Müller", created.adminHousehold().Addressee)
+
+	// A patch is not a create: clearing the addressee has to fail rather than silently
+	// re-deriving it, because by then it is a value somebody chose.
+	path := fmt.Sprintf("/api/admin/households/%d", created.adminHousehold().ID)
+	response := app.patchJSON(path, map[string]any{"addressee": ""})
+	assert.Equal(t, http.StatusBadRequest, response.Status)
+	assert.Contains(t, response.errorEnvelope().Fields, "addressee")
 }
 
 // A code changed by a stray field in a form body is a code nobody knows changed. The
@@ -180,7 +207,7 @@ func TestAdminHouseholdPatchCannotChangeTheCode(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write, withCode("ABC234"))
 
 	response := app.patchJSON(fmt.Sprintf("/api/admin/households/%d", household.ID),
-		map[string]any{"display_name": "Familie Müller", "code": "ZZZ999"})
+		map[string]any{"name": "Familie Müller", "code": "ZZZ999"})
 
 	assert.Equal(t, http.StatusBadRequest, response.Status)
 	assert.Equal(t, "validation_failed", response.errorEnvelope().Code)
@@ -193,17 +220,17 @@ func TestAdminHouseholdValidationFailuresNameTheirFieldsInGerman(t *testing.T) {
 	app := newAdminApp(t)
 
 	response := app.postJSON("/api/admin/households", map[string]any{
-		"display_name": "",
-		"admin_note":   strings.Repeat("x", 2001),
+		"name":       "",
+		"admin_note": strings.Repeat("x", 2001),
 	})
 	require.Equal(t, http.StatusBadRequest, response.Status)
 
 	envelope := response.errorEnvelope()
 	assert.Equal(t, "validation_failed", envelope.Code)
 	assert.Contains(t, envelope.Message, "Felder")
-	assert.Contains(t, envelope.Fields, "display_name", "keyed by the JSON name, not the Go one")
+	assert.Contains(t, envelope.Fields, "name", "keyed by the JSON name, not the Go one")
 	assert.Contains(t, envelope.Fields, "admin_note")
-	assert.Contains(t, envelope.Fields["display_name"], "Bitte")
+	assert.Contains(t, envelope.Fields["name"], "Bitte")
 }
 
 // The three fields a household answers have one writer, and it is the RSVP endpoint
@@ -213,7 +240,7 @@ func TestAdminHouseholdWriteRoutesRefuseTheRSVPAnsweredFields(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"))
+	household := seedHousehold(t, app.Database.Write, withName("Familie Müller"))
 	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
 
 	for _, field := range []string{"transport_seats_needed", "transport_seats_offered", "has_stroller"} {
@@ -221,7 +248,7 @@ func TestAdminHouseholdWriteRoutesRefuseTheRSVPAnsweredFields(t *testing.T) {
 		assert.Equalf(t, http.StatusBadRequest, patched.Status, "PATCH with %q", field)
 		assert.Equal(t, "validation_failed", patched.errorEnvelope().Code)
 
-		created := app.postJSON("/api/admin/households", map[string]any{"display_name": "X", field: 1})
+		created := app.postJSON("/api/admin/households", map[string]any{"name": "X", field: 1})
 		assert.Equalf(t, http.StatusBadRequest, created.Status, "POST with %q", field)
 	}
 
@@ -280,7 +307,7 @@ func TestAdminHouseholdMutationsAreAuditedWithoutTheCode(t *testing.T) {
 
 	app := newAdminApp(t)
 
-	created := app.postJSON("/api/admin/households", map[string]any{"display_name": "Familie Müller"})
+	created := app.postJSON("/api/admin/households", map[string]any{"name": "Familie Müller"})
 	require.Equal(t, http.StatusCreated, created.Status)
 	household := created.adminHousehold()
 	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
@@ -314,11 +341,11 @@ func TestAPatchThatChangesNothingWritesNoAuditRow(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"))
+	household := seedHousehold(t, app.Database.Write, withName("Familie Müller"))
 	before := len(app.auditRows())
 
 	response := app.patchJSON(fmt.Sprintf("/api/admin/households/%d", household.ID),
-		map[string]any{"display_name": "Familie Müller"})
+		map[string]any{"name": "Familie Müller"})
 
 	require.Equal(t, http.StatusOK, response.Status)
 	assert.Len(t, app.auditRows(), before)
@@ -331,7 +358,7 @@ func TestAdminHouseholdRoutesAnswer404ForAnUnknownID(t *testing.T) {
 
 	paths := map[string]*testResponse{
 		"read":    app.get("/api/admin/households/9999"),
-		"patch":   app.patchJSON("/api/admin/households/9999", map[string]any{"display_name": "X"}),
+		"patch":   app.patchJSON("/api/admin/households/9999", map[string]any{"name": "X"}),
 		"delete":  app.deleteRequest("/api/admin/households/9999"),
 		"code":    app.post("/api/admin/households/9999/code"),
 		"guest":   app.postJSON("/api/admin/households/9999/guests", map[string]any{"name": "A B", "kind": "adult"}),
@@ -356,7 +383,7 @@ func TestEveryCreatedHouseholdGetsADistinctCode(t *testing.T) {
 	codes := map[string]bool{}
 	for index := range 25 {
 		response := app.postJSON("/api/admin/households",
-			map[string]any{"display_name": fmt.Sprintf("Familie %d", index)})
+			map[string]any{"name": fmt.Sprintf("Familie %d", index)})
 		require.Equal(t, http.StatusCreated, response.Status)
 
 		code := response.adminHousehold().Code
@@ -382,7 +409,7 @@ func TestACollidingCodeIsRetried(t *testing.T) {
 	}))
 	seedHousehold(t, app.Database.Write, withCode(taken))
 
-	response := app.postJSON("/api/admin/households", map[string]any{"display_name": "Familie Müller"})
+	response := app.postJSON("/api/admin/households", map[string]any{"name": "Familie Müller"})
 
 	require.Equal(t, http.StatusCreated, response.Status)
 	assert.Equal(t, "DEF567", response.adminHousehold().Code)
@@ -403,14 +430,14 @@ func TestAGeneratorThatOnlyEverCollidesFailsLoudly(t *testing.T) {
 	}))
 	seedHousehold(t, app.Database.Write, withCode(taken))
 
-	response := app.postJSON("/api/admin/households", map[string]any{"display_name": "Familie Müller"})
+	response := app.postJSON("/api/admin/households", map[string]any{"name": "Familie Müller"})
 
 	assert.Equal(t, http.StatusInternalServerError, response.Status)
 	assert.Equal(t, "internal_error", response.errorEnvelope().Code)
 	assert.Equal(t, 5, attempts, "bounded, not endless")
 
 	var households int
-	require.NoError(t, app.Database.Read.Get(&households, `SELECT COUNT(*) FROM household WHERE display_name = ?`,
+	require.NoError(t, app.Database.Read.Get(&households, `SELECT COUNT(*) FROM household WHERE name = ?`,
 		"Familie Müller"))
 	assert.Equal(t, 0, households)
 }

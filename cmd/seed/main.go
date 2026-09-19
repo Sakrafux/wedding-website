@@ -111,7 +111,7 @@ func run(households, guests int, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(out, "  #%d  %-28s  %s\n", household.ID, household.DisplayName, household.Code)
+		fmt.Fprintf(out, "  #%d  %-28s  %s\n", household.ID, household.Name, household.Code)
 	}
 	return nil
 }
@@ -138,7 +138,10 @@ func insertHousehold(
 	name string,
 	members int,
 ) (domain.Household, error) {
-	household, err := households.Create(ctx, domain.Household{DisplayName: name})
+	// The addressee is the name verbatim, which is what UseCase.Create would fall
+	// back to anyway: a seeded household is a placeholder, and anything the addressee
+	// should really say gets typed into the admin form.
+	household, err := households.Create(ctx, domain.Household{Name: name, Addressee: name})
 	if err != nil {
 		return domain.Household{}, fmt.Errorf("inserting household %q: %w", name, err)
 	}

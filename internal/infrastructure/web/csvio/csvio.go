@@ -34,7 +34,7 @@ const (
 	byteOrderMark = "\ufeff"
 )
 
-// Writer streams quoted CSV rows to a response.
+// Writer streams CSV rows to a response.
 //
 // Streaming rather than building the file in memory. Not for the sixty rows this
 // application has — for the habit, and because the alternative sets a precedent for
@@ -50,12 +50,19 @@ type Writer struct {
 // Content-Disposition is `attachment`: a CSV that renders in the browser instead of
 // downloading is a CSV somebody copies out of the page by hand.
 //
+// `Cache-Control: no-store` for two reasons. codes.csv is the whole key list leaving
+// the server, and a copy of it sitting in a browser or proxy cache is a copy nobody
+// knows about. It is also the only thing that makes re-downloading trustworthy: these
+// URLs never change, so without it a stale export is served again after the data — or
+// the format — has moved on, which is a genuinely confusing way to lose an afternoon.
+//
 // Nothing can be reported to the client after this point — the status line is
 // already on the wire — so the caller logs a later failure and leaves the response
 // truncated. That is the same trade httpio.WriteJSON makes, and for the same reason.
 func Begin(w http.ResponseWriter, filename string) *Writer {
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(http.StatusOK)
 
 	buffered := bufio.NewWriter(w)
@@ -66,12 +73,12 @@ func Begin(w http.ResponseWriter, filename string) *Writer {
 
 // WriteRow writes one row of strings, typically the header.
 func (writer *Writer) WriteRow(fields ...string) error {
-	quoted := make([]string, 0, len(fields))
+	encoded := make([]string, 0, len(fields))
 	for _, field := range fields {
-		quoted = append(quoted, quote(field))
+		encoded = append(encoded, quoteIfNeeded(field))
 	}
 
-	if _, err := writer.buffered.WriteString(strings.Join(quoted, fieldSeparator) + lineSeparator); err != nil {
+	if _, err := writer.buffered.WriteString(strings.Join(encoded, fieldSeparator) + lineSeparator); err != nil {
 		return fmt.Errorf("writing csv row: %w", err)
 	}
 	writer.rows++
@@ -107,12 +114,20 @@ func (writer *Writer) Finish() error {
 	return nil
 }
 
-// quote wraps every field, always.
+// quoteIfNeeded wraps a field only when leaving it bare would break the row.
 //
-// Cheap, and it removes the whole class of bug where a name containing a semicolon
-// splits a row — which is not hypothetical in a file of free-text notes. A doubled
-// quote is the CSV escape for a literal one.
-func quote(field string) string {
+// Quoting everything was the earlier decision and was wrong in practice: every
+// value a person copies out of a cell — a login code, a name — comes with quotes
+// attached, which Excel shows but does not strip on copy. So the quotes are back to
+// doing the one job they exist for: a field carrying the separator, a quote or a
+// line break still splits a row, and that is not hypothetical in a file of
+// free-text notes.
+//
+// A doubled quote is the CSV escape for a literal one.
+func quoteIfNeeded(field string) string {
+	if !strings.ContainsAny(field, fieldSeparator+`"`+"\r\n") {
+		return field
+	}
 	return `"` + strings.ReplaceAll(field, `"`, `""`) + `"`
 }
 

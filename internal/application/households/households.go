@@ -83,7 +83,16 @@ func (useCase *UseCase) withMembers(ctx context.Context, household domain.Househ
 }
 
 // Create inserts a household, which assigns it a login code in the process.
+//
+// An empty addressee falls back to the name. The addressee is the string guests see
+// and the one printed on the card, so it may not be empty in the database — but on
+// a create the two are usually the same and the admin has nothing to say yet. The
+// fallback lives here, once, rather than at every read site.
 func (useCase *UseCase) Create(ctx context.Context, draft domain.Household) (domain.Household, error) {
+	if draft.Addressee == "" {
+		draft.Addressee = draft.Name
+	}
+
 	created, err := useCase.households.Create(ctx, draft)
 	if err != nil {
 		return domain.Household{}, err
@@ -94,7 +103,8 @@ func (useCase *UseCase) Create(ctx context.Context, draft domain.Household) (dom
 		// The code is created here too and is deliberately not recorded. See
 		// NewAdminChangeEntry.
 		domain.CreatedChanges(map[string]any{
-			"display_name":            created.DisplayName,
+			"name":                    created.Name,
+			"addressee":               created.Addressee,
 			"admin_note":              created.AdminNote,
 			"transport_seats_needed":  created.TransportSeatsNeeded,
 			"transport_seats_offered": created.TransportSeatsOffered,
@@ -150,7 +160,7 @@ func (useCase *UseCase) Delete(ctx context.Context, id int64) error {
 
 	useCase.recordAudit(ctx, domain.NewAdminChangeEntry(
 		domain.AuditEntityHousehold, id, domain.AuditActionDelete, time.Now(),
-		domain.DeletedChanges(map[string]any{"display_name": household.DisplayName}),
+		domain.DeletedChanges(map[string]any{"name": household.Name}),
 	))
 
 	return nil

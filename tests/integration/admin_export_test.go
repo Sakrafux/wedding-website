@@ -38,8 +38,10 @@ func TestCodesExportListsEveryHouseholdWithItsPrintedCode(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	first := seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"), withCode("ABC234"))
-	second := seedHousehold(t, app.Database.Write, withDisplayName("Familie Albrecht"), withCode("DEF567"))
+	first := seedHousehold(t, app.Database.Write,
+		withName("Familie Müller"), withAddressee("Hans & Erika"), withCode("ABC234"))
+	second := seedHousehold(t, app.Database.Write,
+		withName("Familie Albrecht"), withAddressee("Luki & Paddi"), withCode("DEF567"))
 
 	response := app.get("/api/admin/export/codes.csv")
 	require.Equal(t, http.StatusOK, response.Status)
@@ -49,9 +51,12 @@ func TestCodesExportListsEveryHouseholdWithItsPrintedCode(t *testing.T) {
 	require.Len(t, rows, 3)
 
 	// German headers, uniquely in this application, because a print shop reads them.
-	assert.Equal(t, []string{"haushalt", "code"}, rows[0])
-	assert.Equal(t, []string{second.DisplayName, "DEF567"}, rows[1], "sorted by name")
-	assert.Equal(t, []string{first.DisplayName, "ABC234"}, rows[2])
+	assert.Equal(t, []string{"anschrift", "code"}, rows[0])
+	// The addressee, not the household name: this file is what the cards are printed
+	// from. Still ordered by the household name, which is what the list is scanned by.
+	assert.Equal(t, []string{second.Addressee, "DEF567"}, rows[1], "sorted by household name")
+	assert.Equal(t, []string{first.Addressee, "ABC234"}, rows[2])
+	assert.NotContains(t, response.Body, first.Name, "the internal household name stays out of the print file")
 }
 
 // The three encoding decisions, asserted on the bytes rather than on the parsed
@@ -61,7 +66,7 @@ func TestExportsAreExcelReadableUTF8(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"), withGuests(1))
+	seedHousehold(t, app.Database.Write, withName("Familie Müller"), withGuests(1))
 
 	for _, file := range []string{"codes.csv", "guests.csv"} {
 		response := app.get("/api/admin/export/" + file)
@@ -70,12 +75,19 @@ func TestExportsAreExcelReadableUTF8(t *testing.T) {
 		assert.Truef(t, strings.HasPrefix(response.Body, utf8BOM), "%s starts with a BOM", file)
 		assert.Containsf(t, response.Body, ";", "%s is semicolon-delimited", file)
 		assert.Containsf(t, response.Body, "\r\n", "%s uses CRLF", file)
-		assert.Containsf(t, response.Body, `"`, "%s quotes every field", file)
+		// No quotes on an ordinary value: a quoted login code is a login code
+		// somebody copies out of a cell with the quotes attached. Quoting is
+		// per-field now — see TestExportedFieldsSurviveSeparatorsAndQuotes.
+		assert.NotContainsf(t, response.Body, `"`, "%s leaves ordinary fields unquoted", file)
 		// The umlaut survives as UTF-8 bytes and is not mangled into Latin-1.
 		assert.Containsf(t, response.Body, "Müller", "%s keeps umlauts", file)
 		assert.NotContainsf(t, response.Body, "MÃ¼ller", "%s is not double-encoded", file)
 
 		assert.Equal(t, `attachment; filename="`+file+`"`, response.Header.Get("Content-Disposition"))
+		// A cached copy of the key list is a copy nobody knows about, and a cached
+		// copy of either file is a re-download that silently answers with yesterday's
+		// data in yesterday's format.
+		assert.Equal(t, "no-store", response.Header.Get("Cache-Control"), "%s is never cached", file)
 	}
 }
 
@@ -87,7 +99,7 @@ func TestExportedFieldsSurviveSeparatorsAndQuotes(t *testing.T) {
 
 	const awkward = `Familie "Groß"; von Müller`
 	app := newAdminApp(t)
-	seedHousehold(t, app.Database.Write, withDisplayName(awkward), withCode("ABC234"))
+	seedHousehold(t, app.Database.Write, withAddressee(awkward), withCode("ABC234"))
 
 	rows := readCSV(t, app.get("/api/admin/export/codes.csv").Body)
 
@@ -141,7 +153,7 @@ func TestGuestExportIncludesRemovedPeopleWithTheirDeletionTime(t *testing.T) {
 
 	app := newAdminApp(t)
 	household := seedHousehold(t, app.Database.Write,
-		withDisplayName("Familie Müller"), withCode("ABC234"),
+		withName("Familie Müller"), withCode("ABC234"),
 		withAdult("Anna Müller"), withChild("Emil Müller", 4))
 
 	require.Equal(t, http.StatusNoContent,
@@ -161,7 +173,8 @@ func TestGuestExportIncludesRemovedPeopleWithTheirDeletionTime(t *testing.T) {
 	assert.NotEmpty(t, byColumn(rows[2], "deleted_at"), "Emil was removed and is still in the dump")
 	assert.Equal(t, "Emil Müller", byColumn(rows[2], "name"))
 	assert.Equal(t, "4", byColumn(rows[2], "age"))
-	assert.Equal(t, "Familie Müller", byColumn(rows[2], "household_display_name"))
+	assert.Equal(t, "Familie Müller", byColumn(rows[2], "household_name"))
+	assert.Equal(t, "Familie Müller", byColumn(rows[2], "household_addressee"), "seeded from the name")
 	assert.Equal(t, "ABC234", byColumn(rows[2], "household_code"))
 }
 

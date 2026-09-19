@@ -50,9 +50,12 @@ type BootstrapResponse struct {
 //     to anything that can read a network log or a browser cache.
 //   - admin_note — our private note about the household. Written on the assumption
 //     that they will never read it.
+//   - name — the internal household name. Not a secret, but the wrong string: we
+//     file households by surname and address them by first name, and this response
+//     is what every greeting is rendered from. `addressee` is that string.
 type HouseholdSummary struct {
-	ID          int64  `json:"id"`
-	DisplayName string `json:"display_name"`
+	ID        int64  `json:"id"`
+	Addressee string `json:"addressee"`
 }
 
 // Member is one person in the household.

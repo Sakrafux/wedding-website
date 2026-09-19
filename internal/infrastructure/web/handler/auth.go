@@ -166,8 +166,8 @@ func bootstrapResponse(bootstrap auth.Bootstrap) dto.BootstrapResponse {
 
 	return dto.BootstrapResponse{
 		Household: dto.HouseholdSummary{
-			ID:          bootstrap.Household.ID,
-			DisplayName: bootstrap.Household.DisplayName,
+			ID:        bootstrap.Household.ID,
+			Addressee: bootstrap.Household.Addressee,
 		},
 		Members: members,
 		Flags: dto.Flags{

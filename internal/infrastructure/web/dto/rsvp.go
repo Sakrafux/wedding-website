@@ -66,9 +66,11 @@ type RSVPAddMemberResponse struct {
 //   - admin_note — our private note about the household.
 //   - rsvp_note_seen_at — whether we have read their note is our business, and a
 //     household that saw an unread marker would reasonably start chasing us.
+//   - name — the internal household name, for the reason dto.HouseholdSummary
+//     gives: guests are shown `addressee`, never the name we file them under.
 type RSVPHousehold struct {
-	ID          int64  `json:"id"`
-	DisplayName string `json:"display_name"`
+	ID        int64  `json:"id"`
+	Addressee string `json:"addressee"`
 	// Church → reception only. Zero when nobody in the household attends both, which
 	// the server enforces rather than trusting the form to hide the fields.
 	TransportSeatsNeeded  int    `json:"transport_seats_needed"`

@@ -30,6 +30,10 @@ func NewAdminExport(exports *exports.UseCase) *AdminExport {
 // German column headers, uniquely in this application, because a print shop reads
 // them. The code is written in exactly the form that must appear on the card: the six
 // stored characters, ungrouped, with no separator for anyone to get wrong.
+//
+// The **addressee**, not the household name: this file is the variable-data source
+// for the invitation cards, so the column has to hold the text that gets printed on
+// one. The internal name is in guests.csv, which is the file we read ourselves.
 func (handler *AdminExport) Codes(w http.ResponseWriter, r *http.Request) {
 	households, err := handler.exports.Codes(r.Context())
 	if err != nil {
@@ -41,12 +45,12 @@ func (handler *AdminExport) Codes(w http.ResponseWriter, r *http.Request) {
 
 	writer := csvio.Begin(w, "codes.csv")
 
-	if err := writer.WriteRow("haushalt", "code"); err != nil {
+	if err := writer.WriteRow("anschrift", "code"); err != nil {
 		logTruncatedExport(r, "codes.csv", err)
 		return
 	}
 	for _, household := range households {
-		if err := writer.WriteRow(household.DisplayName, household.Code); err != nil {
+		if err := writer.WriteRow(household.Addressee, household.Code); err != nil {
 			logTruncatedExport(r, "codes.csv", err)
 			return
 		}

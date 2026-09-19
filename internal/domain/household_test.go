@@ -11,7 +11,8 @@ import (
 func household() domain.Household {
 	return domain.Household{
 		ID:                    12,
-		DisplayName:           "Familie Müller",
+		Name:                  "Familie Müller",
+		Addressee:             "Hans & Erika",
 		Code:                  "ABC234",
 		TransportSeatsNeeded:  0,
 		TransportSeatsOffered: 4,
@@ -23,12 +24,13 @@ func TestApplyHouseholdPatchLeavesAbsentFieldsAlone(t *testing.T) {
 	t.Parallel()
 
 	name := "Familie Müller-Schmidt"
-	updated, changes := domain.ApplyHouseholdPatch(household(), domain.HouseholdPatch{DisplayName: &name})
+	updated, changes := domain.ApplyHouseholdPatch(household(), domain.HouseholdPatch{Name: &name})
 
-	assert.Equal(t, name, updated.DisplayName)
+	assert.Equal(t, name, updated.Name)
+	assert.Equal(t, "Hans & Erika", updated.Addressee, "the two names move independently")
 	assert.Equal(t, "Kommen mit dem Zug", updated.AdminNote)
 	assert.Equal(t, 4, updated.TransportSeatsOffered)
-	assert.Equal(t, []string{"display_name"}, changedFields(changes))
+	assert.Equal(t, []string{"name"}, changedFields(changes))
 }
 
 // The reason the patch fields are pointers: an empty value has to be able to clear a
@@ -51,11 +53,24 @@ func TestApplyHouseholdPatchNeverTouchesTheCode(t *testing.T) {
 	t.Parallel()
 
 	name := "Familie Schmidt"
-	updated, changes := domain.ApplyHouseholdPatch(household(), domain.HouseholdPatch{DisplayName: &name})
+	updated, changes := domain.ApplyHouseholdPatch(household(), domain.HouseholdPatch{Name: &name})
 
 	assert.Equal(t, "ABC234", updated.Code)
 	assert.NotContains(t, changes.Before, "code")
 	assert.NotContains(t, changes.After, "code")
+}
+
+// The internal name and the guest-facing addressee are separate columns and separate
+// audit entries: renaming the household must not quietly reprint the cards.
+func TestApplyHouseholdPatchTracksNameAndAddresseeSeparately(t *testing.T) {
+	t.Parallel()
+
+	addressee := "Luki & Paddi"
+	updated, changes := domain.ApplyHouseholdPatch(household(), domain.HouseholdPatch{Addressee: &addressee})
+
+	assert.Equal(t, "Familie Müller", updated.Name)
+	assert.Equal(t, addressee, updated.Addressee)
+	assert.Equal(t, []string{"addressee"}, changedFields(changes))
 }
 
 func TestApplyHouseholdPatchReportsNoChangesWhenNothingDiffers(t *testing.T) {
@@ -64,7 +79,7 @@ func TestApplyHouseholdPatchReportsNoChangesWhenNothingDiffers(t *testing.T) {
 	sameName := "Familie Müller"
 	seats := 4
 	_, changes := domain.ApplyHouseholdPatch(household(),
-		domain.HouseholdPatch{DisplayName: &sameName, TransportSeatsOffered: &seats})
+		domain.HouseholdPatch{Name: &sameName, TransportSeatsOffered: &seats})
 
 	assert.True(t, changes.IsEmpty())
 }

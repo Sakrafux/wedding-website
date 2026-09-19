@@ -55,7 +55,7 @@ func TestDuplicateHouseholdCodeIsRejected(t *testing.T) {
 	database := newTestApp(t).Database
 	insertHousehold(t, database.Write, "ABC234")
 
-	_, err := database.Write.Exec(`INSERT INTO household (display_name, code) VALUES ('Familie Zwei', 'ABC234')`)
+	_, err := database.Write.Exec(`INSERT INTO household (name, code) VALUES ('Familie Zwei', 'ABC234')`)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "UNIQUE")

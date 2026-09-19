@@ -33,7 +33,7 @@ func TestAdminAddsUpdatesAndRemovesAMember(t *testing.T) {
 	t.Parallel()
 
 	app := newAdminApp(t)
-	household := seedHousehold(t, app.Database.Write, withDisplayName("Familie Müller"))
+	household := seedHousehold(t, app.Database.Write, withName("Familie Müller"))
 
 	created := app.postJSON(fmt.Sprintf("/api/admin/households/%d/guests", household.ID), map[string]any{
 		"name":         "Emil Müller",

@@ -431,13 +431,18 @@ export const householdLabels = {
 
   createHeading: "Haushalt anlegen",
   createNameLabel: "Name des Haushalts",
-  createNameHint: "Zum Beispiel „Familie Müller“ oder „Anna und Bernd“.",
+  createNameHint: "Nur für uns, zum Beispiel „Familie Müller“. Die Anschrift kommt danach.",
   createSubmit: "Anlegen",
   createSubmitting: "Wird angelegt …",
 
   detailBack: "Zurück zur Übersicht",
-  detailDataHeading: "Haushalt",
-  displayNameLabel: "Name",
+  /** Not "Haushalt": that is now the label of one of the fields inside this group. */
+  detailDataHeading: "Haushaltsdaten",
+  householdNameLabel: "Haushalt",
+  householdNameHint: "Nur für uns: so steht der Haushalt in der Liste. Zum Beispiel „Familie Müller“.",
+  addresseeLabel: "Anschrift",
+  addresseeHint:
+    "So sprechen wir sie an – das steht auf der Einladung und begrüßt sie auf der Seite. Zum Beispiel „Luki & Paddi“.",
   adminNoteLabel: "Interne Notiz (nur für uns)",
   adminNoteHint: "Der Haushalt sieht diese Notiz nie.",
   save: "Speichern",

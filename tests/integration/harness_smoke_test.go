@@ -75,8 +75,8 @@ func TestSeedHouseholdDefaultsAreUsable(t *testing.T) {
 
 	assert.Len(t, first.Code, 6)
 	assert.NotEqual(t, first.Code, second.Code, "generated codes must not collide")
-	assert.NotContains(t, first.DisplayName, first.Code, "the default name must not carry the household's secret")
-	assert.NotEqual(t, first.DisplayName, second.DisplayName)
+	assert.NotContains(t, first.Name, first.Code, "the default name must not carry the household's secret")
+	assert.NotEqual(t, first.Name, second.Name)
 	assert.Empty(t, first.Guests)
 }
 
@@ -85,7 +85,7 @@ func TestSeedHouseholdAppliesOptions(t *testing.T) {
 
 	household := seedHousehold(t, app.Database.Write,
 		withCode("XYZ789"),
-		withDisplayName("Familie Beispiel"),
+		withName("Familie Beispiel"),
 		withAdminNote("zahlt bar"),
 		withAdult("Anna Beispiel"),
 		withChild("Emil Beispiel", 4),
@@ -135,7 +135,7 @@ func TestFindLeakAllowsHarmlessBodies(t *testing.T) {
 		// The envelope's own "code" is the error kind, not a login code — the one
 		// exception the detector has to make, and therefore the one worth pinning.
 		{"error envelope", `{"error":{"code":"not_found","message":"Nicht gefunden.","request_id":"ABC"}}`},
-		{"guest DTO", `{"household":{"id":1,"display_name":"Familie Beispiel"}}`},
+		{"guest DTO", `{"household":{"id":1,"addressee":"Familie Beispiel"}}`},
 		{"not JSON at all", `<!doctype html><html lang="de"></html>`},
 	}
 

@@ -250,7 +250,7 @@ func rsvpResponse(answer rsvp.Answer) dto.RSVPResponse {
 	return dto.RSVPResponse{
 		Household: dto.RSVPHousehold{
 			ID:                    answer.Household.ID,
-			DisplayName:           answer.Household.DisplayName,
+			Addressee:             answer.Household.Addressee,
 			TransportSeatsNeeded:  answer.Household.TransportSeatsNeeded,
 			TransportSeatsOffered: answer.Household.TransportSeatsOffered,
 			HasStroller:           answer.Household.HasStroller,

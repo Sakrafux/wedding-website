@@ -26,13 +26,13 @@ As an admin, I want the guest list as CSV, so that the print shop can do variabl
 
 1. One CSV writer, used by both endpoints, so the encoding decisions below are made once and cannot diverge between the file the printer gets and the file we read.
 2. **Encoding: UTF-8 with a BOM, semicolon-delimited, CRLF.** This is a decision about Excel, not about correctness. German Excel splits on the list separator, which is `;` in a German locale, so a comma-delimited file lands entirely in column A; and without a BOM it reads UTF-8 as Latin-1, so `Müller` becomes `MÃ¼ller`. Both of these are silent, both would be discovered by the print shop rather than by us, and one of them ends up on eighty cards. Record the trade-off: the file is then not RFC 4180 and not what `pandas.read_csv` expects by default.
-3. Quote every field. Cheap, and it removes the class of bug where a name containing a semicolon splits a row.
+3. Quote a field **only when it needs it** — when it contains the separator, a quote or a line break. Quoting everything was the first decision and was wrong in practice: the quotes come along when a value is copied out of a spreadsheet cell, which is what happens to a login code, and they earn nothing on a value with no separator in it. The class of bug they exist for — a free-text note containing a semicolon splitting a row — is still covered.
 4. `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment; filename="codes.csv"`. A CSV that renders in the browser instead of downloading is a CSV somebody copies out of the page by hand.
-5. `codes.csv` columns: `haushalt;code`. The code goes in exactly the form that must appear on the card: the six stored characters, ungrouped (`ABC234`). There is no separator for the print shop to get wrong. German column headers here, uniquely, because a print shop reads them.
+5. `codes.csv` columns: `anschrift;code`. The **addressee**, not the internal household name: this file is the variable-data source for the invitation cards, so the column has to hold the string that gets printed on one. Still ordered by `household.name`, which is what the list is scanned by. The code goes in exactly the form that must appear on the card: the six stored characters, ungrouped (`ABC234`). There is no separator for the print shop to get wrong. German column headers here, uniquely, because a print shop reads them.
 6. `guests.csv` is a **database output**: every column of `guest`, plus every column of the household that owns it, one row per guest. Not a curated subset — this file is the release valve, and the point of a release valve is that it does not require anyone to have guessed correctly in advance which field would be wanted.
    Headers are the column names verbatim, English, prefixed `household_` where they come from the household. The prefix is what stops `created_at` from being ambiguous, and matching the schema exactly means a question about a value is answered by reading `03-data-model` rather than by guessing what a friendly header meant.
    `guest.name` is one column, not two: the first/last split was merged in migration `0002`, so **nothing in this file sorts by surname**. That was the accepted cost of the merge, and it lands here — anyone wanting surname order has to do it by hand.
-   Order as built: `guest_id`, `household_id`, `deleted_at`, `household_display_name`, `household_code`, then the remaining guest columns, then the remaining household columns. `deleted_at` third takes precedence over grouping the identifying columns together, for the reason in point 7. `household_id` appears once and serves both `guest.household_id` and `household.id` — the same number under two names would be a column nobody can explain.
+   Order as built: `guest_id`, `household_id`, `deleted_at`, `household_name`, `household_addressee`, `household_code`, then the remaining guest columns, then the remaining household columns. `deleted_at` third takes precedence over grouping the identifying columns together, for the reason in point 7. `household_id` appears once and serves both `guest.household_id` and `household.id` — the same number under two names would be a column nobody can explain.
 7. Include **soft-deleted guests**, with `deleted_at` as the third column so it cannot be missed while scanning. Excluding them would make the file disagree with the database it claims to dump, and a removed plus-one is exactly the row somebody eventually wants to see.
    The cost is real and must be stated in the file's own description (`F5-F03`) as well as here: **this file is a dump, not a headcount.** Anything counted from it has to filter `deleted_at` first. `F6-B05`'s caterer export is the one that has already done that.
 8. The RSVP columns are empty until `F3` fills them. Emit them anyway: the file's shape should not change on the day the answers start arriving, or every spreadsheet built on it breaks at once.
@@ -49,8 +49,8 @@ GET /api/admin/export/codes.csv
 Response `200`, `text/csv`:
 
 ```csv
-"haushalt";"code"
-"Familie Müller";"ABC234"
+anschrift;code
+Hans & Erika;ABC234
 ```
 
 ```http
@@ -65,7 +65,7 @@ Errors: `unauthenticated` → 401
 
 - [ ] Integration: `codes.csv` has a header row and one row per household, with codes in printed form.
 - [ ] Integration: the body starts with a UTF-8 BOM and uses `;` and CRLF.
-- [ ] Integration: a household name containing a semicolon and a quote round-trips through a CSV reader unmangled.
+- [ ] Integration: a household name containing a semicolon and a quote round-trips through a CSV reader unmangled, while an ordinary value carries no quotes at all.
 - [ ] Integration: umlauts survive — assert the bytes, not just the string, since this is exactly what the BOM is for.
 - [ ] Integration: `Content-Disposition` is `attachment` with the expected filename.
 - [ ] Integration: `guests.csv` carries every column of `guest` and of `household` — assert against the column list, so a migration that adds a field and forgets this file fails here.

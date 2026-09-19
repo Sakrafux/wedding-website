@@ -19,7 +19,8 @@ The unit of authentication and of RSVP.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | INTEGER PK | |
-| `display_name` | TEXT | e.g. "Familie Müller", "Anna & Ben", "Oma Gertrud". Shown on the login confirmation screen. |
+| `name` | TEXT | **Internal.** How we file the household: e.g. "Familie Müller", "Müller & Albrecht". What the admin list shows, searches and is ordered by, and what `guests.csv` carries. Never in a guest response — not as a secret, but because it is the wrong string (see `addressee`). |
+| `addressee` | TEXT | **Guest-facing.** How we address the household: e.g. "Hans & Erika", "Luki & Paddi", "Oma Gertrud". Every greeting, and the column `codes.csv` prints onto the invitation cards. Split off from the old single `display_name` by migration `0004`, because we address most households by first name and first names are exactly what makes a list of sixty households ambiguous. Seeded from `name`, so it is never empty; `POST /api/admin/households` falls back to `name` when it is not given, and a `PATCH` may not clear it. |
 | `code` | TEXT UNIQUE | The printed login code, normalized (uppercase, no dashes). |
 | `transport_seats_needed` | INTEGER | Default 0. Seats this household needs for the church → reception trip. Not derived from household size; some members drive themselves. Mutually exclusive with `transport_seats_offered` — enforced in the domain (`F3-B07`), not by a CHECK, so the refusal can be a field error rather than a driver error. |
 | `transport_seats_offered` | INTEGER | Default 0. Spare seats this household can offer others. Zero whenever `transport_seats_needed` is not. |
@@ -42,7 +43,7 @@ A person. Belongs to exactly one household.
 |---|---|---|
 | `id` | INTEGER PK | |
 | `household_id` | INTEGER FK → household | |
-| `name` | TEXT | The **whole** name in one field, required. Not split into first and last (migration `0002` merged them): every output — place card, caterer list, "so haben wir euch notiert" — wants the full name, and one field lets a household enter a double first name, a person with no surname we know, or "Oma Erika" without deciding which half is which. It cannot be inherited from `household.display_name` either: a household is any group sharing one invitation, so its name is free text like "Luki & Paddi". Accepted cost: nothing sorts by surname any more — see `F5-B04`. |
+| `name` | TEXT | The **whole** name in one field, required. Not split into first and last (migration `0002` merged them): every output — place card, caterer list, "so haben wir euch notiert" — wants the full name, and one field lets a household enter a double first name, a person with no surname we know, or "Oma Erika" without deciding which half is which. It cannot be inherited from the household either: a household is any group sharing one invitation, so `household.name` and `household.addressee` are free text like "Luki & Paddi". Accepted cost: nothing sorts by surname any more — see `F5-B04`. |
 | `kind` | TEXT | `adult` \| `child` |
 | `age` | INTEGER NULL | Children only. **Age at the wedding date**, not at RSVP time — the UI asks it that way so the value does not drift over the months before the event. Feeds caterer pricing brackets and venue headcounts. |
 | `origin` | TEXT | `seeded` (we created it) \| `guest_added` (household added it). Drives the admin delta view. |

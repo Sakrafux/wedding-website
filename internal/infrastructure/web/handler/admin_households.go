@@ -71,8 +71,9 @@ func (handler *AdminHouseholds) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	created, err := handler.households.Create(r.Context(), domain.Household{
-		DisplayName: request.DisplayName,
-		AdminNote:   request.AdminNote,
+		Name:      request.Name,
+		Addressee: request.Addressee,
+		AdminNote: request.AdminNote,
 	})
 	if err != nil {
 		respondAdminError(w, r, err)
@@ -101,8 +102,9 @@ func (handler *AdminHouseholds) Update(w http.ResponseWriter, r *http.Request) {
 	// domain.HouseholdPatch keeps its transport fields — PUT /rsvp patches through
 	// them — so the three left nil here are the ones this endpoint no longer owns.
 	detail, err := handler.households.Update(r.Context(), id, domain.HouseholdPatch{
-		DisplayName: request.DisplayName,
-		AdminNote:   request.AdminNote,
+		Name:      request.Name,
+		Addressee: request.Addressee,
+		AdminNote: request.AdminNote,
 	})
 	if err != nil {
 		respondAdminError(w, r, err)
@@ -298,7 +300,8 @@ func seatingNeedPointer(value *string) *domain.SeatingNeed {
 func householdOverviewResponse(overview domain.HouseholdOverview) dto.AdminHouseholdOverview {
 	return dto.AdminHouseholdOverview{
 		ID:              overview.ID,
-		DisplayName:     overview.DisplayName,
+		Name:            overview.Name,
+		Addressee:       overview.Addressee,
 		Code:            overview.Code,
 		MemberCount:     overview.MemberCount,
 		LastLoginAt:     overview.LastLoginAt,
@@ -315,7 +318,8 @@ func householdResponse(household domain.Household, members []domain.Guest) dto.A
 	return dto.AdminHousehold{
 		AdminHouseholdOverview: dto.AdminHouseholdOverview{
 			ID:              household.ID,
-			DisplayName:     household.DisplayName,
+			Name:            household.Name,
+			Addressee:       household.Addressee,
 			Code:            household.Code,
 			MemberCount:     len(guests),
 			LastLoginAt:     household.LastLoginAt,

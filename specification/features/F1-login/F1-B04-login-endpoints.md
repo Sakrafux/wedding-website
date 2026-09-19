@@ -45,7 +45,7 @@ Response `200`:
 
 ```json
 {
-  "household": { "id": 12, "display_name": "Familie Müller" },
+  "household": { "id": 12, "addressee": "Hans & Erika" },
   "members": [
     { "id": 30, "name": "Anna Müller", "kind": "adult", "origin": "seeded" }
   ],

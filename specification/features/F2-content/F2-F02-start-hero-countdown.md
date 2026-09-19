@@ -12,7 +12,7 @@ As a guest, I want the first screen after logging in to show our photo, our name
 
 - `/start`, replacing the placeholder page in `web/src/routes/_guest/start.tsx`.
 - `HeroSection`: photo, names, date, venue town.
-- The greeting, addressed to the household by `display_name`.
+- The greeting, addressed to the household by `addressee`.
 - `CountdownBadge`, and what it renders on and after the wedding day.
 - The primary call to action into the RSVP form.
 - `web/src/lib/wedding.ts`: the wedding date as one exported constant.
@@ -27,7 +27,7 @@ As a guest, I want the first screen after logging in to show our photo, our name
 
 1. The page currently says "Ihr seid angemeldet" and points at this story from two places: its own doc comment, and `shellLabels.startHeading` / `startIntro` in `labels.ts`. Delete both label entries with the placeholder, and rewrite the doc comment. Leaving a `startIntro` nobody renders is how a label file grows strings that lie.
 2. The wedding date is hardcoded, like all static content, but in **one** place: `web/src/lib/wedding.ts`. `labels.ts` already spells "17.07.2027" into `householdLabels.ageHint`; that string becomes a function of the constant in this story, so a date change is one edit rather than a search.
-3. Greet the household by name from `me.household.display_name`, which the app already has — no new query. Free text like "Luki & Paddi" is a valid display name, so the sentence must read correctly with a name that is not "Familie …": build the copy around the name rather than gluing a salutation in front of it.
+3. Greet the household by name from `me.household.addressee`, which the app already has — no new query. Free text like "Luki & Paddi" is a valid addressee, so the sentence must read correctly with a name that is not "Familie …": build the copy around the name rather than gluing a salutation in front of it.
 4. Hero per [05-design](../../05-design.md): `object-cover`, `aspect-[4/5]` on mobile and `aspect-[16/9]` on desktop, a warm overlay so the display text keeps its contrast against whatever the photo does, explicit `width`/`height` to prevent layout shift, `.webp` with a `.jpg` fallback. Names in `display`, and nothing else at that size on the page.
 5. The hero photo is `alt=""` — it is decoration next to text that already says who and when. A description of our own engagement photo helps no screen reader user.
 6. Do not lazy-load the hero. It is the first thing above the fold; `loading="lazy"` there costs a visible delay for a guest on a train.

@@ -22,7 +22,12 @@ import type { Attending, GuestKind, GuestOrigin, MealChoice, Portion, SeatingNee
  */
 export interface HouseholdSummary {
   id: number;
-  display_name: string;
+  /**
+   * How we address the household — "Luki & Paddi". The internal household name
+   * (`name`, the one the admin list is filed by) is deliberately absent: not a
+   * secret, but the wrong string for a greeting.
+   */
+  addressee: string;
 }
 
 export interface Member {
@@ -73,7 +78,8 @@ export interface BootstrapResponse {
  */
 export interface RSVPHousehold {
   id: number;
-  display_name: string;
+  /** The guest-facing addressee. The internal `name` is absent — see HouseholdSummary. */
+  addressee: string;
   /** Church → reception only, and zero unless somebody in the household attends both. */
   transport_seats_needed: number;
   transport_seats_offered: number;
@@ -195,7 +201,10 @@ export interface AdminSession {
  */
 export interface AdminHouseholdOverview {
   id: number;
-  display_name: string;
+  /** The internal household name: what the list shows, searches and is sorted by. */
+  name: string;
+  /** How the household is addressed. Guest-facing, and what codes.csv prints. */
+  addressee: string;
   code: string;
   member_count: number;
   /** RFC3339, or null for a household that has never redeemed its code. */

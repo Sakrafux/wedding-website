@@ -23,8 +23,9 @@ type rsvpBody struct {
 }
 
 type rsvpHousehold struct {
-	ID                    int64   `json:"id"`
-	DisplayName           string  `json:"display_name"`
+	ID int64 `json:"id"`
+	// The addressee, not the internal household name — see dto.RSVPHousehold.
+	Addressee             string  `json:"addressee"`
 	TransportSeatsNeeded  int     `json:"transport_seats_needed"`
 	TransportSeatsOffered int     `json:"transport_seats_offered"`
 	HasStroller           bool    `json:"has_stroller"`
@@ -181,7 +182,7 @@ func TestRSVPReportsAnUnansweredHouseholdAsUnanswered(t *testing.T) {
 	}
 	assert.Nil(t, body.Household.RSVPSubmittedAt)
 	assert.Nil(t, body.Household.RSVPUpdatedAt)
-	assert.NotEmpty(t, body.Household.DisplayName)
+	assert.NotEmpty(t, body.Household.Addressee)
 	assert.Equal(t, household.ID, body.Household.ID)
 }
 

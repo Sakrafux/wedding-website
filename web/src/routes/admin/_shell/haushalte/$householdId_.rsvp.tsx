@@ -62,8 +62,11 @@ function AdminRSVPPage() {
         {adminRSVPLabels.back}
       </Link>
 
-      <h1 className="text-h1 font-body">{adminRSVPLabels.heading(answer.household.display_name)}</h1>
-      <p className="text-ink-muted">{adminRSVPLabels.intro(answer.household.display_name)}</p>
+      {/* The addressee, because this page renders the guests' own RSVP body and that
+          body carries no internal household name — see dto.RSVPHousehold. Adding one
+          for a heading would put the admin's filing name into a guest response. */}
+      <h1 className="text-h1 font-body">{adminRSVPLabels.heading(answer.household.addressee)}</h1>
+      <p className="text-ink-muted">{adminRSVPLabels.intro(answer.household.addressee)}</p>
 
       {/* The deadline is information here, never a lock: this page exists for the late
           call, so the override is passed explicitly and the shared default stays safe. */}

@@ -23,8 +23,8 @@ func newValidator() *validator.Validate {
 
 	// Errors are reported under the JSON field name, not the Go one: the frontend
 	// renders each message next to the control whose name it knows, and that name is
-	// the one on the wire. Without this, `DisplayName` would arrive at a form that
-	// only knows `display_name`.
+	// the one on the wire. Without this, `Name` would arrive at a form that
+	// only knows `name`.
 	instance.RegisterTagNameFunc(func(field reflect.StructField) string {
 		name, _, _ := strings.Cut(field.Tag.Get("json"), ",")
 		if name == "-" {
@@ -44,7 +44,7 @@ func newValidator() *validator.Validate {
 // produces a field entry — a generic sentence next to the right control beats a
 // correct sentence at the top of the form.
 func Validate(body any) error {
-	// The leaf name, which is the whole key for a flat body: `display_name`, `age`.
+	// The leaf name, which is the whole key for a flat body: `name`, `age`.
 	return validateKeyedBy(body, func(fieldError validator.FieldError) string {
 		return fieldError.Field()
 	})

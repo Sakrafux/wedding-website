@@ -147,12 +147,12 @@ describe("the guest navigation", () => {
 });
 
 describe("the start page", () => {
-  it("greets the household by its display name", async () => {
+  it("greets the household by its addressee", async () => {
     stubGuest();
 
     await renderApp("/start");
 
-    expect(screen.getByText(/Familie Müller/)).toBeInTheDocument();
+    expect(screen.getByText(/Hans & Erika/)).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
   });
 
@@ -261,7 +261,7 @@ describe("the start page", () => {
 
     await renderApp("/start");
 
-    expect(screen.getByText(/Schön, dass du da bist, Familie Müller\./)).toBeInTheDocument();
+    expect(screen.getByText(/Schön, dass du da bist, Hans & Erika\./)).toBeInTheDocument();
     expect(screen.getByText(/Bitte antworte bis zum/)).toBeInTheDocument();
   });
 
@@ -285,7 +285,7 @@ describe("the start page", () => {
 
     await renderApp("/start");
 
-    expect(screen.getByText(/Schön, dass ihr da seid, Familie Müller\./)).toBeInTheDocument();
+    expect(screen.getByText(/Schön, dass ihr da seid, Hans & Erika\./)).toBeInTheDocument();
   });
 
   it("carries the hero photo as decoration, not as content", async () => {

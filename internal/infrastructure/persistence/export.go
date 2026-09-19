@@ -46,7 +46,8 @@ var GuestExportColumns = []string{
 	"guest_id",
 	"household_id",
 	"deleted_at",
-	"household_display_name",
+	"household_name",
+	"household_addressee",
 	"household_code",
 	"name",
 	"kind",
@@ -79,7 +80,8 @@ var guestExportExpressions = []string{
 	"g.id",
 	"g.household_id",
 	"g.deleted_at",
-	"h.display_name",
+	"h.name",
+	"h.addressee",
 	"h.code",
 	"g.name",
 	"g.kind",
@@ -131,7 +133,7 @@ func (store *ExportStore) StreamGuests(ctx context.Context, yield func(values []
 	query := `SELECT ` + strings.Join(projection, ", ") + `
 		FROM guest g
 		JOIN household h ON h.id = g.household_id
-		ORDER BY h.display_name COLLATE NOCASE, g.id`
+		ORDER BY h.name COLLATE NOCASE, g.id`
 
 	rows, err := store.database.Read.QueryxContext(ctx, query)
 	if err != nil {

@@ -99,7 +99,7 @@ func TestRunAppendsToAnExistingDatabase(t *testing.T) {
 	database := openSeededDatabase(t, path)
 
 	var names []string
-	require.NoError(t, database.Read.Select(&names, `SELECT display_name FROM household ORDER BY id`))
+	require.NoError(t, database.Read.Select(&names, `SELECT name FROM household ORDER BY id`))
 	require.Equal(t, []string{
 		"Familie Testhaushalt 1",
 		"Familie Testhaushalt 2",
@@ -144,7 +144,7 @@ func TestSeededMembersAreAdultsOfTheirHousehold(t *testing.T) {
 	require.NoError(t, database.Read.Select(&members,
 		`SELECT g.name, g.kind, g.origin, g.attending
 		 FROM guest g JOIN household h ON h.id = g.household_id
-		 WHERE h.display_name = 'Familie Testhaushalt 1'
+		 WHERE h.name = 'Familie Testhaushalt 1'
 		 ORDER BY g.id`))
 
 	require.Len(t, members, 2)

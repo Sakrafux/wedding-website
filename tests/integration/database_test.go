@@ -77,7 +77,7 @@ func TestConcurrentWritesSerialise(t *testing.T) {
 			defer waitGroup.Done()
 
 			_, err := database.Write.Exec(
-				`INSERT INTO household (display_name, code) VALUES (?, ?)`,
+				`INSERT INTO household (name, code) VALUES (?, ?)`,
 				fmt.Sprintf("Familie %d", writer), fmt.Sprintf("CODE%02d", writer))
 			assert.NoError(t, err)
 		}()
@@ -95,7 +95,7 @@ func TestConcurrentWritesSerialise(t *testing.T) {
 func TestReadPoolCannotWrite(t *testing.T) {
 	database := newTestApp(t).Database
 
-	_, err := database.Read.Exec(`INSERT INTO household (display_name, code) VALUES ('Familie Nope', 'ABC234')`)
+	_, err := database.Read.Exec(`INSERT INTO household (name, code) VALUES ('Familie Nope', 'ABC234')`)
 
 	require.Error(t, err)
 	assert.Contains(t, strings.ToLower(err.Error()), "readonly")
@@ -106,12 +106,12 @@ func TestReadPoolCannotWrite(t *testing.T) {
 func TestReadPoolSeesCommittedWrites(t *testing.T) {
 	database := newTestApp(t).Database
 
-	_, err := database.Write.Exec(`INSERT INTO household (id, display_name, code) VALUES (1, 'Familie Sichtbar', 'ABC234')`)
+	_, err := database.Write.Exec(`INSERT INTO household (id, name, code) VALUES (1, 'Familie Sichtbar', 'ABC234')`)
 	require.NoError(t, err)
 
-	var displayName string
-	require.NoError(t, database.Read.Get(&displayName, `SELECT display_name FROM household WHERE id = 1`))
-	assert.Equal(t, "Familie Sichtbar", displayName)
+	var name string
+	require.NoError(t, database.Read.Get(&name, `SELECT name FROM household WHERE id = 1`))
+	assert.Equal(t, "Familie Sichtbar", name)
 }
 
 func TestReadyReportsDatabaseReachable(t *testing.T) {

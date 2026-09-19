@@ -16,7 +16,7 @@ import type {
  */
 export function bootstrap(overrides: Partial<BootstrapResponse> = {}): BootstrapResponse {
   return {
-    household: { id: 12, display_name: "Familie Müller" },
+    household: { id: 12, addressee: "Hans & Erika" },
     members: [
       { id: 30, name: "Anna Müller", kind: "adult", origin: "seeded" },
       { id: 31, name: "Emil Müller", kind: "child", origin: "seeded" },
@@ -36,7 +36,8 @@ export const adminSession: AdminSession = { subject_type: "admin" };
 export function adminHousehold(overrides: Partial<AdminHousehold> = {}): AdminHousehold {
   return {
     id: 12,
-    display_name: "Familie Müller",
+    name: "Familie Müller",
+    addressee: "Hans & Erika",
     code: "ABC234",
     member_count: 2,
     last_login_at: "2026-11-03T18:22:00Z",
@@ -73,7 +74,8 @@ export function adminHouseholdOverview(overrides: Partial<AdminHouseholdOverview
 
   return {
     id: household.id,
-    display_name: household.display_name,
+    name: household.name,
+    addressee: household.addressee,
     code: household.code,
     member_count: household.member_count,
     last_login_at: household.last_login_at,
@@ -93,7 +95,7 @@ export function rsvpAnswer(overrides: Partial<RSVPResponse> = {}): RSVPResponse 
   return {
     household: {
       id: 12,
-      display_name: "Familie Müller",
+      addressee: "Hans & Erika",
       transport_seats_needed: 0,
       transport_seats_offered: 0,
       has_stroller: false,

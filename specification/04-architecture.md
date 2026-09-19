@@ -135,7 +135,7 @@ GET    /api/seating                                 → floor plan + own table, 
 GET    /api/gallery
 POST   /api/gallery                                 → upload, if uploads_open
 
-GET    /api/admin/households                        CRUD (display_name + admin_note only:
+GET    /api/admin/households                        CRUD (name + addressee + admin_note only:
                                                       the RSVP-answered fields have one
                                                       writer, the route below — F5-B05)
 GET    /api/admin/households/{id}/rsvp               → same use case as /api/rsvp, by id

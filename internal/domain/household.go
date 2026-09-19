@@ -5,8 +5,20 @@ import "time"
 // Household is the unit of authentication and of RSVP. One printed code, one
 // session, one set of answers.
 type Household struct {
-	ID          int64
-	DisplayName string
+	ID int64
+	// Name is the household as we file it — "Familie Müller", "Müller & Albrecht".
+	// Internal: the admin list is scanned, searched and ordered by it, and
+	// guests.csv carries it. It never reaches a guest response, not for privacy but
+	// because it is the wrong string: see Addressee.
+	Name string
+	// Addressee is the household as we address it — "Luki & Paddi". Every
+	// guest-facing greeting and codes.csv, which is what the invitation cards are
+	// printed from.
+	//
+	// Separate from Name because we call most households by first name, and first
+	// names are exactly what makes a list of sixty households ambiguous. Seeded
+	// from Name by migration 0004, so it is never empty.
+	Addressee string
 	// Code is the printed login code in stored form. It is the only secret this
 	// application has, kept in plaintext because a household that loses its card
 	// has to be told the code again.
@@ -67,7 +79,8 @@ type HouseholdOverview struct {
 // printed card, so it is its own endpoint; a code changed by a stray field in a
 // form body is a code nobody knows changed.
 type HouseholdPatch struct {
-	DisplayName           *string
+	Name                  *string
+	Addressee             *string
 	AdminNote             *string
 	TransportSeatsNeeded  *int
 	TransportSeatsOffered *int
@@ -79,8 +92,11 @@ type HouseholdPatch struct {
 func ApplyHouseholdPatch(current Household, patch HouseholdPatch) (Household, Changes) {
 	updated := current
 
-	if patch.DisplayName != nil {
-		updated.DisplayName = *patch.DisplayName
+	if patch.Name != nil {
+		updated.Name = *patch.Name
+	}
+	if patch.Addressee != nil {
+		updated.Addressee = *patch.Addressee
 	}
 	if patch.AdminNote != nil {
 		updated.AdminNote = *patch.AdminNote
@@ -96,7 +112,8 @@ func ApplyHouseholdPatch(current Household, patch HouseholdPatch) (Household, Ch
 	}
 
 	var changes Changes
-	changes.compare("display_name", current.DisplayName, updated.DisplayName)
+	changes.compare("name", current.Name, updated.Name)
+	changes.compare("addressee", current.Addressee, updated.Addressee)
 	changes.compare("admin_note", current.AdminNote, updated.AdminNote)
 	changes.compare("transport_seats_needed", current.TransportSeatsNeeded, updated.TransportSeatsNeeded)
 	changes.compare("transport_seats_offered", current.TransportSeatsOffered, updated.TransportSeatsOffered)

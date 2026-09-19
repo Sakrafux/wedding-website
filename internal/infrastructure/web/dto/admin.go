@@ -24,8 +24,12 @@ type AdminHouseholdListResponse struct {
 // "did they log in, did they answer" off a laptop screen. They are in
 // AdminHousehold, which is what the detail page loads.
 type AdminHouseholdOverview struct {
-	ID          int64  `json:"id"`
-	DisplayName string `json:"display_name"`
+	ID int64 `json:"id"`
+	// Name is the internal household name, which is what the admin list shows and
+	// searches. Addressee is carried too, because the detail form edits both and
+	// the list is where that form is opened from.
+	Name      string `json:"name"`
+	Addressee string `json:"addressee"`
 	// Code in stored form, which is exactly the form printed on the card. There is
 	// no other form: the group separator was dropped, so what is shown here can be
 	// compared against a card character by character.
@@ -88,8 +92,13 @@ type AdminGuest struct {
 // path that skips the RSVP rules — the transport direction rule (F3-B07) among them.
 // DecodeJSON refuses unknown fields, so a caller that still sends them is told so.
 type AdminHouseholdCreateRequest struct {
-	DisplayName string `json:"display_name" validate:"required,max=120"`
-	AdminNote   string `json:"admin_note" validate:"max=2000"`
+	Name string `json:"name" validate:"required,max=120"`
+	// Addressee is optional here and only here: on a create it is usually the name
+	// again, and the use case copies it over when empty. Everywhere else it is a
+	// required field, because it is what a guest reads and what the card is printed
+	// from.
+	Addressee string `json:"addressee" validate:"max=120"`
+	AdminNote string `json:"admin_note" validate:"max=2000"`
 }
 
 // AdminHouseholdPatchRequest is the body of PATCH /api/admin/households/{id}. Any
@@ -108,8 +117,9 @@ type AdminHouseholdCreateRequest struct {
 // AdminHouseholdCreateRequest gives: one writer for the fields a household answers,
 // and it is the one that runs the RSVP rules (F5-B05).
 type AdminHouseholdPatchRequest struct {
-	DisplayName *string `json:"display_name" validate:"omitnil,min=1,max=120"`
-	AdminNote   *string `json:"admin_note" validate:"omitnil,max=2000"`
+	Name      *string `json:"name" validate:"omitnil,min=1,max=120"`
+	Addressee *string `json:"addressee" validate:"omitnil,min=1,max=120"`
+	AdminNote *string `json:"admin_note" validate:"omitnil,max=2000"`
 }
 
 // AdminCodeReissueResponse is the body of POST /api/admin/households/{id}/code.

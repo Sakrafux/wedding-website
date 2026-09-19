@@ -45,7 +45,7 @@ Response `200`:
 {
   "household": {
     "id": 12,
-    "display_name": "Familie Müller",
+    "addressee": "Hans & Erika",
     "transport_seats_needed": 0,
     "transport_seats_offered": 2,
     "has_stroller": false,

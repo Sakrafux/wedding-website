@@ -17,10 +17,11 @@ import (
 // seededHousehold is what a test needs to talk about the row it just created: the
 // identifiers to query by, and the code it must never find in a response.
 type seededHousehold struct {
-	ID          int64
-	Code        string
-	DisplayName string
-	Guests      []seededGuest
+	ID        int64
+	Code      string
+	Name      string
+	Addressee string
+	Guests    []seededGuest
 }
 
 type seededGuest struct {
@@ -33,10 +34,11 @@ type seededGuest struct {
 type householdOption func(*householdSpec)
 
 type householdSpec struct {
-	code        string
-	displayName string
-	adminNote   string
-	guests      []guestSpec
+	code      string
+	name      string
+	addressee string
+	adminNote string
+	guests    []guestSpec
 }
 
 type guestSpec struct {
@@ -51,8 +53,15 @@ func withCode(code string) householdOption {
 	return func(spec *householdSpec) { spec.code = code }
 }
 
-func withDisplayName(displayName string) householdOption {
-	return func(spec *householdSpec) { spec.displayName = displayName }
+func withName(name string) householdOption {
+	return func(spec *householdSpec) { spec.name = name }
+}
+
+// withAddressee sets the guest-facing name, for a test that asserts on what a guest
+// is shown or on what codes.csv prints. Left alone it is the household name, which
+// is what migration 0004 seeded the column with.
+func withAddressee(addressee string) householdOption {
+	return func(spec *householdSpec) { spec.addressee = addressee }
 }
 
 // withAdminNote sets the private note. Mostly used to give assertNoLeak something
@@ -99,25 +108,29 @@ func seedHousehold(t *testing.T, pool *sqlx.DB, options ...householdOption) seed
 	for _, option := range options {
 		option(&spec)
 	}
-	if spec.displayName == "" {
+	if spec.name == "" {
 		// Deliberately not derived from the code. A default that embedded the
 		// login code in a *displayed* field would make every household's secret
 		// appear legitimately in guest-facing JSON, and assertNoLeak — which
 		// searches the body for the code as a value — would fire on every test
 		// that did not override it.
-		spec.displayName = fmt.Sprintf("Familie Muster %d", testHouseholdCounter.Add(1))
+		spec.name = fmt.Sprintf("Familie Muster %d", testHouseholdCounter.Add(1))
+	}
+	if spec.addressee == "" {
+		spec.addressee = spec.name
 	}
 
 	result, err := pool.Exec(
-		`INSERT INTO household (display_name, code, admin_note) VALUES (?, ?, ?)`,
-		spec.displayName, spec.code, spec.adminNote,
+		`INSERT INTO household (name, addressee, code, admin_note) VALUES (?, ?, ?, ?)`,
+		spec.name, spec.addressee, spec.code, spec.adminNote,
 	)
 	require.NoError(t, err)
 
 	household := seededHousehold{
-		ID:          lastInsertID(t, result),
-		Code:        spec.code,
-		DisplayName: spec.displayName,
+		ID:        lastInsertID(t, result),
+		Code:      spec.code,
+		Name:      spec.name,
+		Addressee: spec.addressee,
 	}
 
 	for _, guest := range spec.guests {
@@ -188,7 +201,7 @@ func nextTestCode() string {
 func insertHousehold(t *testing.T, pool *sqlx.DB, code string) int64 {
 	t.Helper()
 
-	result, err := pool.Exec(`INSERT INTO household (display_name, code) VALUES (?, ?)`, "Familie "+code, code)
+	result, err := pool.Exec(`INSERT INTO household (name, code) VALUES (?, ?)`, "Familie "+code, code)
 	require.NoError(t, err)
 	return lastInsertID(t, result)
 }

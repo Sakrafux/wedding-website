@@ -16,8 +16,10 @@ import (
 // compiling silently — the frontend reads these names, not the Go field names.
 type bootstrapBody struct {
 	Household struct {
-		ID          int64  `json:"id"`
-		DisplayName string `json:"display_name"`
+		ID int64 `json:"id"`
+		// The guest bootstrap carries the addressee and not the internal household
+		// name. A `name` here would be the wrong string on every greeting.
+		Addressee string `json:"addressee"`
 	} `json:"household"`
 	Members []struct {
 		ID     int64  `json:"id"`
@@ -48,7 +50,8 @@ func TestLoginWithAValidCodeReturnsTheHousehold(t *testing.T) {
 	app := newTestApp(t)
 	household := seedHousehold(t, app.Database.Write,
 		withCode("ABC234"),
-		withDisplayName("Familie Müller"),
+		withName("Familie Müller"),
+		withAddressee("Hans & Erika"),
 		withAdult("Anna Müller"),
 		withChild("Emil Müller", 4),
 	)
@@ -59,7 +62,8 @@ func TestLoginWithAValidCodeReturnsTheHousehold(t *testing.T) {
 	body := response.bootstrap()
 
 	assert.Equal(t, household.ID, body.Household.ID)
-	assert.Equal(t, "Familie Müller", body.Household.DisplayName)
+	assert.Equal(t, "Hans & Erika", body.Household.Addressee)
+	assert.NotContains(t, response.Body, "Familie Müller", "the internal household name is not guest-facing")
 
 	require.Len(t, body.Members, 2)
 	assert.Equal(t, "Anna Müller", body.Members[0].Name)
@@ -259,7 +263,7 @@ func TestMeReturnsTheSameBodyAsLogin(t *testing.T) {
 	t.Parallel()
 
 	app := newTestApp(t)
-	seedHousehold(t, app.Database.Write, withCode("ABC234"), withDisplayName("Familie Müller"), withGuests(3))
+	seedHousehold(t, app.Database.Write, withCode("ABC234"), withName("Familie Müller"), withGuests(3))
 
 	login := app.logIn("ABC234")
 	require.Equal(t, http.StatusOK, login.Status)
@@ -343,8 +347,8 @@ func TestLoggingInAgainReplacesTheExistingSession(t *testing.T) {
 	t.Parallel()
 
 	app := newTestApp(t)
-	first := seedHousehold(t, app.Database.Write, withCode("ABC234"), withDisplayName("Familie Müller"))
-	second := seedHousehold(t, app.Database.Write, withCode("DEF567"), withDisplayName("Familie Schmidt"))
+	first := seedHousehold(t, app.Database.Write, withCode("ABC234"), withName("Familie Müller"))
+	second := seedHousehold(t, app.Database.Write, withCode("DEF567"), withName("Familie Schmidt"))
 
 	require.Equal(t, http.StatusOK, app.logIn("ABC234").Status)
 	require.Equal(t, first.ID, app.get("/api/me").bootstrap().Household.ID)
