@@ -21,8 +21,8 @@ Decisions:
 - Field names `name`/`addressee` over `display_name`/`admin_name`, and both `NOT NULL` with the addressee seeded from the name rather than nullable with a coalesce — chosen with the user before building. Reasoning lives in migration `0004`'s header and `specification/03-data-model.md`.
 - The admin RSVP page shows the addressee, because it renders the guests' own RSVP body and that body carries no internal name; noted at the heading.
 
-Time: <h>
-Cost: $<x>
+Time: 0.5h
+Cost: $9.55
 
 ## 2026-09-01
 
