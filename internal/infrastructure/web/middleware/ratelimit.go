@@ -56,6 +56,10 @@ type RateLimiter struct {
 	// lastEviction drives the sweep. Doing it here, on a request, rather than in a
 	// goroutine keeps the whole limiter free of lifecycle: nothing to start and
 	// nothing to stop.
+	//
+	// It is only ever compared against the `now` the caller passes, never against
+	// time.Now(): mixing the two made the first sweep depend on the wall clock, and
+	// a test with a fixed clock in the past then never swept at all.
 	lastEviction time.Time
 }
 
@@ -71,11 +75,12 @@ func NewAdminLoginLimiter() *RateLimiter {
 }
 
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
+	// lastEviction is left at the zero time, so the first RecordFailure sweeps an
+	// empty map and starts the interval from the caller's clock.
 	return &RateLimiter{
-		limit:        limit,
-		window:       window,
-		failures:     make(map[string][]time.Time),
-		lastEviction: time.Now(),
+		limit:    limit,
+		window:   window,
+		failures: make(map[string][]time.Time),
 	}
 }
 
