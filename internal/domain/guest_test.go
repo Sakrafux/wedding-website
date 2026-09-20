@@ -189,3 +189,50 @@ func changedFields(changes domain.Changes) []string {
 	slices.Sort(fields)
 	return fields
 }
+
+// F4-B04: an admin rename is us correcting our own list, so it moves the seeded name
+// with it — otherwise the detail page would report "früher: …" for a typo we fixed.
+func TestApplyGuestPatchMovesTheSeededNameForASeededGuest(t *testing.T) {
+	t.Parallel()
+
+	current := domain.Guest{
+		ID:         7,
+		Name:       "Anna Müler",
+		SeededName: "Anna Müler",
+		Origin:     domain.GuestOriginSeeded,
+		Kind:       domain.GuestKindAdult,
+	}
+	corrected := "  Anna Müller  "
+
+	updated, changes, err := domain.ApplyGuestPatch(current, domain.GuestPatch{Name: &corrected})
+
+	require.NoError(t, err)
+	assert.Equal(t, "Anna Müller", updated.Name)
+	assert.Equal(t, "Anna Müller", updated.SeededName)
+	assert.Equal(t, map[string]any{"name": "Anna Müller"}, changes.After)
+}
+
+// A plus-one has no name of ours behind them, so there is nothing to move and the
+// column stays empty — a copy would tell a later reader we invited somebody we did not.
+func TestApplyGuestPatchLeavesTheSeededNameEmptyForAnAddedGuest(t *testing.T) {
+	t.Parallel()
+
+	current := domain.Guest{ID: 8, Name: "Tom", Origin: domain.GuestOriginGuestAdded, Kind: domain.GuestKindAdult}
+	renamed := "Tom Berger"
+
+	updated, _, err := domain.ApplyGuestPatch(current, domain.GuestPatch{Name: &renamed})
+
+	require.NoError(t, err)
+	assert.Empty(t, updated.SeededName)
+}
+
+func TestResolveGuestNameRefusesABlankName(t *testing.T) {
+	t.Parallel()
+
+	_, err := domain.ResolveGuestName("  \t ")
+	require.ErrorIs(t, err, domain.ErrEmptyName)
+
+	name, err := domain.ResolveGuestName(" Oma Erika ")
+	require.NoError(t, err)
+	assert.Equal(t, "Oma Erika", name)
+}

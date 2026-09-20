@@ -246,6 +246,11 @@ export const rsvpLabels = {
   /** A statement of fact in the muted ink, not an error: a form that opens red at a
       household who has not answered yet reads as broken. */
   memberUnanswered: "Noch keine Antwort",
+  /** The name is editable here, not only displayed: we typed the guest list off an
+      address book, and the people on it know best how they are called (`F4-F04`). */
+  memberNameLabel: "Name",
+  memberNameHelp:
+    "So steht der Name auf der Tischkarte und in der Liste. Ändere ihn ruhig — Spitzname, Doppelname oder „Oma Erika“ ist alles in Ordnung.",
   memberScopeLabel: (name: string) => `Wozu kommt ${name}?`,
   memberScopeHelp:
     "Kirche und Feier sind getrennt — manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
@@ -473,6 +478,10 @@ export const householdLabels = {
       "Oma Erika" is the surname. */
   nameLabel: "Name",
   nameHint: "Vor- und Nachname, so wie die Person genannt werden möchte.",
+  /** Only rendered when the household has rewritten the name we invited them under
+      (`F4-F04`). "Eingeladen als", not "früher": it says which name is on the card we
+      posted, which is the question this line exists to answer. */
+  seededName: (name: string) => `Eingeladen als ${name}`,
   kindLabel: "Erwachsen oder Kind",
   ageLabel: "Alter am Hochzeitstag",
   ageHint: `Nur bei Kindern, und gemeint ist das Alter am ${weddingDateShort}.`,

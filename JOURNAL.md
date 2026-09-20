@@ -4,6 +4,26 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-09-20
+
+Done:
+
+- RSVP deadline fixed at **2027-05-01**: migration `0005` moves the seeded `app_setting.rsvp_deadline` to `2027-05-01T21:59:59Z` (end of that day in Vienna), guarded on the old placeholder. Updated in `CLAUDE.md`, `07-roadmap`, `TODO.md`, `F1-B04`, `F3-B02` and both test suites.
+- `F4-B04` — households edit the names of their own members. `name` joins the member objects of `PUT /api/rsvp`; `domain.ResolveGuestName` trims and refuses blank, shared with the admin patch; `ErrEmptyName` maps to the `name` field of the right card.
+- Migration `0006` adds `guest.seeded_name`, the name we posted the invitation to. Written by the admin patch only — `RSVPStore.SaveAnswer` writes `name` alone. Empty for `guest_added`. Exposed as `seeded_name` on `dto.AdminGuest` and as a column in `guests.csv`; absent from every guest-facing shape.
+- `F4-F04` — name input as the first field of each member card, with its `?` popover; card labels follow the typed name. The admin household detail shows "Eingeladen als …" only where the two names differ.
+- Specs: `02-features`, `03-data-model`, `04-architecture`, `CLAUDE.md`, `TODO.md`, `features/README.md`, plus the two new story files.
+- Suites: 152 frontend tests, `go test ./...` green.
+
+Decisions:
+
+- Names editable for **seeded members too**, not just guest-added ones — the case that actually occurs is a seeded name we got slightly wrong. Reasoning in `02-features` and `F4-B04`.
+- The seeded name is kept rather than overwritten, and the admin rename moves both. Recorded in migration `0006`'s header and `03-data-model`.
+- Edited on the existing form and saved with it, rather than through a rename endpoint: one screen, one save button, one set of deadline and audit rules.
+
+Time: <h>
+Cost: $<x>
+
 ## 2026-09-19
 
 Done:

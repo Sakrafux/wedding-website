@@ -18,6 +18,7 @@ import type { Attending, MealChoice, Portion, SeatingNeed } from "@/lib/api/enum
 export const maxTransportSeats = 20;
 export const maxNoteLength = 2000;
 export const maxDietaryNoteLength = 500;
+export const maxNameLength = 160;
 
 /** The point at which the note's character counter appears. Not before: a counter on
     an empty field reads as a limit on what you are allowed to say. */
@@ -39,6 +40,9 @@ const firstTransportSeat = 1;
 /** One member's answer as the form holds it. `null` in `attending` is "not answered". */
 export interface MemberDraft {
   id: number;
+  /** Editable by the household: the list is seeded off an address book, and the
+      people on it know better than we do how they are called (`F4-F04`). */
+  name: string;
   attending: Attending | null;
   meal_choice: MealChoice | null;
   portion: Portion;
@@ -63,6 +67,7 @@ export function draftFrom(answer: RSVPResponse): RSVPDraft {
   for (const member of answer.members) {
     members[member.id] = withMealDefault({
       id: member.id,
+      name: member.name,
       attending: member.attending,
       meal_choice: member.meal_choice,
       portion: member.portion,
@@ -128,6 +133,9 @@ export function toRequest(draft: RSVPDraft, members: RSVPMember[]): RSVPSaveRequ
       const memberDraft = draft.members[member.id];
       return {
         id: member.id,
+        // The stored name when the draft never learned about this member, so a save
+        // cannot blank somebody out. Trimming is the server's (domain.ResolveGuestName).
+        name: memberDraft?.name ?? member.name,
         // Defaulted only to satisfy the type: submit is blocked while any scope is
         // missing, and a request built here always has one.
         attending: memberDraft?.attending ?? "no",

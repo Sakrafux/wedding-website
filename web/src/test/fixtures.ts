@@ -22,7 +22,7 @@ export function bootstrap(overrides: Partial<BootstrapResponse> = {}): Bootstrap
       { id: 31, name: "Emil Müller", kind: "child", origin: "seeded" },
     ],
     flags: { rsvp_open: true, seating_published: false, gallery_visible: false, uploads_open: false },
-    rsvp_deadline: "2027-05-17T21:59:59Z",
+    rsvp_deadline: "2027-05-01T21:59:59Z",
     ...overrides,
   };
 }
@@ -52,10 +52,11 @@ export function adminHousehold(overrides: Partial<AdminHousehold> = {}): AdminHo
 }
 
 export function adminGuest(overrides: Partial<AdminGuest> = {}): AdminGuest {
-  return {
+  const guest: AdminGuest = {
     id: 30,
     household_id: 12,
     name: "Anna Müller",
+    seeded_name: "",
     kind: "adult",
     age: null,
     origin: "seeded",
@@ -63,6 +64,10 @@ export function adminGuest(overrides: Partial<AdminGuest> = {}): AdminGuest {
     dietary_note: "",
     ...overrides,
   };
+
+  // A guest nobody renamed is the ordinary case, so the two names match unless a
+  // test says otherwise — the detail page only speaks up when they differ.
+  return guest.seeded_name === "" ? { ...guest, seeded_name: guest.name } : guest;
 }
 
 /**
@@ -104,7 +109,7 @@ export function rsvpAnswer(overrides: Partial<RSVPResponse> = {}): RSVPResponse 
       rsvp_updated_at: null,
     },
     members: [rsvpMember(), rsvpMember({ id: 31, name: "Emil Müller", kind: "child", age: 4 })],
-    deadline: "2027-05-17T21:59:59Z",
+    deadline: "2027-05-01T21:59:59Z",
     editable: true,
     // Two seeded members by default, so the default household is one that may not add
     // — which is what most households are.

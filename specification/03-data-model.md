@@ -43,7 +43,8 @@ A person. Belongs to exactly one household.
 |---|---|---|
 | `id` | INTEGER PK | |
 | `household_id` | INTEGER FK → household | |
-| `name` | TEXT | The **whole** name in one field, required. Not split into first and last (migration `0002` merged them): every output — place card, caterer list, "so haben wir euch notiert" — wants the full name, and one field lets a household enter a double first name, a person with no surname we know, or "Oma Erika" without deciding which half is which. It cannot be inherited from the household either: a household is any group sharing one invitation, so `household.name` and `household.addressee` are free text like "Luki & Paddi". Accepted cost: nothing sorts by surname any more — see `F5-B04`. |
+| `name` | TEXT | The **whole** name in one field, required. Not split into first and last (migration `0002` merged them): every output — place card, caterer list, "so haben wir euch notiert" — wants the full name, and one field lets a household enter a double first name, a person with no surname we know, or "Oma Erika" without deciding which half is which. It cannot be inherited from the household either: a household is any group sharing one invitation, so `household.name` and `household.addressee` are free text like "Luki & Paddi". Accepted cost: nothing sorts by surname any more — see `F5-B04`. **Editable by the household through the RSVP** (`F4-B04`): we type the list off an address book and the people on it know better than we do how they are called. |
+| `seeded_name` | TEXT | The name we posted the invitation to, kept so a rename by the household does not erase whose card this was (migration `0006`). Admin-only — shown as "Eingeladen als …" on the household detail page when it differs from `name` — and never in a guest response. Empty for a `guest_added` member, who has no name of ours behind them; a copy of `name` there would claim we invited somebody the household invented. |
 | `kind` | TEXT | `adult` \| `child` |
 | `age` | INTEGER NULL | Children only. **Age at the wedding date**, not at RSVP time — the UI asks it that way so the value does not drift over the months before the event. Feeds caterer pricing brackets and venue headcounts. |
 | `origin` | TEXT | `seeded` (we created it) \| `guest_added` (household added it). Drives the admin delta view. |
@@ -58,6 +59,7 @@ A person. Belongs to exactly one household.
 
 Invariants:
 
+- **`seeded_name` has one writer, and it is the admin path.** The RSVP save writes `name` alone; the admin guest patch writes both, because an admin rename is us correcting our own list rather than the household correcting us.
 - A household may only delete `guest` rows where `origin = 'guest_added'`, and only before the RSVP deadline. Seeded guests are never deleted by a guest — they get `attending = 'no'`.
 - `seating_need = 'with_parent'` means the guest consumes no seat and must not be assigned one.
 - **`attending` scope gates the catering fields.** `meal_choice`, `portion` and `midnight_snack` are only meaningful for `party_only` and `both`, as is a party `seat_assignment` (a church seat is gated by `church_only`/`both` instead). For `church_only` and `no` they are ignored, and every derived count keys off the scope — not off "is attending". Getting this wrong means paying for meals nobody eats.

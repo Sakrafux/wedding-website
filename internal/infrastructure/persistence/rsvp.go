@@ -42,9 +42,13 @@ func (store *RSVPStore) SaveAnswer(ctx context.Context, household domain.Househo
 		    rsvp_note = ?, rsvp_submitted_at = ?, rsvp_updated_at = ?
 		WHERE id = ?`
 
+	// seeded_name is deliberately absent from the statement below. It is the name we
+	// posted the invitation to, and this write runs on behalf of the household
+	// (F4-B04); the admin patch is the only writer of that column.
+
 	const updateMember = `
 		UPDATE guest
-		SET attending = ?, meal_choice = ?, portion = ?, midnight_snack = ?,
+		SET name = ?, attending = ?, meal_choice = ?, portion = ?, midnight_snack = ?,
 		    seating_need = ?, dietary_note = ?, age = ?
 		WHERE id = ? AND household_id = ? AND deleted_at IS NULL`
 
@@ -62,6 +66,7 @@ func (store *RSVPStore) SaveAnswer(ctx context.Context, household domain.Househo
 
 		for _, member := range members {
 			result, err := transaction.ExecContext(ctx, updateMember,
+				member.Name,
 				nullableEnum(member.Attending), nullableEnum(member.MealChoice),
 				string(member.Portion), member.MidnightSnack,
 				string(member.SeatingNeed), member.DietaryNote, member.Age,

@@ -135,8 +135,9 @@ func seedHousehold(t *testing.T, pool *sqlx.DB, options ...householdOption) seed
 
 	for _, guest := range spec.guests {
 		guestResult, err := pool.Exec(
-			`INSERT INTO guest (household_id, name, kind, age, origin) VALUES (?, ?, ?, ?, 'seeded')`,
-			household.ID, guest.name, guest.kind, guest.age,
+			`INSERT INTO guest (household_id, name, seeded_name, kind, age, origin)
+			 VALUES (?, ?, ?, ?, ?, 'seeded')`,
+			household.ID, guest.name, guest.name, guest.kind, guest.age,
 		)
 		require.NoError(t, err)
 
@@ -211,8 +212,9 @@ func insertGuest(t *testing.T, pool *sqlx.DB, householdID int64, name string) in
 
 	// Only the columns without a default, so the defaults stay observable.
 	result, err := pool.Exec(
-		`INSERT INTO guest (household_id, name, kind, origin) VALUES (?, ?, 'adult', 'seeded')`,
-		householdID, name,
+		`INSERT INTO guest (household_id, name, seeded_name, kind, origin)
+		 VALUES (?, ?, ?, 'adult', 'seeded')`,
+		householdID, name, name,
 	)
 	require.NoError(t, err)
 	return lastInsertID(t, result)

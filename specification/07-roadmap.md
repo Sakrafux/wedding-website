@@ -10,7 +10,7 @@ Three fixed points. Everything else is ordering, not scheduling.
 |---|---|
 | Wedding | **2027-07-17** — working assumption. Venue and church are being fixed within ~2 weeks of 2026-08-22, and the venue's availability sets the date, so this becomes firm in early September 2026. Any change is within days and costs a copy edit |
 | Invitation send-out | **October / November 2026** |
-| RSVP deadline | **~2 months before the wedding**, so around mid-May 2027 |
+| RSVP deadline | **2027-05-01** — fixed 2026-09-20. Two and a half months before the wedding, and the date printed on the card |
 
 Development target: **finished by the end of 2026, ideally September/October** — which is to say, done in time for send-out rather than done at leisure.
 
@@ -120,14 +120,14 @@ In the first fortnight, watch `last_login_at`. A household that never logs in ne
 
 ### M5 — The long middle
 
-This is now the longest stretch of the plan — roughly send-out until mid-May. Everything in it is optional and cuttable.
+This is now the longest stretch of the plan — roughly send-out until the start of May. Everything in it is optional and cuttable.
 
 - F6 dashboard, if it slipped out of M4. Worth doing early in this window: it is the tool you will actually live in for six months.
 - F8 budget. No dependencies; bring it forward whenever the mood strikes.
 - F9 curated gallery, including the thumbnailing library decision that [04-architecture](04-architecture.md) deferred.
 - RSVP chasing off the nudge list. Expect the last 20% of households to need a personal nudge regardless of how good the site is.
 
-### RSVP deadline · ~2 months before the wedding
+### RSVP deadline · 2027-05-01
 
 The form goes read-only. Late changes go through us in the admin UI.
 
@@ -166,8 +166,8 @@ Roughly three months post-wedding, run the end-of-life procedure in [06-privacy-
 
 Posting the invitations nine months before the wedding is unusually early — it merges the save-the-date and the invitation into one mailing. That is a legitimate choice and it removes a whole phase of work, but three consequences follow and are worth planning around:
 
-1. **The RSVP window is about six months long.** Most answers will arrive in the first three weeks and the last few in May. Plan for a long, quiet chasing period rather than a single deadline push.
-2. **Answers go stale.** Someone who says yes in November may be pregnant, moved, or separated by May. The form stays editable until the deadline precisely for this, and the deadline is where the numbers finally stop moving — which is also when per-head budget items stop drifting.
+1. **The RSVP window is about six months long.** Most answers will arrive in the first three weeks and the last few in the days before 1 May. Plan for a long, quiet chasing period rather than a single deadline push.
+2. **Answers go stale.** Someone who says yes in November may be pregnant, moved, or separated by May 2027. The form stays editable until the deadline precisely for this, and the deadline is where the numbers finally stop moving — which is also when per-head budget items stop drifting.
 3. **The field-set freeze lands very early.** Gate 1 is now weeks away rather than months. That is uncomfortable, but it is also the correct incentive: the F3 story has to be written properly before anything is built, because there is no slack in which to discover a missing field.
 
 One phase drops out entirely: **no separate save-the-date.** A save-the-date solves two problems — an invitation too far out to be actionable, and guests who must book travel far ahead — and neither applies at nine months with a mostly local guest list. It would also mean either two variable-data print runs or a card pointing at a site nobody can log into yet. An Oct/Nov mailing additionally lands exactly when employers collect holiday planning for 2027, which is the save-the-date's real job done by the invitation itself. The one argument for splitting — hedging an unfixed date — disappears once the venue is booked, which happens well before anything is printed.
@@ -180,7 +180,7 @@ All are inputs we do not control. The urgency has changed considerably: several 
 |---|---|---|
 | Venue and church: names, addresses, travel and accommodation notes | M3 | Being fixed by ~early September 2026. Also fixes the date |
 | Schedule of the day, dress code, gift wishes, bank details | M3 | **Before send-out** — now the highest-urgency unknown |
-| RSVP deadline: the exact date, and what the site says after it | M2 configuration, and the wording printed on the card | **Before send-out** |
+| What the site says after the RSVP deadline | M5 | Before the deadline. The date itself is fixed: 2027-05-01 |
 | Plus-one rule for single-person households | M2 | Before send-out |
 | Final guest list and household groupings | M4 | Before send-out — codes are printed per household |
 | Caterer age brackets | F6 dashboard | Can slip; derived at read time |
@@ -188,7 +188,7 @@ All are inputs we do not control. The urgency has changed considerably: several 
 | Who draws the SVG, in what tool, ids surviving re-export | M6 | Spring 2027 |
 | Photo retention policy | M9 and the Datenschutz page | Late |
 
-The RSVP deadline is worth deciding early even though it is enforced late: it should be **printed on the invitation card**, and a card that says "bitte bis …" is far more effective than a website that says it.
+The RSVP deadline was decided early even though it is enforced late, because it is **printed on the invitation card** — a card that says "bitte bis 1. Mai 2027" is far more effective than a website that says it.
 
 ## Risks
 

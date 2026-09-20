@@ -92,6 +92,7 @@ Two layers, no mocking layer.
 **Domain unit tests** cover the rules where a silent bug costs a real headcount or a wrong bill:
 
 - Only `guest_added` members are deletable, and only before the RSVP deadline.
+- A household may rename any of its members; `guest.seeded_name` keeps the name we invited them under, and only the admin path writes it (`F4-B04`).
 - `seating_need = 'with_parent'` consumes no seat and cannot hold an assignment.
 - Attendance scope gates catering: church-only guests never appear in meal, portion, snack or seating counts.
 - Flipping `attending` to `no` or `church_only` produces a *stale assignment*, never a silent unassignment.

@@ -338,6 +338,7 @@ func guestResponse(guest domain.Guest) dto.AdminGuest {
 		ID:          guest.ID,
 		HouseholdID: guest.HouseholdID,
 		Name:        guest.Name,
+		SeededName:  guest.SeededName,
 		Kind:        string(guest.Kind),
 		Age:         guest.Age,
 		Origin:      string(guest.Origin),

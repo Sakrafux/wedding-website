@@ -178,6 +178,22 @@ describe("admin household detail", () => {
     expect(await screen.findAllByText("Selbst hinzugefügt")).toHaveLength(1);
   });
 
+  // F4-F04: the household writes the names, and we still have to recognise whose
+  // invitation card this was.
+  it("names the invitation only for a member the household renamed", async () => {
+    stubHousehold({
+      members: [
+        adminGuest({ name: "Oma Erika", seeded_name: "Erika Huber" }),
+        adminGuest({ id: 31, name: "Clara Müller" }),
+      ],
+    });
+
+    await renderApp("/admin/haushalte/12");
+
+    expect(await screen.findByText("Eingeladen als Erika Huber")).toBeInTheDocument();
+    expect(screen.queryByText("Eingeladen als Clara Müller")).not.toBeInTheDocument();
+  });
+
   it("removes a member behind a confirmation that says the record survives", async () => {
     const { api } = stubHousehold({ members: [adminGuest()] });
     api.set("DELETE /api/admin/guests/30", ok());

@@ -227,7 +227,7 @@ func TestAnAnsweredAdditionMayStillBeRemoved(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	added := app.postJSON("/api/rsvp/members", map[string]any{"name": "Isabella Michelbacher"}).addedMember()
 	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp",
-		submission(answerFor(household.Guests[0].ID, "both"), answerFor(added.Member.ID, "both"))).Status)
+		submission(answerFor(household.Guests[0], "both"), answerFor(seededGuest{ID: added.Member.ID, Name: added.Member.Name}, "both"))).Status)
 
 	assert.Equal(t, http.StatusNoContent, app.deleteRequest(memberPath(added.Member.ID)).Status)
 }

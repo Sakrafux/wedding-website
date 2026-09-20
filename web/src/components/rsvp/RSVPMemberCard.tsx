@@ -20,6 +20,7 @@ import {
   attendsAnything,
   coversParty,
   maxDietaryNoteLength,
+  maxNameLength,
   memberCardId,
   memberFieldKey,
   type MemberDraft,
@@ -84,6 +85,10 @@ export function RSVPMemberCard({
 }) {
   const scopeFieldId = `${memberCardId(member.id)}-attending`;
   const isMissing = showMissingAnswer && draft.attending === null;
+  // Every label below addresses the person by name, so they follow what is being
+  // typed rather than the stored name. The stored one stands in while the field is
+  // empty — a heading reading "Wozu kommt ?" mid-edit is worse than a stale name.
+  const name = draft.name.trim() === "" ? member.name : draft.name.trim();
 
   function errorFor(field: keyof MemberDraft): string | undefined {
     return fieldErrors[memberFieldKey(member.id, field)];
@@ -92,7 +97,7 @@ export function RSVPMemberCard({
   return (
     <Card id={memberCardId(member.id)} className="gap-4 px-4 py-4" data-testid={memberCardId(member.id)}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-h3 font-body">{member.name}</h3>
+        <h3 className="text-h3 font-body">{name}</h3>
         <div className="flex items-center gap-2">
           {draft.attending === null ? (
             <p className={isMissing ? "text-danger text-small" : "text-ink-muted text-small"}>
@@ -101,15 +106,29 @@ export function RSVPMemberCard({
           ) : null}
           {/* Only what the household added itself. A seeded member's remedy is the
               scope control below, not a removal (F4-B01). */}
-          {onRemove && member.origin === "guest_added" ? (
-            <RemoveMemberButton name={member.name} onRemove={onRemove} />
-          ) : null}
+          {onRemove && member.origin === "guest_added" ? <RemoveMemberButton name={name} onRemove={onRemove} /> : null}
         </div>
       </div>
 
       <FormField
+        id={`${memberCardId(member.id)}-name`}
+        label={rsvpLabels.memberNameLabel}
+        help={rsvpLabels.memberNameHelp}
+        error={errorFor("name")}
+      >
+        <Input
+          id={`${memberCardId(member.id)}-name`}
+          value={draft.name}
+          maxLength={maxNameLength}
+          autoComplete="off"
+          aria-invalid={errorFor("name") !== undefined}
+          onChange={(event) => onChange({ name: event.target.value })}
+        />
+      </FormField>
+
+      <FormField
         id={scopeFieldId}
-        label={rsvpLabels.memberScopeLabel(member.name)}
+        label={rsvpLabels.memberScopeLabel(name)}
         help={rsvpLabels.memberScopeHelp}
         error={errorFor("attending") ?? (isMissing ? rsvpLabels.memberUnanswered : undefined)}
       >
@@ -131,7 +150,7 @@ export function RSVPMemberCard({
         <div className="flex flex-col gap-4">
           <FormField
             id={`${scopeFieldId}-meal`}
-            label={rsvpLabels.mealChoiceLabel(member.name)}
+            label={rsvpLabels.mealChoiceLabel(name)}
             help={rsvpLabels.mealChoiceHelp}
             error={errorFor("meal_choice")}
           >
@@ -148,7 +167,7 @@ export function RSVPMemberCard({
 
           <FormField
             id={`${scopeFieldId}-portion`}
-            label={rsvpLabels.portionLabel(member.name)}
+            label={rsvpLabels.portionLabel(name)}
             help={rsvpLabels.portionHelp}
             error={errorFor("portion")}
           >
@@ -172,7 +191,7 @@ export function RSVPMemberCard({
 
           <FormField
             id={`${scopeFieldId}-snack`}
-            label={rsvpLabels.midnightSnackLabel(member.name)}
+            label={rsvpLabels.midnightSnackLabel(name)}
             help={rsvpLabels.midnightSnackHelp}
             error={errorFor("midnight_snack")}
           >
@@ -194,7 +213,7 @@ export function RSVPMemberCard({
         <div className="flex flex-col gap-4">
           <FormField
             id={`${scopeFieldId}-seating`}
-            label={rsvpLabels.seatingNeedLabel(member.name)}
+            label={rsvpLabels.seatingNeedLabel(name)}
             help={rsvpLabels.seatingNeedHelp}
             error={errorFor("seating_need")}
           >
@@ -211,7 +230,7 @@ export function RSVPMemberCard({
 
           <FormField
             id={`${scopeFieldId}-dietary`}
-            label={rsvpLabels.dietaryNoteLabel(member.name)}
+            label={rsvpLabels.dietaryNoteLabel(name)}
             help={rsvpLabels.dietaryNoteHelp}
             error={errorFor("dietary_note")}
           >
@@ -232,7 +251,7 @@ export function RSVPMemberCard({
           {member.kind === "child" ? (
             <FormField
               id={`${scopeFieldId}-age`}
-              label={rsvpLabels.ageLabel(member.name)}
+              label={rsvpLabels.ageLabel(name)}
               help={rsvpLabels.ageHelp}
               error={errorFor("age")}
             >

@@ -29,7 +29,7 @@ func TestAdminWritesAHouseholdAnswerTheGuestThenSees(t *testing.T) {
 	admin := app.onANewDevice()
 	require.Equal(t, http.StatusOK, admin.logInAsAdmin().Status)
 
-	body := submission(answerFor(anna.ID, "both"), answerFor(bernd.ID, "church_only"))
+	body := submission(answerFor(anna, "both"), answerFor(bernd, "church_only"))
 	body["rsvp_note"] = "Am Telefon durchgegeben."
 	saved := admin.putJSON(adminRSVPPath(household.ID), body)
 	require.Equal(t, http.StatusOK, saved.Status, saved.Body)
@@ -52,7 +52,7 @@ func TestAdminAndGuestRSVPBodiesAreIdentical(t *testing.T) {
 		withCode("ABC234"), withAdminNote("Ruft nie zurück"), withAdult("Anna Müller"), withChild("Emma Müller", 6))
 	require.Equal(t, http.StatusOK, app.logIn("ABC234").Status)
 
-	full := submission(answerFor(household.Guests[0].ID, "both"), answerFor(household.Guests[1].ID, "party_only"))
+	full := submission(answerFor(household.Guests[0], "both"), answerFor(household.Guests[1], "party_only"))
 	full["rsvp_note"] = "Wir bringen einen Kinderwagen mit."
 	full["has_stroller"] = true
 	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", full).Status)
@@ -81,13 +81,13 @@ func TestAdminWritesAfterTheDeadlineAndTheGuestDoesNot(t *testing.T) {
 	setRSVPDeadline(t, app.Database.Write, time.Now().Add(-24*time.Hour))
 
 	require.Equal(t, http.StatusOK, app.logIn("ABC234").Status)
-	refused := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both")))
+	refused := app.putJSON("/api/rsvp", submission(answerFor(anna, "both")))
 	require.Equal(t, http.StatusConflict, refused.Status)
 	assert.Equal(t, "rsvp_closed", refused.errorEnvelope().Code)
 
 	admin := app.onANewDevice()
 	require.Equal(t, http.StatusOK, admin.logInAsAdmin().Status)
-	accepted := admin.putJSON(adminRSVPPath(household.ID), submission(answerFor(anna.ID, "both")))
+	accepted := admin.putJSON(adminRSVPPath(household.ID), submission(answerFor(anna, "both")))
 
 	require.Equal(t, http.StatusOK, accepted.Status, accepted.Body)
 	body := accepted.rsvp()
@@ -110,7 +110,7 @@ func TestAdminSaveSetsSubmittedAt(t *testing.T) {
 	require.Equal(t, http.StatusOK, admin.logInAsAdmin().Status)
 
 	body := admin.putJSON(adminRSVPPath(household.ID),
-		submission(answerFor(household.Guests[0].ID, "both"))).rsvp()
+		submission(answerFor(household.Guests[0], "both"))).rsvp()
 
 	assert.NotNil(t, body.Household.RSVPSubmittedAt)
 }
@@ -128,11 +128,11 @@ func TestAdminRSVPSaveIsAuditedAsAdminAndTheGuestSaveAsHousehold(t *testing.T) {
 	admin := app.onANewDevice()
 	require.Equal(t, http.StatusOK, admin.logInAsAdmin().Status)
 	require.Equal(t, http.StatusOK,
-		admin.putJSON(adminRSVPPath(household.ID), submission(answerFor(anna.ID, "both"))).Status)
+		admin.putJSON(adminRSVPPath(household.ID), submission(answerFor(anna, "both"))).Status)
 
 	require.Equal(t, http.StatusOK, app.logIn("ABC234").Status)
 	require.Equal(t, http.StatusOK,
-		app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "church_only"))).Status)
+		app.putJSON("/api/rsvp", submission(answerFor(anna, "church_only"))).Status)
 
 	rows := rsvpAuditRows(app)
 	require.Len(t, rows, 2)
@@ -170,7 +170,7 @@ func TestAdminRSVPRefusesAMemberSetThatDoesNotMatch(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write, withAdult("Anna Müller"), withAdult("Bernd Müller"))
 
 	response := app.putJSON(adminRSVPPath(household.ID),
-		submission(answerFor(household.Guests[0].ID, "both")))
+		submission(answerFor(household.Guests[0], "both")))
 
 	assert.Equal(t, http.StatusConflict, response.Status)
 	assert.Equal(t, "member_set_mismatch", response.errorEnvelope().Code)

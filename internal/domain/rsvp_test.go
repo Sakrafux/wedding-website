@@ -21,8 +21,12 @@ func mealChoice(value domain.MealChoice) *domain.MealChoice {
 // the scope gate can say which of them survived.
 func answeredGuest(scope domain.Attending) domain.Guest {
 	return domain.Guest{
-		ID:            31,
-		Name:          "Anna Müller",
+		ID:   31,
+		Name: "Anna Müller",
+		// Seeded, so the name we posted the card to is on file and a rename through
+		// the RSVP has something to leave alone (F4-B04).
+		SeededName:    "Anna Müller",
+		Origin:        domain.GuestOriginSeeded,
 		Kind:          domain.GuestKindAdult,
 		Attending:     attending(scope),
 		MealChoice:    mealChoice(domain.MealChoiceVegetarian),
@@ -179,6 +183,7 @@ func TestApplyGuestAnswerReportsOnlyTheChangedFields(t *testing.T) {
 	current := answeredGuest(domain.AttendingBoth)
 
 	updated, changes, err := domain.ApplyGuestAnswer(current, domain.GuestAnswer{
+		Name:          current.Name,
 		Attending:     domain.AttendingBoth,
 		MealChoice:    mealChoice(domain.MealChoiceVegan),
 		Portion:       current.Portion,
@@ -205,6 +210,7 @@ func TestApplyGuestAnswerReportsNoChangeForAnIdenticalAnswer(t *testing.T) {
 	current := answeredGuest(domain.AttendingPartyOnly)
 
 	_, changes, err := domain.ApplyGuestAnswer(current, domain.GuestAnswer{
+		Name:          current.Name,
 		Attending:     *current.Attending,
 		MealChoice:    current.MealChoice,
 		Portion:       current.Portion,
@@ -225,6 +231,7 @@ func TestApplyGuestAnswerNormalizesBeforeDiffing(t *testing.T) {
 	current := answeredGuest(domain.AttendingBoth)
 
 	updated, changes, err := domain.ApplyGuestAnswer(current, domain.GuestAnswer{
+		Name:          current.Name,
 		Attending:     domain.AttendingChurchOnly,
 		MealChoice:    mealChoice(domain.MealChoiceVegan),
 		Portion:       domain.PortionKids,
@@ -257,11 +264,13 @@ func TestApplyGuestAnswerReportsTheAgeSentinels(t *testing.T) {
 	t.Parallel()
 
 	adult := domain.Guest{Kind: domain.GuestKindAdult}
-	_, _, err := domain.ApplyGuestAnswer(adult, domain.GuestAnswer{Attending: domain.AttendingBoth, Age: age(30)})
+	_, _, err := domain.ApplyGuestAnswer(adult,
+		domain.GuestAnswer{Name: "Anna Müller", Attending: domain.AttendingBoth, Age: age(30)})
 	assert.ErrorIs(t, err, domain.ErrAgeOnAdult)
 
 	child := domain.Guest{Kind: domain.GuestKindChild}
-	_, _, err = domain.ApplyGuestAnswer(child, domain.GuestAnswer{Attending: domain.AttendingBoth, Age: age(18)})
+	_, _, err = domain.ApplyGuestAnswer(child,
+		domain.GuestAnswer{Name: "Emil Müller", Attending: domain.AttendingBoth, Age: age(18)})
 	assert.ErrorIs(t, err, domain.ErrAgeOutOfRange)
 }
 
@@ -319,10 +328,50 @@ func TestApplyGuestAnswerRejectsAChildOnlySeatingNeedOnAnAdult(t *testing.T) {
 
 	adult := domain.Guest{ID: 7, Kind: domain.GuestKindAdult, SeatingNeed: domain.SeatingNeedNormal}
 	_, _, err := domain.ApplyGuestAnswer(adult, domain.GuestAnswer{
+		Name:        "Anna Müller",
 		Attending:   domain.AttendingBoth,
 		Portion:     domain.PortionFull,
 		SeatingNeed: domain.SeatingNeedHighChair,
 	})
 
 	require.ErrorIs(t, err, domain.ErrSeatingNeedOnAdult)
+}
+
+// F4-B04: the household writes the name, and it is diffed like any other field — an
+// audit row is what later answers "who is 'Omi' and when did that happen".
+func TestApplyGuestAnswerStoresARenameAndReportsIt(t *testing.T) {
+	t.Parallel()
+
+	current := answeredGuest(domain.AttendingBoth)
+
+	updated, changes, err := domain.ApplyGuestAnswer(current, domain.GuestAnswer{
+		// Trailing whitespace off a phone keyboard, trimmed rather than refused.
+		Name:          "  Anna Hofer  ",
+		Attending:     *current.Attending,
+		MealChoice:    current.MealChoice,
+		Portion:       current.Portion,
+		MidnightSnack: current.MidnightSnack,
+		SeatingNeed:   current.SeatingNeed,
+		DietaryNote:   current.DietaryNote,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "Anna Hofer", updated.Name)
+	// Untouched by the household's own write: it is how we still recognise whose
+	// invitation card this was.
+	assert.Equal(t, current.SeededName, updated.SeededName)
+	assert.Equal(t, map[string]any{"name": "Anna Müller"}, changes.Before)
+	assert.Equal(t, map[string]any{"name": "Anna Hofer"}, changes.After)
+}
+
+func TestApplyGuestAnswerRefusesABlankName(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := domain.ApplyGuestAnswer(answeredGuest(domain.AttendingBoth), domain.GuestAnswer{
+		Name:      "   ",
+		Attending: domain.AttendingBoth,
+		Portion:   domain.PortionFull,
+	})
+
+	require.ErrorIs(t, err, domain.ErrEmptyName)
 }

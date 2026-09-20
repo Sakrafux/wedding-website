@@ -68,7 +68,7 @@ Response `200`:
       "dietary_note": "Nussallergie"
     }
   ],
-  "deadline": "2027-05-17T21:59:59Z",
+  "deadline": "2027-05-01T21:59:59Z",
   "editable": true
 }
 ```

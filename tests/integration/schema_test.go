@@ -214,7 +214,7 @@ func TestAppSettingsAreSeeded(t *testing.T) {
 	require.NoError(t, rows.Err())
 
 	assert.Equal(t, map[string]string{
-		"rsvp_deadline":     "2027-05-17T21:59:59Z",
+		"rsvp_deadline":     "2027-05-01T21:59:59Z",
 		"seating_published": "false",
 		"uploads_open":      "false",
 		"gallery_visible":   "false",

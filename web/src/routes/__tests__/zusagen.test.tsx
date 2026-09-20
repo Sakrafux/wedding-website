@@ -318,6 +318,30 @@ describe("the RSVP form", () => {
     expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();
   });
 
+  // F4-F04: the list is seeded off an address book, so the household gets to correct
+  // how its people are called.
+  it("submits an edited name and addresses the person by it while typing", async () => {
+    const { api } = stubRSVP({ members: [rsvpMember()] });
+    api.set("PUT /api/rsvp", ok(rsvpAnswer({ members: [rsvpMember({ name: "Anna Hofer", attending: "both" })] })));
+
+    const { user } = await openForm();
+    const anna = card("Anna Müller");
+
+    await user.clear(anna.getByLabelText("Name"));
+    await user.type(anna.getByLabelText("Name"), "Anna Hofer");
+
+    // The labels follow the field rather than the stored name, so the card does not
+    // keep asking about somebody who has just been renamed.
+    expect(screen.getByRole("heading", { name: "Anna Hofer", level: 3 })).toBeInTheDocument();
+
+    await user.click(card("Anna Hofer").getByRole("radio", { name: /Kirche und Feier/ }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+
+    await screen.findByRole("heading", { name: "Danke, wir haben es notiert" });
+    const request = api.calls.find((call) => call.method === "PUT")?.body as Record<string, unknown>;
+    expect(request.members).toEqual([expect.objectContaining({ id: 30, name: "Anna Hofer" })]);
+  });
+
   it("opens on the form for a household that has not answered", async () => {
     stubRSVP();
 
@@ -357,6 +381,7 @@ describe("the RSVP form", () => {
     expect(request.members).toEqual([
       {
         id: 30,
+        name: "Anna Müller",
         attending: "both",
         meal_choice: "vegan",
         portion: "full",

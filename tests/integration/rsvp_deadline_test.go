@@ -18,7 +18,7 @@ func TestRSVPWriteIsRefusedAfterTheDeadline(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	setRSVPDeadline(t, app.Database.Write, time.Now().Add(-24*time.Hour))
 
-	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0].ID, "both")))
+	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0], "both")))
 
 	require.Equal(t, http.StatusConflict, response.Status, response.Body)
 	envelope := response.errorEnvelope()
@@ -39,7 +39,7 @@ func TestRSVPReadStaysOpenAfterTheDeadline(t *testing.T) {
 
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	require.Equal(t, http.StatusOK,
-		app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0].ID, "both"))).Status)
+		app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0], "both"))).Status)
 
 	deadline := time.Now().Add(-time.Hour).UTC().Truncate(time.Second)
 	setRSVPDeadline(t, app.Database.Write, deadline)
@@ -72,7 +72,7 @@ func TestRSVPDeadlineAtThisInstantCountsAsClosed(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	setRSVPDeadline(t, app.Database.Write, time.Now())
 
-	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0].ID, "both")))
+	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0], "both")))
 
 	assert.Equal(t, http.StatusConflict, response.Status)
 	assert.Equal(t, "rsvp_closed", response.errorEnvelope().Code)
@@ -87,8 +87,8 @@ func TestRSVPClosedFormOutranksAnInvalidBody(t *testing.T) {
 	setRSVPDeadline(t, app.Database.Write, time.Now().Add(-time.Hour))
 
 	// Both wrong at once: an unanswerable scope and a member set that does not match.
-	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0].ID, "maybe"),
-		answerFor(household.Guests[0].ID, "no")))
+	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0], "maybe"),
+		answerFor(household.Guests[0], "no")))
 
 	require.Equal(t, http.StatusConflict, response.Status)
 	assert.Equal(t, "rsvp_closed", response.errorEnvelope().Code)

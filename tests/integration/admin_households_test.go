@@ -45,6 +45,7 @@ type adminGuest struct {
 	ID          int64  `json:"id"`
 	HouseholdID int64  `json:"household_id"`
 	Name        string `json:"name"`
+	SeededName  string `json:"seeded_name"`
 	Kind        string `json:"kind"`
 	Age         *int   `json:"age"`
 	Origin      string `json:"origin"`

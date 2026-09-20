@@ -71,6 +71,12 @@ type AdminGuest struct {
 	ID          int64  `json:"id"`
 	HouseholdID int64  `json:"household_id"`
 	Name        string `json:"name"`
+	// SeededName is the name we posted the invitation to, which a household may since
+	// have rewritten through its own RSVP (F4-B04). Present so the detail page can
+	// show "früher: …" and we can still tell whose card this was. Empty for a
+	// guest_added member, who has no name of ours behind them. Admin-only, and
+	// absent from every guest-facing shape — see dto.RSVPMember.
+	SeededName string `json:"seeded_name"`
 	// Kind, Origin and SeatingNeed are the English enum values from the database.
 	// German labels are the frontend's business, mapped in web/src/lib/labels.ts.
 	Kind string `json:"kind"`

@@ -29,14 +29,14 @@ func NewGuestStore(database *configuration.Database) *GuestStore {
 // a Guest with an empty Attending because of *which query loaded it* is a value no
 // caller can reason about, and "is this person coming" is asked from F6, F7 and F8
 // alike.
-const guestColumns = `id, household_id, name, kind, age, origin, seating_need, dietary_note,
+const guestColumns = `id, household_id, name, seeded_name, kind, age, origin, seating_need, dietary_note,
 	attending, meal_choice, portion, midnight_snack`
 
 // insertGuest is shared by the admin path and the household's own plus-one path, which
 // differ only in the origin they pass and in the rule checked before the insert.
 const insertGuest = `
-	INSERT INTO guest (household_id, name, kind, age, origin, seating_need, dietary_note)
-	VALUES (?, ?, ?, ?, ?, ?, ?)`
+	INSERT INTO guest (household_id, name, seeded_name, kind, age, origin, seating_need, dietary_note)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 // selectLivingMembers is the household's members, soft-deleted rows excluded, ordered
 // by id — insertion order, so a household's form does not reshuffle under them. Shared
@@ -71,7 +71,7 @@ func (store *GuestStore) FindByID(ctx context.Context, id int64) (domain.Guest, 
 // it is decides what the admin delta view shows.
 func (store *GuestStore) Create(ctx context.Context, guest domain.Guest) (domain.Guest, error) {
 	result, err := store.database.Write.ExecContext(ctx, insertGuest,
-		guest.HouseholdID, guest.Name, string(guest.Kind), guest.Age,
+		guest.HouseholdID, guest.Name, guest.SeededName, string(guest.Kind), guest.Age,
 		string(guest.Origin), string(guest.SeatingNeed), guest.DietaryNote)
 	if err != nil {
 		return domain.Guest{}, fmt.Errorf("inserting guest: %w", err)
@@ -108,7 +108,7 @@ func (store *GuestStore) CreateIfHouseholdAllows(
 		}
 
 		result, err := transaction.ExecContext(ctx, insertGuest,
-			guest.HouseholdID, guest.Name, string(guest.Kind), guest.Age,
+			guest.HouseholdID, guest.Name, guest.SeededName, string(guest.Kind), guest.Age,
 			string(guest.Origin), string(guest.SeatingNeed), guest.DietaryNote)
 		if err != nil {
 			return fmt.Errorf("inserting guest: %w", err)
@@ -132,13 +132,17 @@ func (store *GuestStore) CreateIfHouseholdAllows(
 // looks like it — a plus-one counted in the wrong household — is a removal and an
 // addition, which is also what the audit trail should show.
 func (store *GuestStore) Update(ctx context.Context, guest domain.Guest) error {
+	// seeded_name is written here and nowhere else: this is the admin path, and we
+	// are the authority on the name we invited somebody under. domain.ApplyGuestPatch
+	// decides whether it moves — a household's own rename (F4-B04) goes through
+	// RSVPStore.SaveAnswer, which leaves the column alone.
 	const updateGuest = `
 		UPDATE guest
-		SET name = ?, kind = ?, age = ?, seating_need = ?, dietary_note = ?
+		SET name = ?, seeded_name = ?, kind = ?, age = ?, seating_need = ?, dietary_note = ?
 		WHERE id = ? AND deleted_at IS NULL`
 
 	result, err := store.database.Write.ExecContext(ctx, updateGuest,
-		guest.Name, string(guest.Kind), guest.Age,
+		guest.Name, guest.SeededName, string(guest.Kind), guest.Age,
 		string(guest.SeatingNeed), guest.DietaryNote, guest.ID)
 	if err != nil {
 		return fmt.Errorf("updating guest: %w", err)
@@ -177,6 +181,7 @@ type guestRow struct {
 	ID          int64         `db:"id"`
 	HouseholdID int64         `db:"household_id"`
 	Name        string        `db:"name"`
+	SeededName  string        `db:"seeded_name"`
 	Kind        string        `db:"kind"`
 	Age         sql.NullInt64 `db:"age"`
 	Origin      string        `db:"origin"`
@@ -195,6 +200,7 @@ func (row guestRow) toDomain() domain.Guest {
 		ID:            row.ID,
 		HouseholdID:   row.HouseholdID,
 		Name:          row.Name,
+		SeededName:    row.SeededName,
 		Kind:          domain.GuestKind(row.Kind),
 		Origin:        domain.GuestOrigin(row.Origin),
 		SeatingNeed:   domain.SeatingNeed(row.SeatingNeed),

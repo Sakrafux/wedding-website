@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"slices"
+	"strings"
 )
 
 // GuestKind separates adults from children. It is not derived from age: age is
@@ -61,7 +62,12 @@ type Guest struct {
 	// field lets a household enter "Oma Erika" or a double first name without
 	// deciding which half is which. See migration 0002 for the accepted cost.
 	Name string
-	Kind GuestKind
+	// SeededName is the name we invited this person under, kept because a household
+	// may rewrite Name through its own RSVP (F4-B04) and we still have to recognise
+	// whose invitation card that was. Admin-only — it is history, not an output —
+	// and empty for a guest_added member, who has no name we gave them.
+	SeededName string
+	Kind       GuestKind
 	// Age is **age at the wedding date** and is set for children only. Asked that
 	// way in the UI so the value does not drift over the months before the event.
 	Age    *int
@@ -82,6 +88,28 @@ type Guest struct {
 	MealChoice    *MealChoice
 	Portion       Portion
 	MidnightSnack bool
+}
+
+// ErrEmptyName reports a name that is blank once trimmed.
+//
+// A sentinel like ErrAgeOnAdult, and for the same reason: the answer belongs next to
+// the name field of a card. The schema cannot catch this — ” satisfies NOT NULL —
+// and an unnamed guest is one nobody can seat, cater for or hand a place card to.
+var ErrEmptyName = errors.New("a guest's name must not be blank")
+
+// ResolveGuestName returns the name to store: trimmed, and never blank.
+//
+// Trimmed rather than refused for stray whitespace, because a name pasted off a
+// phone keyboard routinely carries a trailing space and that is not a mistake worth
+// a red field. One function for both writers — the household's own RSVP and the
+// admin patch — so "Erika " and "Erika" cannot become two people in the seating list
+// depending on who typed them.
+func ResolveGuestName(name string) (string, error) {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return "", ErrEmptyName
+	}
+	return trimmed, nil
 }
 
 // ErrAgeOnAdult reports an age recorded against an adult.
@@ -165,7 +193,19 @@ func ApplyGuestPatch(current Guest, patch GuestPatch) (Guest, Changes, error) {
 	var changes Changes
 
 	if patch.Name != nil {
-		updated.Name = *patch.Name
+		name, err := ResolveGuestName(*patch.Name)
+		if err != nil {
+			return Guest{}, Changes{}, err
+		}
+		updated.Name = name
+		// An admin rename also moves the seeded name: we are the authority on what we
+		// invited somebody as, and this path is how a typo on our side gets fixed. A
+		// household's own rename leaves it alone — that is the whole point of the
+		// column (F4-B04). A guest_added member keeps the empty seeded name, because
+		// there is no invitation of ours behind them.
+		if updated.Origin == GuestOriginSeeded {
+			updated.SeededName = updated.Name
+		}
 	}
 	if patch.Kind != nil {
 		updated.Kind = *patch.Kind

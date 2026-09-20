@@ -161,6 +161,8 @@ func GuestFieldValidationError(err error) error {
 // "members.<id>." so the message lands on the right card.
 func GuestFieldValidationErrorUnder(prefix string, err error) error {
 	switch {
+	case errors.Is(err, domain.ErrEmptyName):
+		return fieldError(prefix+"name", "Bitte gib einen Namen an.")
 	case errors.Is(err, domain.ErrAgeOnAdult):
 		return fieldError(prefix+"age", "Ein Alter speichern wir nur für Kinder.")
 	case errors.Is(err, domain.ErrAgeOutOfRange):

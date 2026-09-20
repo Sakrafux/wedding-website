@@ -154,9 +154,13 @@ func insertHousehold(
 	surname := strings.TrimPrefix(name, "Familie ")
 
 	for member := range members {
+		memberName := firstNames[member%len(firstNames)] + " " + surname
 		_, err := guests.Create(ctx, domain.Guest{
 			HouseholdID: household.ID,
-			Name:        firstNames[member%len(firstNames)] + " " + surname,
+			Name:        memberName,
+			// The same name in both, as the admin create path does: this is a seeded
+			// guest, so the name we "invited" them under is the one they start with.
+			SeededName:  memberName,
 			Kind:        domain.GuestKindAdult,
 			Origin:      domain.GuestOriginSeeded,
 			SeatingNeed: domain.SeatingNeedNormal,

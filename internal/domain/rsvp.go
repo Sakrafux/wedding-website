@@ -133,6 +133,11 @@ func NormalizeHouseholdAnswer(household Household, members []Guest) Household {
 // pressing a radio button, and the case that would serve — we typed the wrong thing
 // — is ours to fix in F5-F02.
 type GuestAnswer struct {
+	// Name is editable by the household: we seed the list off an address book, and
+	// the people on it know better than we do how they are called (F4-B04). The name
+	// we seeded survives in Guest.SeededName, so an admin can still tell whose card
+	// this was.
+	Name          string
 	Attending     Attending
 	MealChoice    *MealChoice
 	Portion       Portion
@@ -150,6 +155,13 @@ type GuestAnswer struct {
 // which the answer cannot change.
 func ApplyGuestAnswer(current Guest, answer GuestAnswer) (Guest, Changes, error) {
 	updated := current
+
+	name, err := ResolveGuestName(answer.Name)
+	if err != nil {
+		return Guest{}, Changes{}, err
+	}
+	updated.Name = name
+
 	updated.Attending = &answer.Attending
 	updated.MealChoice = answer.MealChoice
 	updated.Portion = answer.Portion
@@ -172,6 +184,7 @@ func ApplyGuestAnswer(current Guest, answer GuestAnswer) (Guest, Changes, error)
 	updated = NormalizeGuestAnswer(updated)
 
 	var changes Changes
+	changes.compare("name", current.Name, updated.Name)
 	compareOptional(&changes, "attending", current.Attending, updated.Attending)
 	compareOptional(&changes, "meal_choice", current.MealChoice, updated.MealChoice)
 	changes.compare("portion", current.Portion, updated.Portion)

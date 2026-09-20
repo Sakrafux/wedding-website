@@ -216,6 +216,7 @@ func submissionFrom(request dto.RSVPSaveRequest) rsvp.Submission {
 		members = append(members, rsvp.MemberSubmission{
 			ID: member.ID,
 			Answer: domain.GuestAnswer{
+				Name:          member.Name,
 				Attending:     domain.Attending(member.Attending),
 				MealChoice:    mealChoicePointer(member.MealChoice),
 				Portion:       domain.Portion(member.Portion),

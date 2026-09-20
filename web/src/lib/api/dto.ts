@@ -156,6 +156,10 @@ export interface RSVPAddMemberResponse {
 /** One member's answer, as PUT sends it. */
 export interface RSVPMemberRequest {
   id: number;
+  /** The household's own spelling of the name (`F4-B04`). Trimmed server-side, and
+      refused when blank. The name we seeded is kept out of this shape — it is
+      admin-only history, see `AdminGuest.seeded_name`. */
+  name: string;
   attending: Attending;
   meal_choice: MealChoice | null;
   portion: Portion;
@@ -233,6 +237,9 @@ export interface AdminGuest {
   id: number;
   household_id: number;
   name: string;
+  /** The name we posted the invitation to, which the household may since have
+      rewritten (`F4-B04`). Empty for a `guest_added` member. Admin-only. */
+  seeded_name: string;
   kind: GuestKind;
   /** Age at the wedding date, and null for an adult. */
   age: number | null;

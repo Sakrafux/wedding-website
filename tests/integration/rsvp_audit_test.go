@@ -43,7 +43,7 @@ func TestRSVPSaveAuditsOneRowPerChangedMember(t *testing.T) {
 	anna, bernd := household.Guests[0], household.Guests[1]
 
 	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp",
-		submission(answerFor(anna.ID, "both"), answerFor(bernd.ID, "both"))).Status)
+		submission(answerFor(anna, "both"), answerFor(bernd, "both"))).Status)
 
 	rows := rsvpAuditRows(app)
 	require.Len(t, rows, 2, "two members changed, the household's own fields did not")
@@ -62,9 +62,9 @@ func TestRSVPSaveOfTheNoteAloneAuditsOnlyTheHousehold(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both"))).Status)
+	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(answerFor(anna, "both"))).Status)
 
-	body := submission(answerFor(anna.ID, "both"))
+	body := submission(answerFor(anna, "both"))
 	body["rsvp_note"] = "Oma braucht einen Platz nah am Ausgang."
 	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", body).Status)
 
@@ -88,10 +88,10 @@ func TestRSVPSaveThatChangesNothingIsNotAudited(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both"))).Status)
+	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(answerFor(anna, "both"))).Status)
 	before := len(rsvpAuditRows(app))
 
-	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both"))).Status)
+	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(answerFor(anna, "both"))).Status)
 
 	assert.Len(t, rsvpAuditRows(app), before)
 }
@@ -104,11 +104,11 @@ func TestRSVPAuditRecordsOnlyTheChangedFieldsWithBothValues(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	first := answerFor(anna.ID, "both")
+	first := answerFor(anna, "both")
 	first["meal_choice"] = "vegetarian"
 	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(first)).Status)
 
-	second := answerFor(anna.ID, "both")
+	second := answerFor(anna, "both")
 	second["meal_choice"] = "vegan"
 	require.Equal(t, http.StatusOK, app.putJSON("/api/rsvp", submission(second)).Status)
 
@@ -130,7 +130,7 @@ func TestRSVPSaveSurvivesAFailingAuditWrite(t *testing.T) {
 	_, err := app.Database.Write.Exec(`DROP TABLE audit_log`)
 	require.NoError(t, err)
 
-	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0].ID, "both")))
+	response := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0], "both")))
 
 	require.Equal(t, http.StatusOK, response.Status, "the answer matters more than the record of it")
 	require.NotNil(t, response.rsvp().Household.RSVPSubmittedAt)

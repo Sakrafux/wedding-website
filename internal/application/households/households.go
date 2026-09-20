@@ -220,6 +220,11 @@ func (useCase *UseCase) AddGuest(ctx context.Context, householdID int64, draft d
 	draft.Age = age
 	draft.SeatingNeed = seatingNeed
 	draft.Origin = domain.GuestOriginSeeded
+	// The name we invite them under, kept so a household renaming them through the
+	// RSVP (F4-B04) does not erase who that card went to. Taken from the draft rather
+	// than accepted as an input: the two are the same name at creation, and a request
+	// that could set them apart would be a request lying about our own list.
+	draft.SeededName = draft.Name
 
 	created, err := useCase.guests.Create(ctx, draft)
 	if err != nil {

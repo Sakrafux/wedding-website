@@ -327,6 +327,14 @@ function MemberRow({ householdId, member }: { householdId: number; member: Admin
           </span>
         ) : null}
 
+        {/* Only when the household has rewritten the name we invited them under
+          (`F4-F04`) — otherwise the two are the same string and the line would be
+          noise on every card. It is what lets us match this person to a posted
+          invitation; saving the field below adopts the new name as ours. */}
+        {member.seeded_name !== "" && member.seeded_name !== member.name ? (
+          <p className="text-ink-muted text-small">{householdLabels.seededName(member.seeded_name)}</p>
+        ) : null}
+
         <div className="flex flex-wrap gap-3">
           <Field label={householdLabels.nameLabel} id={`name-${member.id}`} error={fieldError(update.error, "name")}>
             <Input id={`name-${member.id}`} value={name} onChange={(event) => setName(event.target.value)} />

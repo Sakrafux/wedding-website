@@ -236,7 +236,7 @@ describe("the start page", () => {
     stubGuest();
 
     await renderApp("/start");
-    expect(screen.getByText(/Bitte antwortet bis zum 17\.05\.2027/)).toBeInTheDocument();
+    expect(screen.getByText(/Bitte antwortet bis zum 01\.05\.2027/)).toBeInTheDocument();
     expect(screen.queryByText(/Danke/)).not.toBeInTheDocument();
   });
 
@@ -246,7 +246,7 @@ describe("the start page", () => {
     await renderApp("/start");
 
     expect(
-      await screen.findByText(/Danke für eure Antwort! Ändern könnt ihr sie noch bis zum 17\.05\.2027/),
+      await screen.findByText(/Danke für eure Antwort! Ändern könnt ihr sie noch bis zum 01\.05\.2027/),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Bitte antwortet bis/)).not.toBeInTheDocument();
   });

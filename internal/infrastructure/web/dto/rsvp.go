@@ -143,6 +143,12 @@ type RSVPSaveRequest struct {
 // wrong thing — is ours to fix in F5-F02.
 type RSVPMemberRequest struct {
 	ID int64 `json:"id" validate:"required"`
+	// The household's own spelling of the name, editable here because the list is
+	// seeded off an address book and the people on it know better than we do how
+	// they are called (F4-B04). The bound matches AdminGuestCreateRequest.Name: one
+	// rule set, three callers. The name we seeded is kept out of reach — it is
+	// admin-only history, see dto.AdminGuest.SeededName.
+	Name string `json:"name" validate:"required,max=160"`
 	// Required, because there is no way to store half an answer: rsvp_submitted_at
 	// means "they have told us who is coming", and a save leaving two people at null
 	// while setting it would make the nudge list lie.

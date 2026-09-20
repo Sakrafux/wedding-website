@@ -106,6 +106,8 @@ Nothing user-visible. Exit criterion: the container runs on the real server, beh
 - [x] `F4-F01` Add-plus-one sheet, and the hint for everyone else
 - [x] `F4-F02` Remove member, pre-deadline only
 - [x] `F4-F03` The plus-one sheet must not submit the RSVP form
+- [x] `F4-B04` The household writes its own names; `seeded_name` keeps ours
+- [x] `F4-F04` Name field on the member card
 
 ## F2 — Informational content · M3 · P0
 

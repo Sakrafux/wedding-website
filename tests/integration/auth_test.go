@@ -78,7 +78,7 @@ func TestLoginWithAValidCodeReturnsTheHousehold(t *testing.T) {
 	assert.False(t, body.Flags.SeatingPublished)
 	assert.False(t, body.Flags.GalleryVisible)
 	assert.False(t, body.Flags.UploadsOpen)
-	assert.Equal(t, time.Date(2027, 5, 17, 21, 59, 59, 0, time.UTC), body.RSVPDeadline.UTC())
+	assert.Equal(t, time.Date(2027, 5, 1, 21, 59, 59, 0, time.UTC), body.RSVPDeadline.UTC())
 }
 
 func TestLoginSetsAHardenedSessionCookie(t *testing.T) {

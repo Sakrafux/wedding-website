@@ -72,9 +72,14 @@ func (body rsvpBody) memberByID(t *testing.T, id int64) rsvpMember {
 
 // answerFor is a submitted answer for one member, with the ordinary defaults. Tests
 // override the field they are about, which keeps the interesting value visible.
-func answerFor(id int64, attending string) map[string]any {
+//
+// Takes the guest rather than their id because the body carries the name as well
+// (F4-B04), and a default that did not echo the stored one would silently rename
+// everybody the moment a test saved an answer.
+func answerFor(guest seededGuest, attending string) map[string]any {
 	return map[string]any{
-		"id":             id,
+		"id":             guest.ID,
+		"name":           guest.Name,
 		"attending":      attending,
 		"portion":        "full",
 		"midnight_snack": false,
@@ -121,11 +126,11 @@ func TestRSVPReadsBackWhatWasSaved(t *testing.T) {
 		"rsvp_note":               "Wir kommen erst nach der Zeremonie.",
 		"members": []map[string]any{
 			{
-				"id": anna.ID, "attending": "both", "meal_choice": "vegetarian", "portion": "full",
+				"id": anna.ID, "name": anna.Name, "attending": "both", "meal_choice": "vegetarian", "portion": "full",
 				"midnight_snack": true, "seating_need": "wheelchair", "dietary_note": "Nussallergie",
 			},
 			{
-				"id": emma.ID, "attending": "both", "meal_choice": "all", "portion": "kids",
+				"id": emma.ID, "name": emma.Name, "attending": "both", "meal_choice": "all", "portion": "kids",
 				"midnight_snack": false, "seating_need": "high_chair", "dietary_note": "", "age": 7,
 			},
 		},
@@ -224,7 +229,7 @@ func TestRSVPStoresNoCateringForAGuestOutsideTheParty(t *testing.T) {
 	oma := household.Guests[0]
 
 	response := app.putJSON("/api/rsvp", submission(map[string]any{
-		"id": oma.ID, "attending": "church_only", "meal_choice": "vegan", "portion": "kids",
+		"id": oma.ID, "name": oma.Name, "attending": "church_only", "meal_choice": "vegan", "portion": "kids",
 		"midnight_snack": true, "seating_need": "wheelchair", "dietary_note": "Laktose",
 	}))
 	require.Equal(t, http.StatusOK, response.Status, response.Body)
@@ -249,7 +254,7 @@ func TestRSVPSetsSubmittedOnceAndUpdatedOnEverySave(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	first := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both"))).rsvp()
+	first := app.putJSON("/api/rsvp", submission(answerFor(anna, "both"))).rsvp()
 	require.NotNil(t, first.Household.RSVPSubmittedAt)
 	require.NotNil(t, first.Household.RSVPUpdatedAt)
 
@@ -257,7 +262,7 @@ func TestRSVPSetsSubmittedOnceAndUpdatedOnEverySave(t *testing.T) {
 	// second save could legitimately land on the same timestamp.
 	time.Sleep(1100 * time.Millisecond)
 
-	second := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "church_only"))).rsvp()
+	second := app.putJSON("/api/rsvp", submission(answerFor(anna, "church_only"))).rsvp()
 
 	require.NotNil(t, second.Household.RSVPSubmittedAt)
 	assert.Equal(t, *first.Household.RSVPSubmittedAt, *second.Household.RSVPSubmittedAt,
@@ -275,10 +280,10 @@ func TestRSVPSaveThatChangesNothingMovesNoTimestamp(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	first := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both"))).rsvp()
+	first := app.putJSON("/api/rsvp", submission(answerFor(anna, "both"))).rsvp()
 	time.Sleep(1100 * time.Millisecond)
 
-	repeated := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both")))
+	repeated := app.putJSON("/api/rsvp", submission(answerFor(anna, "both")))
 	require.Equal(t, http.StatusOK, repeated.Status)
 
 	body := repeated.rsvp()
@@ -301,12 +306,12 @@ func TestRSVPRefusesAMemberSetThatDoesNotMatch(t *testing.T) {
 
 	bodies := map[string]map[string]any{
 		"a member of another household": submission(
-			answerFor(anna.ID, "both"), answerFor(other.Guests[0].ID, "both")),
-		"a missing member": submission(answerFor(anna.ID, "both")),
+			answerFor(anna, "both"), answerFor(other.Guests[0], "both")),
+		"a missing member": submission(answerFor(anna, "both")),
 		"a duplicated member": submission(
-			answerFor(anna.ID, "both"), answerFor(anna.ID, "no")),
+			answerFor(anna, "both"), answerFor(anna, "no")),
 		"an extra member": submission(
-			answerFor(anna.ID, "both"), answerFor(bernd.ID, "both"), answerFor(other.Guests[0].ID, "no")),
+			answerFor(anna, "both"), answerFor(bernd, "both"), answerFor(other.Guests[0], "no")),
 	}
 
 	for name, body := range bodies {
@@ -340,10 +345,10 @@ func TestRSVPRequiresAnAnswerForEveryMember(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"), withAdult("Bernd Müller"))
 	anna, bernd := household.Guests[0], household.Guests[1]
 
-	unanswered := answerFor(bernd.ID, "both")
+	unanswered := answerFor(bernd, "both")
 	delete(unanswered, "attending")
 
-	response := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "both"), unanswered))
+	response := app.putJSON("/api/rsvp", submission(answerFor(anna, "both"), unanswered))
 
 	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
 	envelope := response.errorEnvelope()
@@ -360,7 +365,7 @@ func TestRSVPReportsAnInvalidScopeOnTheRightMember(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	response := app.putJSON("/api/rsvp", submission(answerFor(anna.ID, "maybe")))
+	response := app.putJSON("/api/rsvp", submission(answerFor(anna, "maybe")))
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
 	assert.Contains(t, response.errorEnvelope().Fields, keyFor(anna.ID, "attending"))
@@ -378,7 +383,7 @@ func TestRSVPSaveIsAllOrNothing(t *testing.T) {
 	// The invalid age is on the last member, so the first member's answer and the
 	// household's own fields would already have been written by a save without a
 	// transaction.
-	invalidAge := answerFor(emma.ID, "both")
+	invalidAge := answerFor(emma, "both")
 	invalidAge["age"] = 40
 
 	response := app.putJSON("/api/rsvp", map[string]any{
@@ -386,7 +391,7 @@ func TestRSVPSaveIsAllOrNothing(t *testing.T) {
 		"transport_seats_offered": 0,
 		"has_stroller":            true,
 		"rsvp_note":               "Bitte einen Platz nah am Ausgang.",
-		"members":                 []map[string]any{answerFor(anna.ID, "both"), invalidAge},
+		"members":                 []map[string]any{answerFor(anna, "both"), invalidAge},
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
@@ -413,7 +418,7 @@ func TestRSVPZeroesTransportSeatsWithoutAMemberAttendingBoth(t *testing.T) {
 		"transport_seats_offered": 0,
 		"has_stroller":            false,
 		"rsvp_note":               "",
-		"members":                 []map[string]any{answerFor(anna.ID, "church_only")},
+		"members":                 []map[string]any{answerFor(anna, "church_only")},
 	})
 	require.Equal(t, http.StatusOK, response.Status, response.Body)
 
@@ -432,7 +437,7 @@ func TestRSVPRejectsSeatCountsAboveTheBound(t *testing.T) {
 		"transport_seats_offered": 0,
 		"has_stroller":            false,
 		"rsvp_note":               "",
-		"members":                 []map[string]any{answerFor(household.Guests[0].ID, "both")},
+		"members":                 []map[string]any{answerFor(household.Guests[0], "both")},
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
@@ -452,7 +457,7 @@ func TestRSVPRefusesNeedingAndOfferingSeatsAtOnce(t *testing.T) {
 		"transport_seats_offered": 3,
 		"has_stroller":            false,
 		"rsvp_note":               "",
-		"members":                 []map[string]any{answerFor(household.Guests[0].ID, "both")},
+		"members":                 []map[string]any{answerFor(household.Guests[0], "both")},
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
@@ -475,7 +480,7 @@ func TestRSVPRefusesBothDirectionsEvenWhenNobodyAttendsBoth(t *testing.T) {
 		"transport_seats_offered": 3,
 		"has_stroller":            false,
 		"rsvp_note":               "",
-		"members":                 []map[string]any{answerFor(household.Guests[0].ID, "church_only")},
+		"members":                 []map[string]any{answerFor(household.Guests[0], "church_only")},
 	})
 
 	require.Equal(t, http.StatusBadRequest, response.Status, response.Body)
@@ -489,7 +494,7 @@ func TestRSVPRefusesAChildOnlySeatingNeedForAnAdult(t *testing.T) {
 	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
 	anna := household.Guests[0]
 
-	answer := answerFor(anna.ID, "both")
+	answer := answerFor(anna, "both")
 	answer["seating_need"] = "high_chair"
 
 	response := app.putJSON("/api/rsvp", map[string]any{
@@ -522,7 +527,7 @@ func TestRSVPResponseLeaksNothing(t *testing.T) {
 	read.assertNoLeak(household.Code, "Ruft nie zurück")
 	assert.NotContains(t, read.Body, "rsvp_note_seen_at")
 
-	saved := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0].ID, "both")))
+	saved := app.putJSON("/api/rsvp", submission(answerFor(household.Guests[0], "both")))
 	saved.assertNoLeak(household.Code, "Ruft nie zurück")
 	assert.NotContains(t, saved.Body, "rsvp_note_seen_at")
 }
