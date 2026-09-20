@@ -21,8 +21,8 @@ Decisions:
 - The seeded name is kept rather than overwritten, and the admin rename moves both. Recorded in migration `0006`'s header and `03-data-model`.
 - Edited on the existing form and saved with it, rather than through a rename endpoint: one screen, one save button, one set of deadline and audit rules.
 
-Time: <h>
-Cost: $<x>
+Time: 0.5h
+Cost: $10.06
 
 ## 2026-09-19
 
