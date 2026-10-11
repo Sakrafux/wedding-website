@@ -2,7 +2,7 @@
  * Every German string in the application.
  *
  * Two kinds live here. First, the mapping from English enum values to German UI
- * text — the reason the file exists. Second, the screen copy: headings, buttons,
+ * text – the reason the file exists. Second, the screen copy: headings, buttons,
  * help text. No German string is written inline in a component, ever.
  *
  * That rule is what makes "enums are English everywhere" survivable: the API, the
@@ -18,7 +18,7 @@
  * Every map is typed `Record<TheUnion, ...>`, so adding a variant to enums.ts and
  * forgetting it here is a compile error rather than a raw English word appearing on
  * a guest's screen. Do not loosen these annotations to `Partial` or to a plain
- * object literal — that is the whole value of the file.
+ * object literal – that is the whole value of the file.
  *
  * Copy register: informal "du" throughout, short sentences, no jargon. See
  * specification/05-design.md.
@@ -58,7 +58,7 @@ export const attendingShortLabels: Record<Attending, string> = {
 
 /**
  * `guest.attending` is NULL until the household answers. The unanswered state is
- * not part of the Attending union — it is the absence of a value — so its labels
+ * not part of the Attending union – it is the absence of a value – so its labels
  * live beside the maps instead of inside them.
  */
 export const attendingUnansweredLabel = "Noch keine Antwort";
@@ -77,7 +77,7 @@ export const portionLabels: Record<Portion, string> = {
 };
 
 /**
- * Help text shown under the portion options. Only `none` needs explaining — the
+ * Help text shown under the portion options. Only `none` needs explaining – the
  * other two are self-evident, and a hint under every option is noise that makes the
  * one that matters easy to skip.
  */
@@ -95,8 +95,8 @@ export const seatingNeedLabels: Record<SeatingNeed, string> = {
 };
 
 /**
- * The transport question's three answers. Not a database enum — the direction is
- * derived from the two seat counts (`components/rsvp/state.ts`) — but it is a fixed
+ * The transport question's three answers. Not a database enum – the direction is
+ * derived from the two seat counts (`components/rsvp/state.ts`) – but it is a fixed
  * set of options rendered from a `Record`, so it belongs with the other maps.
  */
 export const transportDirectionLabels: Record<TransportDirection, string> = {
@@ -168,17 +168,17 @@ export const loginLabels = {
   codeHint: "Sechs Zeichen, genau wie auf der Karte. Groß- und Kleinschreibung ist egal.",
   submit: "Anmelden",
   submitting: "Wird geprüft …",
-  /** Revealed after two failures — the point at which a person starts to feel
+  /** Revealed after two failures – the point at which a person starts to feel
       stupid, which is exactly when the way out should appear. */
   fallback: "Klappt es nicht? Ruf uns an:",
   loggedOut: "Du wurdest abgemeldet. Bitte melde dich noch einmal an.",
-  rejectedHousehold: "Kein Problem — bitte prüf den Code noch einmal.",
+  rejectedHousehold: "Kein Problem – bitte prüf den Code noch einmal.",
 } as const;
 
 export const confirmationLabels = {
   /** Names the household, because the whole screen exists to catch a valid code
       that belongs to somebody else. */
-  heading: (householdName: string) => `Willkommen, ${householdName} — seid ihr das?`,
+  heading: (householdName: string) => `Willkommen, ${householdName} – seid ihr das?`,
   membersIntro: "So haben wir euch notiert:",
   confirm: "Ja, das sind wir",
   reject: "Nein",
@@ -211,13 +211,13 @@ export const formLabels = {
 } as const;
 
 /**
- * The RSVP form — the screen this whole product exists for.
+ * The RSVP form – the screen this whole product exists for.
  *
  * Every field carries a `*Help` sentence, per the form rules in 05-design: the help
  * lives behind a `?` popover beside the label, so a guest who needs the explanation
  * gets it and the form does not become a wall of grey text for everybody else.
  *
- * The register is the same "du" as everywhere else, addressed to a household — so the
+ * The register is the same "du" as everywhere else, addressed to a household – so the
  * questions are plural where they concern the group ("Wozu kommt ihr?") and singular
  * where they concern one person ("Was isst Anna?").
  */
@@ -232,7 +232,7 @@ export const rsvpLabels = {
     "Das setzt die Antwort für alle Personen unten auf einmal. Danach kannst du einzelne Personen noch ändern.",
   /** Shown instead of a lit-up option once the cards disagree: a selector that stayed
       lit while the cards said something else would be a lie about what gets saved. */
-  householdScopeMixed: "Ihr habt unterschiedliche Antworten — siehe unten.",
+  householdScopeMixed: "Ihr habt unterschiedliche Antworten – siehe unten.",
   householdScopeOverwriteTitle: "Antworten überschreiben?",
   householdScopeOverwriteBody: (changed: number, scope: string) =>
     changed === 1
@@ -250,25 +250,25 @@ export const rsvpLabels = {
       address book, and the people on it know best how they are called (`F4-F04`). */
   memberNameLabel: "Name",
   memberNameHelp:
-    "So steht der Name auf der Tischkarte und in der Liste. Ändere ihn ruhig — Spitzname, Doppelname oder „Oma Erika“ ist alles in Ordnung.",
+    "So steht der Name auf der Tischkarte und in der Liste. Ändere ihn ruhig – Spitzname, Doppelname oder „Oma Erika“ ist alles in Ordnung.",
   memberScopeLabel: (name: string) => `Wozu kommt ${name}?`,
   memberScopeHelp:
-    "Kirche und Feier sind getrennt — manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
+    "Kirche und Feier sind getrennt – manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
   mealChoiceLabel: (name: string) => `Was isst ${name}?`,
   mealChoiceHelp: "Wir geben dem Catering nur die Zahlen weiter, keine Namen. „Isst alles“ heißt: kein Sonderwunsch.",
   portionLabel: (name: string) => `Portion für ${name}`,
   portionHelp:
-    "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra — sag ruhig, was wirklich passt.",
+    "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra – sag ruhig, was wirklich passt.",
   midnightSnackLabel: (name: string) => `Mitternachtssnack für ${name}`,
   midnightSnackHelp:
-    "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele — wer schon im Bett ist, braucht keinen.",
+    "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele – wer schon im Bett ist, braucht keinen.",
   midnightSnackHint: "Kleine Stärkung spät am Abend",
   seatingNeedLabel: (name: string) => `Platz für ${name}`,
   seatingNeedHelp:
-    "Damit planen wir die Plätze in der Kirche und am Tisch: Rollstuhl, Hochstuhl, oder ein Kind, das bei den Eltern sitzt. Der Hochstuhl gilt für die Feier — in der Kirche sitzt euer Kind normal in der Bank.",
+    "Damit planen wir die Plätze in der Kirche und am Tisch: Rollstuhl, Hochstuhl, oder ein Kind, das bei den Eltern sitzt. Der Hochstuhl gilt für die Feier – in der Kirche sitzt euer Kind normal in der Bank.",
   dietaryNoteLabel: (name: string) => `Allergien oder Unverträglichkeiten von ${name}`,
   dietaryNoteHelp:
-    "Was die Küche wissen muss, zum Beispiel „Nussallergie“ oder „laktosefrei“. Kurz reicht — wir fragen nach, wenn etwas unklar ist.",
+    "Was die Küche wissen muss, zum Beispiel „Nussallergie“ oder „laktosefrei“. Kurz reicht – wir fragen nach, wenn etwas unklar ist.",
   dietaryNotePlaceholderHint: "Zum Beispiel: Nussallergie, laktosefrei",
   /** The date is in the label, not only in the help: a bare "Alter" gets answered as
       of today, and then the value drifts over the months before the wedding. */
@@ -280,7 +280,7 @@ export const rsvpLabels = {
       sich aus, und nebeneinander lasen sie sich wie dieselbe Frage zweimal (F3-F07). */
   transportDirectionLabel: "Wie sieht es bei euch mit der Fahrt aus?",
   transportDirectionHelp:
-    "Gemeint ist die kurze Fahrt von der Kirche zur Feier. Wir sehen daran, ob sich ein Shuttle lohnt — Fahrgemeinschaften vermitteln wir nicht, das klärt sich vor Ort.",
+    "Gemeint ist die kurze Fahrt von der Kirche zur Feier. Wir sehen daran, ob sich ein Shuttle lohnt – Fahrgemeinschaften vermitteln wir nicht, das klärt sich vor Ort.",
   transportNeededLabel: "Wie viele Plätze braucht ihr?",
   transportOfferedLabel: "Wie viele Plätze könnt ihr anbieten?",
   transportSeatsHelp:
@@ -296,12 +296,12 @@ export const rsvpLabels = {
   noteHeading: "Willst du uns noch etwas sagen?",
   noteLabel: "Nachricht an uns",
   noteHelp:
-    "Alles, wonach das Formular nicht fragt. Wir lesen jede Nachricht — eine Antwort hier im Formular gibt es aber nicht.",
+    "Alles, wonach das Formular nicht fragt. Wir lesen jede Nachricht – eine Antwort hier im Formular gibt es aber nicht.",
   noteHint: "Zum Beispiel: „Wir kommen erst nach der Zeremonie“ oder „Oma braucht einen Platz nah am Ausgang“.",
   noteReadPromise: "Wir lesen das.",
   noteRemaining: (remaining: number) => `Noch ${remaining} Zeichen.`,
 
-  /* F4 — the plus-one. Phrased as the question it answers rather than as an
+  /* F4 – the plus-one. Phrased as the question it answers rather than as an
      administrative option: for a guest invited alone it is the most consequential
      thing on this page. */
   addPlusOneTrigger: "Kommst du zu zweit? Begleitung hinzufügen",
@@ -309,14 +309,14 @@ export const rsvpLabels = {
   addPlusOneBody: "Trag die Person ein, die mit dir kommt. Wozu sie kommt, fragen wir gleich darunter im Formular.",
   addPlusOneNameLabel: "Name der Begleitung",
   addPlusOneNameHelp:
-    "Gemeint ist eine erwachsene Person, die mit dir kommt. Kinder und weitere Gäste tragen wir gern für euch ein — ruf uns dazu bitte kurz an.",
+    "Gemeint ist eine erwachsene Person, die mit dir kommt. Kinder und weitere Gäste tragen wir gern für euch ein – ruf uns dazu bitte kurz an.",
   addPlusOneSubmit: "Hinzufügen",
   addPlusOneSubmitting: "Wird hinzugefügt …",
   /** Says both things: the person is on the list, and the form still has to be
       answered and saved. The asymmetry is real, so the copy names it. */
   addPlusOneAdded: (name: string) =>
     `${name} steht jetzt auf eurer Liste. Sag uns unten noch, wozu ${name} kommt, und speichere das Formular.`,
-  /** Shown in place of the trigger for every household that may not add — which is
+  /** Shown in place of the trigger for every household that may not add – which is
       most of them. An offer, not a refusal: the answer is yes, we just want to hear
       the Personenzahl. */
   plusOneUnavailable: "Weitere Personen tragen wir gern für euch ein.",
@@ -337,7 +337,7 @@ export const rsvpLabels = {
   /** Named at the top of the form and linking to each card, so a household with one
       missing answer does not have to hunt for it. */
   missingAnswersHeading: "Bitte antworte noch für diese Personen:",
-  missingAnswerLink: (name: string) => `${name} — Antwort fehlt`,
+  missingAnswerLink: (name: string) => `${name} – Antwort fehlt`,
   saveFailedHeading: "Das Speichern hat nicht geklappt",
   reload: "Neu laden",
 
@@ -357,15 +357,15 @@ export const rsvpLabels = {
   summaryStroller: "Kinderwagen",
   summaryStrollerYes: "Ja",
   summaryNote: "Nachricht an uns",
-  summaryNothing: "—",
+  summaryNothing: "–",
   changeAnswer: "Antwort ändern",
   changeableUntil: (date: string) => `Ändern kannst du das noch bis zum ${date}.`,
 
   closedHeading: "Die Rückmeldefrist ist vorbei",
   closedBody: (date: string) =>
-    `Am ${date} haben wir die Zahlen ans Catering weitergegeben. Das ist, was wir notiert haben — wenn sich etwas geändert hat, ruf uns bitte kurz an:`,
+    `Am ${date} haben wir die Zahlen ans Catering weitergegeben. Das ist, was wir notiert haben – wenn sich etwas geändert hat, ruf uns bitte kurz an:`,
   closedNothingRecorded:
-    "Von euch haben wir keine Rückmeldung. Die Frist ist vorbei, aber ruf uns bitte trotzdem an — wir tragen es dann ein:",
+    "Von euch haben wir keine Rückmeldung. Die Frist ist vorbei, aber ruf uns bitte trotzdem an – wir tragen es dann ein:",
 } as const;
 
 /**
@@ -377,7 +377,7 @@ export const adminRSVPLabels = {
   /** An admin with two tabs open must not write Familie Müller's answer into Familie
       Schmidt: the household's name is on the page, in the heading, not only in the URL. */
   intro: (householdName: string) => `Du beantwortest dieses Formular für ${householdName}.`,
-  deadlinePassed: "Die Frist ist abgelaufen — du kannst hier trotzdem speichern.",
+  deadlinePassed: "Die Frist ist abgelaufen – du kannst hier trotzdem speichern.",
   back: "Zurück zum Haushalt",
   notFound: "Diesen Haushalt gibt es nicht.",
 } as const;
@@ -390,7 +390,7 @@ export const adminLabels = {
   submitting: "Wird geprüft …",
   sessionExpired: "Sitzung abgelaufen. Bitte melde dich erneut an.",
   logout: "Abmelden",
-  /** Nav entries whose pages do not exist yet render disabled — better than a 404,
+  /** Nav entries whose pages do not exist yet render disabled – better than a 404,
       and it keeps the remaining work visible. */
   comingSoon: "Kommt später",
   navHouseholds: "Haushalte",
@@ -406,7 +406,7 @@ export const adminLabels = {
 /**
  * The admin guest list: the household table and the detail page.
  *
- * Admin-facing, so the register is denser than the guest copy — but still "du" and
+ * Admin-facing, so the register is denser than the guest copy – but still "du" and
  * still German, because there is exactly one admin and no reason to switch voice.
  */
 export const householdLabels = {
@@ -507,7 +507,7 @@ export const householdLabels = {
   rsvpStroller: "Kinderwagen",
   rsvpYes: "Ja",
   rsvpNo: "Nein",
-  rsvpNothing: "—",
+  rsvpNothing: "–",
   rsvpAnsweredAt: (date: string) => `Beantwortet am ${date}.`,
   /** A link, not a second form: the same component the guests use, addressed by id. */
   rsvpOpenForm: "Rückmeldung bearbeiten",
@@ -521,7 +521,7 @@ export const householdLabels = {
   exportCodesCount: (households: number) => `${households} Haushalte, je eine Zeile`,
   /** The app cannot enforce E-OPS-07, and a warning nobody sees is no warning. */
   exportCodesWarning:
-    "Diese Datei enthält alle Login-Codes. Bitte lösche sie nach dem Druck wieder — hier auf dem Rechner und bei der Druckerei.",
+    "Diese Datei enthält alle Login-Codes. Bitte lösche sie nach dem Druck wieder – hier auf dem Rechner und bei der Druckerei.",
   exportGuests: "Gästeliste (Rohdaten)",
   exportGuestsWarning:
     "Vollständiger Auszug aus der Datenbank, entfernte Personen inklusive. Also keine Zählgrundlage: zum Zählen zuerst die entfernten Zeilen herausfiltern.",
@@ -536,10 +536,10 @@ export const householdLabels = {
 } as const;
 
 /* ------------------------------------------------------------------------- *
- * F2 — the informational pages
+ * F2 – the informational pages
  *
  * Content is hardcoded in the frontend by decision (02-features), and every German
- * string still lives here rather than in the components — including the schedule
+ * string still lives here rather than in the components – including the schedule
  * entries and the FAQ, which are content *and* copy at the same time. The rule has no
  * exception clause, and one file is what makes the whole site proof-readable in one
  * sitting.
@@ -553,7 +553,7 @@ export const householdLabels = {
 
 /**
  * The navigation. One definition, rendered as a bottom bar on a phone and a top nav
- * on a desktop — never two lists that drift apart.
+ * on a desktop – never two lists that drift apart.
  */
 export const navLabels = {
   guestNav: "Seiten",
@@ -577,7 +577,7 @@ export const navLabels = {
 
 export const moreLabels = {
   heading: "Mehr",
-  intro: "Alles Weitere zur Hochzeit — und wie du uns erreichst.",
+  intro: "Alles Weitere zur Hochzeit – und wie du uns erreichst.",
 } as const;
 
 /**
@@ -596,7 +596,7 @@ export type Address = "singular" | "plural";
  * does not conjugate by find-and-replace, and a `Record` makes a missing variant a
  * compile error.
  *
- * Only this page varies. The RSVP form stays plural throughout — it addresses a
+ * Only this page varies. The RSVP form stays plural throughout – it addresses a
  * household, and a companion may have been added to it.
  */
 export const startAddressLabels: Record<
@@ -612,15 +612,15 @@ export const startAddressLabels: Record<
     /** Built around the display name rather than glued in front of it: "Luki & Paddi"
         is a valid display name, and "Liebe Luki & Paddi," would read wrong. */
     greeting: (householdName) => `Schön, dass du da bist, ${householdName}.`,
-    intro: "Hier findest du alles zur Hochzeit — und hier sagst du uns, ob du kommst.",
+    intro: "Hier findest du alles zur Hochzeit – und hier sagst du uns, ob du kommst.",
     rsvpDeadline: (date) => `Bitte antworte bis zum ${date}.`,
     /** Once answered, the deadline stops being a request and becomes the date until
-        which the answer can still change — the only thing left worth knowing. */
+        which the answer can still change – the only thing left worth knowing. */
     rsvpAnsweredUntil: (date) => `Danke für deine Antwort! Ändern kannst du sie noch bis zum ${date}.`,
   },
   plural: {
     greeting: (householdName) => `Schön, dass ihr da seid, ${householdName}.`,
-    intro: "Hier findet ihr alles zur Hochzeit — und hier sagt ihr uns, wer von euch kommt.",
+    intro: "Hier findet ihr alles zur Hochzeit – und hier sagt ihr uns, wer von euch kommt.",
     rsvpDeadline: (date) => `Bitte antwortet bis zum ${date}.`,
     rsvpAnsweredUntil: (date) => `Danke für eure Antwort! Ändern könnt ihr sie noch bis zum ${date}.`,
   },
@@ -640,7 +640,7 @@ export const startLabels = {
  * parsing a time only to format it back is work that can go wrong for no gain.
  *
  * PLACEHOLDER (TODO.md): the running order is not fixed. Entries without a time are
- * rendered without one — a time on this page will be believed, so a guessed one is
+ * rendered without one – a time on this page will be believed, so a guessed one is
  * worse than none.
  */
 export const scheduleLabels = {
@@ -656,7 +656,7 @@ export const scheduleLabels = {
     {
       time: null,
       title: "Trauung",
-      detail: "Die kirchliche Trauung — wo genau, steht auf der Seite Location.",
+      detail: "Die kirchliche Trauung – wo genau, steht auf der Seite Location.",
       part: "church",
     },
     { time: null, title: "Empfang", detail: "Sekt, Zeit zum Ankommen und für Fotos.", part: "party" },
@@ -675,7 +675,7 @@ export const scheduleLabels = {
  *
  * PLACEHOLDER (TODO.md): names, addresses, parking and travel notes are open until
  * the venues are booked. These pages must not ship to guests with these strings in
- * them — 07-roadmap accepts a thin Ablauf page at launch and explicitly does not
+ * them – 07-roadmap accepts a thin Ablauf page at launch and explicitly does not
  * accept an empty Location page. Splitting the page into an overview and one page per
  * venue (F2-F09) does not change that: it is now three pages waiting for the same
  * facts.
@@ -683,7 +683,7 @@ export const scheduleLabels = {
 export const locationLabels = {
   heading: "Location & Anreise",
   intro:
-    "Getraut wird in der Kirche, gefeiert wird danach woanders. Hier findet ihr beide Orte — und auf der jeweiligen Seite alles, was ihr dazu braucht.",
+    "Getraut wird in der Kirche, gefeiert wird danach woanders. Hier findet ihr beide Orte – und auf der jeweiligen Seite alles, was ihr dazu braucht.",
   venuesHeading: "Die Orte",
   churchHeading: "Trauung in der Kirche",
   partyHeading: "Feier",
@@ -702,11 +702,11 @@ export const locationLabels = {
   addressHeading: "Adresse",
   arrivalHeading: "Anreise & Parken",
   arrivalOpen: "Wie ihr am besten hinkommt und wo ihr parken könnt, schreiben wir hier auf, sobald der Ort feststeht.",
-  /** Stays on the overview: it belongs to neither venue — it is the bit between them,
+  /** Stays on the overview: it belongs to neither venue – it is the bit between them,
       and it is the paragraph a guest reads before answering the transport question. */
   transferHeading: "Von der Kirche zur Feier",
   transfer:
-    "Zwischen Kirche und Feier liegt eine kurze Fahrt. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden — sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
+    "Zwischen Kirche und Feier liegt eine kurze Fahrt. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden – sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
   /** On the party page, not the overview: somebody looking for a bed is looking for
       one near where the evening ends. */
   accommodationHeading: "Übernachtung",
@@ -717,7 +717,7 @@ export const locationLabels = {
 
 /**
  * PLACEHOLDER (TODO.md): the dress code wording is unwritten. What is decided is the
- * shape — plain words and an example, never a category name: "festlich" means five
+ * shape – plain words and an example, never a category name: "festlich" means five
  * different things to five relatives.
  */
 export const dresscodeLabels = {
@@ -731,8 +731,8 @@ export const dresscodeLabels = {
  *
  * The IBAN is published deliberately (F2-F05): a content page is compiled into the
  * bundle and the bundle is served to anyone who loads the site, so it is semi-public.
- * That was decided with the trade in view — an IBAN lets somebody send money, not take
- * it — and the placeholder below keeps the shape without publishing a real account.
+ * That was decided with the trade in view – an IBAN lets somebody send money, not take
+ * it – and the placeholder below keeps the shape without publishing a real account.
  */
 export const giftLabels = {
   heading: "Geschenke",
@@ -754,7 +754,7 @@ export const giftLabels = {
 
 export const contactLabels = {
   heading: "Kontakt",
-  intro: "Ruf einfach an — wir sind beide erreichbar.",
+  intro: "Ruf einfach an – wir sind beide erreichbar.",
   codeHelpHeading: "Wenn der Code nicht funktioniert",
   codeHelp:
     "Der Code steht auf eurer Einladungskarte, sechs Zeichen, Groß- und Kleinschreibung egal. Klappt es nicht, ruf uns an: wir sagen dir den Code am Telefon oder tragen eure Antwort gleich selbst ein.",
@@ -764,7 +764,7 @@ export const contactLabels = {
  * Datenschutz, in guest German.
  *
  * A translation of 06-privacy-security into "du", not a new document: when the two
- * disagree, the spec changes first. Deliberately not boilerplate — a wall of legalese
+ * disagree, the spec changes first. Deliberately not boilerplate – a wall of legalese
  * would be worse than nothing here, because nobody reads it and it makes a wedding
  * invitation feel like a business.
  *
@@ -780,16 +780,16 @@ export const privacyLabels = {
     "Euren Haushalt mit dem Namen, unter dem wir euch eingeladen haben, die Namen der Personen, euren Code von der Einladungskarte, und alles, was ihr im Antwortformular ausfüllt: wer kommt, wozu, was ihr esst, ob ihr Plätze im Auto braucht oder anbietet, und eure Nachricht an uns.",
   sensitiveHeading: "Allergien und das Alter der Kinder",
   sensitive:
-    "Beides fragen wir, weil das Catering es braucht: Allergien landen auf der Liste für die Küche, das Alter am Hochzeitstag entscheidet über Portion und Preis. Ihr müsst nichts ausfüllen, was ihr nicht wollt — dann ruft uns lieber an.",
+    "Beides fragen wir, weil das Catering es braucht: Allergien landen auf der Liste für die Küche, das Alter am Hochzeitstag entscheidet über Portion und Preis. Ihr müsst nichts ausfüllen, was ihr nicht wollt – dann ruft uns lieber an.",
   whyHeading: "Warum wir das speichern",
   why: "Damit wir die Hochzeit planen können: Personenzahl, Essen, Sitzplätze, Fahrten. Für nichts sonst. Wir schicken keine Werbung, es gibt keine Auswertung und keine Weitergabe an Dritte außer den Zahlen, die das Catering braucht.",
   whoHeading: "Wer das sieht",
   who: "Wir beide. Die Seite läuft auf unserem eigenen Server, ohne Google, ohne Tracking, ohne externe Schriften und ohne Cookies außer dem einen, mit dem ihr angemeldet bleibt. Die Seite steht in keiner Suchmaschine.",
   retentionHeading: "Wie lange",
   retention:
-    "Die Seite geht ungefähr drei Monate nach der Hochzeit offline, und die Daten gehen mit ihr. Was wir behalten, ist eine private Kopie für uns selbst — so, wie man ein Gästebuch behält.",
+    "Die Seite geht ungefähr drei Monate nach der Hochzeit offline, und die Daten gehen mit ihr. Was wir behalten, ist eine private Kopie für uns selbst – so, wie man ein Gästebuch behält.",
   rightsHeading: "Ändern oder löschen",
   rights:
-    "Ruf uns an oder schreib uns, dann ändern oder löschen wir es. Kein Formular, kein Verfahren — bei achtzig Gästen ist ein Anruf schneller als alles andere.",
+    "Ruf uns an oder schreib uns, dann ändern oder löschen wir es. Kein Formular, kein Verfahren – bei achtzig Gästen ist ein Anruf schneller als alles andere.",
   contactLink: "Zum Kontakt",
 } as const;
