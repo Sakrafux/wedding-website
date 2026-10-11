@@ -22,3 +22,4 @@ compose.override.yaml
 
 # Local runtime state: dev database and photo directory from .env.
 /local/
+.idea
