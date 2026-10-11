@@ -1,6 +1,6 @@
 # 05 — Design System
 
-Status: draft · Last updated: 2026-08-22
+Status: draft · Last updated: 2026-10-11
 
 This is the visual and interaction contract for the frontend. It exists so that components are built from a fixed vocabulary instead of ad-hoc Tailwind classes, and so that accessibility is a property of the system rather than something remembered per screen.
 
@@ -8,11 +8,12 @@ Non-negotiable premise, restated from [01-vision-scope](01-vision-scope.md): a 7
 
 ## Direction
 
-**Warm and traditional.** Cream paper, serif headings, generous whitespace, a calm green accent. The site should feel like the printed invitation, not like a SaaS dashboard — for guests. The admin area shares the tokens but drops the decorative layer in favour of density.
+**Festive and traditional, on white.** Pure white paper — the printed cards are white — with cream reserved for cards and input fills, serif headings in Cormorant 700, generous whitespace, a berry primary and honey-gold attention strokes. The site should feel like the printed invitation, not like a SaaS dashboard — for guests. The admin area shares the tokens but drops the decorative layer in favour of density.
 
 Decided inputs:
 
-- No existing stationery, colours or fonts to match. The site defines the palette; if stationery is designed later, it copies from here.
+- The invitation cards exist and are clean white; the site's paper matches them. The first draft had a cream page, which read as yellowed next to the real cards (reworked 2026-10-11, after previewing the alternatives with the couple).
+- No stationery colours or fonts to match beyond that. If stationery is designed later, it copies from here.
 - Engagement photography **is** available, so the start page has a real hero image from day one.
 - **No dark mode.** Rejected deliberately — see below.
 - Informal **"du"** throughout the German copy.
@@ -25,37 +26,40 @@ Warm neutrals plus two accents. Two accents rather than one because the app has 
 
 | Token | Hex | Role |
 |---|---|---|
-| `paper` | `#FAF7F0` | Page background. Cream, never pure white. |
-| `surface` | `#FFFFFF` | Cards, sheets, inputs — lifts off the paper. |
-| `surface-sunken` | `#F2EDE3` | Table stripes, disabled fields, read-only RSVP after deadline. |
-| `ink` | `#3A3226` | Body text. Warm near-black, never `#000`. |
-| `ink-muted` | `#6B6152` | Secondary text, labels, help text. |
-| `line` | `#E2DACB` | Borders, dividers, input outlines. |
-| `primary` | `#4A5D4E` | Sage. All interactive elements: buttons, links, focus rings, active nav. |
-| `primary-hover` | `#3C4C40` | Hover/pressed state. |
-| `primary-soft` | `#E7EDE6` | Tinted backgrounds: selected option, own-table fill in the seating SVG. |
-| `accent` | `#A8503C` | Terracotta. Attention, not action: "dein Tisch", unread note badge, guest-added marker. |
-| `accent-strong` | `#8E4231` | Same hue, darkened — required for terracotta **text** at body size. |
-| `accent-soft` | `#F6E9E4` | Tinted attention background. |
+| `paper` | `#FFFFFF` | Page background. Pure white, like the printed cards. |
+| `surface` | `#FAF7F0` | Cards, sheets, inputs — cream, the lift off the white page. |
+| `surface-sunken` | `#F3EEE4` | Table stripes, disabled fields, read-only RSVP after deadline. |
+| `ink` | `#332F2D` | Body text. Warm near-black, never `#000`. |
+| `ink-muted` | `#6E6862` | Secondary text, labels, help text. |
+| `line` | `#E4DCCB` | Borders, dividers, input outlines. |
+| `primary` | `#8A4254` | Berry. All interactive elements: buttons, links, focus rings, active nav. |
+| `primary-hover` | `#733647` | Hover/pressed state. |
+| `primary-soft` | `#F8E9EE` | Pastell rose tint: selected option, own-table fill in the seating SVG. |
+| `accent` | `#A87D15` | Honey gold. Attention strokes only — own-table outline, alert border, unread-note border — never a fill under text. |
+| `accent-strong` | `#6D540F` | Bronze — gold as **text** at any size. |
+| `accent-soft` | `#F8F1DC` | Champagne tint: attention backgrounds. |
 | `success` | `#3F6B4A` | RSVP saved confirmation. |
-| `warning` | `#8A6A1F` | Over-capacity table, addition limit reached. Admin-facing mostly. |
+| `warning` | `#A2570F` | Over-capacity table, addition limit reached. Admin-facing mostly. Orange, not amber — gold owns the yellow hue now. |
 | `danger` | `#9A3324` | Destructive confirmation, validation errors. |
 
-### Measured contrast on `paper` (#FAF7F0)
+### Measured contrast on `paper` (#FFFFFF)
 
 | Pair | Ratio | Verdict |
 |---|---|---|
-| `ink` on `paper` | 11.8:1 | AAA body text |
-| `ink-muted` on `paper` | ~5.0:1 | AA body text; not for anything below 16px |
-| `primary` on `paper` | 6.6:1 | AA at any size; also the button-fill/cream-text ratio |
-| `accent` on `paper` | 5.1:1 | AA for large text and button fills only |
-| `accent-strong` on `paper` | 6.6:1 | AA at any size — use this whenever terracotta is text |
+| `ink` on `paper` | 13.3:1 | AAA body text |
+| `ink-muted` on `paper` | 5.5:1 | AA body text; not for anything below 16px |
+| `ink-muted` on `surface-sunken` | 4.75:1 | Read-only RSVP text after the deadline — the tightest pair in the system |
+| `primary` on `paper` | 7.0:1 | AA at any size; also the button-fill/white-text ratio |
+| `accent` on `paper` | 3.7:1 | UI boundaries and large text only — never body text, never a fill under text |
+| `accent` on `primary-soft` | 3.2:1 | The seating-plan own-table stroke; still ≥3:1 as a UI boundary |
+| `accent-strong` on `paper` | 7.2:1 | AA at any size — use this whenever gold is text |
+| `accent-strong` on `accent-soft` | 6.4:1 | Badge text on the champagne tint |
 
-Rule: **`accent` is a fill colour, `accent-strong` is a text colour.** The two exist purely so nobody has to remember which shade passes.
+Rule: **`accent` is a stroke colour, `accent-strong` is a text colour.** A yellow that clears 4.5:1 on white is forced into brown ochre — the reason gold is honey for strokes (the ≥3:1 UI-boundary rule) and bronze for text. Nothing may put body text on a gold fill.
 
 ### Colour is never the only signal
 
-Guest-added members, unread notes, stale seat assignments, and "your table" each carry an icon or a text label in addition to their colour. Roughly 8% of men are red-green colour blind, and sage/terracotta is exactly that axis.
+Guest-added members, unread notes, stale seat assignments, and "your table" each carry an icon or a text label in addition to their colour. Roughly 8% of men are red-green colour blind; under simulated deuteranopia berry collapses to grey while gold, danger and warning all drift into olives of differing lightness (Viénot/Brettel simulation). Hue does most of the primary/accent work, lightness carries the status colours, and the non-colour signal carries whatever remains.
 
 ## Typography
 
@@ -63,7 +67,7 @@ Self-hosted `.woff2`, subset to Latin, bundled into the Vite build. **No Google 
 
 | Role | Face | Notes |
 |---|---|---|
-| Display | **Cormorant Garamond**, 600 | Names, page titles, the hero. High contrast, only at large sizes. |
+| Display | **Cormorant Garamond**, 700 | Names, page titles, the hero. High contrast, only at large sizes. 700 since 2026-10-11 — 600 read as too thin next to the white paper; the 600 files left the bundle because nothing else requested them. |
 | Body & UI | **Source Serif 4**, 400/600 | Designed for screen text; stays warm and traditional while remaining legible at 18px on a cheap Android panel. |
 | Numeric | Source Serif 4, tabular figures | Budget tables, headcounts, seat numbers. `font-variant-numeric: tabular-nums`. |
 
@@ -249,6 +253,9 @@ The one and only mapping from English enum values to German UI text. Lives at `w
 | Hamburger menu on mobile | Hides the exact links an unconfident guest is hunting for. Bottom bar + "Mehr" page instead. |
 | Icon-only navigation | Icon literacy is not universal in this age range. Labels always visible. |
 | A single accent colour | Cannot distinguish "press this" from "look at this" — a warning would read as a button. |
+| Cream page background (the first draft) | The real invitation cards are clean white, and cream next to them read as yellowed — plus cream with muted earth tones is the default look every AI tool ships. Cream survives only as `surface`, the card tint. |
+| Gold dark enough to clear 4.5:1 as a fill with text on it | A yellow at that contrast on white is forced into brown ochre — "schaut wie braun aus", in the fiancée's words. Honey gold for strokes (≥3:1 UI rule) and bronze text instead; see the accent rule above. |
+| Pastell primary (light rose buttons) | Cannot clear 4.5:1 on white at any size this audience reads. The pastel lives in the tints — `primary-soft`, stripes, lines — while the interactive colour stays deep berry. |
 | Autosaving RSVP form | Removes the moment of completion; guests would not know whether they had answered. |
 | Multi-step RSVP wizard | Considered for simplicity. Rejected: it hides the total length, and going back to fix one answer becomes a chore. One long form with clear sections instead. |
 | Scroll animations / parallax | Motion cost with no comprehension benefit, and a reduced-motion liability. |

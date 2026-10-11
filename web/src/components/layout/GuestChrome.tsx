@@ -78,8 +78,8 @@ export function GuestChrome({ entries, children }: { entries: NavEntry[]; childr
  * One entry, in either bar.
  *
  * The active entry carries `aria-current="page"`, the `primary` tint **and** a bold
- * label: colour is never the only signal (05-design), and sage against cream is
- * exactly the axis red-green colour blindness sits on.
+ * label: colour is never the only signal (05-design), and under red-green colour
+ * blindness berry and gold both drift towards olive-greys of similar lightness.
  */
 function NavLink({ entry, className }: { entry: NavEntry; className: string }) {
   const Icon = entry.icon;

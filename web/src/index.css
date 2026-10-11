@@ -8,28 +8,35 @@
    There is no dark variant and no `@custom-variant dark`: dark mode is a recorded
    rejection, not an omission. Adding one doubles every measured contrast pair. */
 @theme {
-  --color-paper: #faf7f0;
-  --color-surface: #ffffff;
-  --color-surface-sunken: #f2ede3;
+  /* Paper is pure white — the printed invitation cards are white — and the card
+     carries the old cream tone: the lift comes from the card, not the page. */
+  --color-paper: #ffffff;
+  --color-surface: #faf7f0;
+  --color-surface-sunken: #f3eee4;
 
-  --color-ink: #3a3226;
-  --color-ink-muted: #6b6152;
-  --color-line: #e2dacb;
+  --color-ink: #332f2d;
+  --color-ink-muted: #6e6862;
+  --color-line: #e4dccb;
 
   /* Interactive: buttons, links, focus rings, active nav. */
-  --color-primary: #4a5d4e;
-  --color-primary-hover: #3c4c40;
-  --color-primary-soft: #e7ede6;
+  --color-primary: #8a4254;
+  --color-primary-hover: #733647;
+  --color-primary-soft: #f8e9ee;
 
-  /* Attention, never action. `accent` is a fill colour and `accent-strong` is the
-     text colour — the split exists so nobody has to remember which shade clears
-     4.5:1 on paper. */
-  --color-accent: #a8503c;
-  --color-accent-strong: #8e4231;
-  --color-accent-soft: #f6e9e4;
+  /* Attention, never action — and a stroke colour, not a fill: #a87d15 clears
+     only 3.7:1 on paper (3.2:1 on primary-soft, the seating own-table stroke),
+     which satisfies the ≥3:1 UI-boundary rule it is used for and nothing more.
+     Gold *text* is `accent-strong`. Putting body text on a gold fill is a design
+     error — a yellow that clears 4.5:1 on white is forced into brown ochre,
+     which is exactly the "looks like brown" complaint that produced this split. */
+  --color-accent: #a87d15;
+  --color-accent-strong: #6d540f;
+  --color-accent-soft: #f8f1dc;
 
   --color-success: #3f6b4a;
-  --color-warning: #8a6a1f;
+  /* Orange, not amber: gold owns the yellow hue now, and an amber warning would
+     sit on top of it. */
+  --color-warning: #a2570f;
   --color-danger: #9a3324;
 
   --font-display: "Cormorant Garamond", Georgia, serif;
@@ -62,16 +69,16 @@
 
   /* One soft shadow for cards. No layered elevation system — the paper metaphor
      carries the depth. */
-  --shadow-card: 0 1px 3px rgb(58 50 38 / 0.08);
+  --shadow-card: 0 1px 3px rgb(28 25 22 / 0.07);
 }
 
 /* shadcn/ui components are copied into this repo and reference its own variable
    names. They are mapped onto our tokens here rather than edited out of each
    component, so `shadcn add` keeps working unmodified.
 
-   Note the collision: shadcn's `--accent` is a hover tint, not our terracotta
-   attention colour, so it maps to `primary-soft`. Our accent stays reachable under
-   its own token name. */
+   Note the collision: shadcn's `--accent` is a hover tint, not our gold attention
+   colour, so it maps to `primary-soft`. Our accent stays reachable under its own
+   token name. */
 :root {
   --background: var(--color-paper);
   --foreground: var(--color-ink);
@@ -135,7 +142,9 @@
   h1,
   h2,
   h3 {
-    @apply font-display font-semibold;
+    /* 700, not 600: the lighter weight read as too thin next to the white paper
+       (05-design, typography — decided 2026-10-11 in the palette preview round). */
+    @apply font-display font-bold;
   }
 
   /* Set once, globally, so that no component can forget it and no component has to

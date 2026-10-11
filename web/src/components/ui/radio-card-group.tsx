@@ -44,7 +44,7 @@ function RadioCard({
       data-slot="radio-card"
       value={value}
       className={cn(
-        "border-line bg-surface hover:border-primary focus-visible:ring-ring/50 focus-visible:border-ring data-[state=checked]:border-primary data-[state=checked]:bg-primary-soft flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-left outline-none focus-visible:ring-[3px]",
+        "border-line bg-paper hover:border-primary focus-visible:ring-ring/50 focus-visible:border-ring data-[state=checked]:border-primary data-[state=checked]:bg-primary-soft flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-lg border border-2 px-4 py-3 text-left outline-none focus-visible:ring-[3px]",
         className,
       )}
       {...props}
@@ -53,7 +53,7 @@ function RadioCard({
           visually, and the dot is what keeps "selected" from being colour alone. */}
       <span
         aria-hidden="true"
-        className="border-line bg-surface data-[state=checked]:border-primary mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border"
+        className="border-line bg-paper data-[state=checked]:border-primary mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border border-2"
       >
         <RadioGroupPrimitive.Indicator className="bg-primary size-2.5 rounded-full" />
       </span>
