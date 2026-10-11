@@ -25,7 +25,7 @@ It replaces: a paper insert with schedule/travel info, RSVP cards mailed back, a
 
 ## In scope
 
-- Static informational content (schedule, venue, travel, accommodation, dress code, gifts, FAQ, contact).
+- Static informational content (schedule, venue, travel, accommodation, dress code, gifts, contact).
 - Per-household login via a printed code.
 - Household RSVP: per-member attendance, meal choice, allergies, free-text note.
 - Guest-added plus-ones and children, visible to us as additions.

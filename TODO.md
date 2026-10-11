@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-09-01 · Building. E0 (setup), F1 (login), F5 (admin households & guests), F3 (RSVP) and F4 (plus-one) are done, and F2 (content) is built except for the facts it needs; see [specification/features/README.md](specification/features/README.md). A round of UI feedback on 2026-09-01 added thirteen stories across F3, F4, F5, F2 and F11 — all built the same day.
+Status: as of 2026-10-11 · Building. E0 (setup), F1 (login), F5 (admin households & guests), F3 (RSVP) and F4 (plus-one) are done, and F2 (content) is built; the facts it was waiting for mostly landed 2026-10-11 (dress code, gift wording, bank details, hero photo) — the venues and the schedule are what still blocks send-out. See [specification/features/README.md](specification/features/README.md). A round of UI feedback on 2026-09-01 added thirteen stories across F3, F4, F5, F2 and F11 — all built the same day.
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -21,7 +21,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [ ] Schedule of the day for the Ablauf page. `/ablauf` ships thin, as 07-roadmap allows: four entries (Trauung, Empfang, Abendessen, Feier) with no times, each rendering "Uhrzeit steht noch nicht fest" rather than a guessed one. Entries live in `scheduleLabels`.
 - [ ] Room/table layout for the reception, enough to draw the floor-plan SVG.
 - [ ] Hotel and pension list for `/location/feier`. Part of the venue facts above, but it hangs off the party venue rather than the church — that is where the section now lives.
-- [ ] Dress code wording; gift wishes and bank details. `/dresscode` and `/geschenke` are built with placeholder copy in `dresscodeLabels` / `giftLabels`; the gift page hides the IBAN block until the account is real, which it detects from the placeholder value.
+- [x] Dress code wording; gift wishes and bank details — landed 2026-10-11: real copy in `dresscodeLabels` and `giftLabels`, account holder and IBAN in place. The IBAN-pending detection on `/geschenke` stays as the documented way to hide the block again if the value is ever blanked back to the placeholder (`F2-F05`).
 - [ ] Caterer age brackets for children's pricing (e.g. 0–3 free / 4–12 reduced / 13+ full) — derived at read time, so this can land late, but the caterer decides the numbers.
 - [x] Print shop does variable-data printing for the household codes — confirmed. F1 stands as specified; the code-slip fallback is not needed.
 
@@ -38,12 +38,12 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 - [ ] Can the caterer export be name-free (counts + allergies keyed by table) instead of a full guest list? Would remove the largest planned data disclosure.
 - [x] **Contact phone numbers, 2026-08-31.** Login fallback uses **+43 650 9408100** (`contactPhoneNumber` in `web/src/lib/labels.ts`, set 2026-08-31; `contacts` there holds both names and numbers for `/kontakt`). `/kontakt` lists both that number and **+43 677 63668655**; One number in the fallback sentence, two on the contact page — see `F11-02` and `F2-F06`.
 - [~] **Datenschutz drafted, 2026-08-31.** `/datenschutz` is written in guest German from `06-privacy-security` (`privacyLabels`) and sits behind the login with the other content pages — the "readable without logging in" requirement was reversed the same day, reasoning in `06-privacy-security` and `F2-F07`. Wants a proof-read, and it deliberately states no gallery lifetime — that number is the open photo-retention question below.
-- [x] **Bank details are published on `/geschenke`, 2026-08-31.** Content pages compile into the bundle and the SPA is served unauthenticated, so an IBAN there is semi-public; accepted, since an IBAN lets somebody send money rather than take it. The IBAN and account holder themselves are still to supply. See `F2-F05`.
+- [x] **Bank details are published on `/geschenke`, 2026-08-31.** Content pages compile into the bundle and the SPA is served unauthenticated, so an IBAN there is semi-public; accepted, since an IBAN lets somebody send money rather than take it. IBAN and account holder supplied 2026-10-11. See `F2-F05`.
 - [x] **Accessibility scope, 2026-08-31.** No automated checker (`axe-core` rejected — it cannot see targets, zoom, focus visibility or copy register) and no screen-reader pass; nobody in the guest list uses one. Manual checklist, kept **in `F11-01` itself** — a separate `specification/08-accessibility.md` was rejected the same day: the rules live in `05-design` and would be restated, and a table of tick marks is progress, which belongs in `features/README.md`.
 - [x] **One countdown, to the wedding**, 2026-08-31. The RSVP deadline is a written-out date beside the answer link, not a second counter. `F2-F02`.
 - [x] **Hero carries names and date only**; the venues get their own page. `F2-F02`, `F2-F04`.
-- [~] **Proof-read the F2 copy.** Added 2026-08-31 with the content pages: `startLabels`, `scheduleLabels`, `locationLabels`, `dresscodeLabels`, `giftLabels`, `faqLabels`, `contactLabels` and `privacyLabels` were written with the pages and have not been read back. The FAQ list is a guess until the first questions arrive after send-out.
-- [~] **Hero photo for `/start`.** A placeholder image is checked in at `web/src/assets/hero.{jpg,webp}` at the aspect ratios the layout uses (4:5 mobile, 16:9 desktop). Swap the files; nothing else changes.
+- [~] **Proof-read the F2 copy.** Added 2026-08-31 with the content pages: `startLabels`, `scheduleLabels`, `locationLabels`, `contactLabels` and `privacyLabels` were written with the pages and have not been read back. Dresscode and Geschenke were rewritten 2026-10-11; the FAQ page was dropped the same day instead of shipping its guessed answer list.
+- [x] **Hero photo for `/start`.** Real photo swapped in 2026-10-11 — `web/src/assets/hero.{jpg,webp}` at the aspect ratios the layout uses (4:5 mobile, 16:9 desktop). Nothing else changes.
 - [~] **Help texts on every guest form field, behind a `?` popover** beside the label — inline help on every field would bloat the form and put an invisible length limit on the copy. Rule added to `05-design`'s form behaviour section on 2026-08-31, including the accessibility requirements. The F3/F4 stories were retrofitted the same day (`F3-F01`, `F3-F02`, `F3-F03`, `F4-F01`). The F3 sentences were written with the form on 2026-08-31 (`rsvpLabels` in `web/src/lib/labels.ts`) and want a proof-read; F4's and F2's are still to write.
 - [ ] Guest upload quotas — file count and total size per household (proposed: 100 files / 2 GB).
 
@@ -101,7 +101,7 @@ Decisions taken with the thirteen stories built that day. Each one is recorded w
 
 - [x] Stationery/colours/fonts to match: none exist. The site defines the palette.
 - [x] Overall feel: warm/traditional.
-- [x] Hero photography: engagement photos exist, hero ships from day one. Final selection and crop still open.
+- [x] Hero photography: engagement photos exist, hero ships from day one. Final selection landed 2026-10-11.
 - [x] Dark mode: rejected.
 
 ### Technical loose ends

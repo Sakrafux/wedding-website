@@ -118,7 +118,7 @@ Frontend only — content is hardcoded in components.
 - [x] `F2-F03` Ablauf
 - [ ] `F2-F04` Location, Anreise & Übernachtung — pages, address blocks and section anchors built (split by `F2-F09`); **the venue facts are still open** (TODO.md), and the story refuses a placeholder Location page because it blocks send-out
 - [x] `F2-F05` Dresscode, Geschenke
-- [x] `F2-F06` FAQ, Kontakt
+- [x] `F2-F06` FAQ, Kontakt — the FAQ page was dropped again on 2026-10-11, before send-out (route, nav entry, labels); Kontakt stands, and questions route there
 - [x] `F2-F07` Datenschutz
 - [x] `F2-F08` Start: one sentence about the answer, singular/plural address
 - [x] `F2-F09` Location: an overview, and a page per venue

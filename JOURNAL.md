@@ -4,6 +4,32 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-10-11
+
+Done:
+
+- Palette reworked after three preview rounds with the couple (`palette-preview.html`, self-contained mockups with the real fonts and a deuteranopia toggle; file deleted after the decision). New tokens in `web/src/index.css` and `specification/05-design.md`: white paper, cream `surface`, berry primary, honey-gold accent, orange `warning`.
+- Cormorant Garamond display weight 600 → 700 ("Wir heiraten!" dicker): 700 woff2 files in `web/src/assets/fonts/`, 600 files removed — nothing requests them any more. `fonts.css` and the typography table updated; `favicon.svg` rings recoloured from sage to berry.
+- `components/ui` follow-ups on the new palette: editable controls filled `paper` with 2px borders, outline button 2px, `Card` carries the honey-gold border. The F11-05 form rule in `05-design` re-pointed from `surface` to `paper`.
+- Hero photo: real engagement photo swapped into `web/src/assets/hero.{jpg,webp}`; `.env.example` now shows dev-relative `./data/…` paths, `.idea` ignored, `/data/` added to `.gitignore` so the dev photo directory cannot land in git.
+- Text round: final copy for Dresscode and Geschenke, real account holder and IBAN in `giftLabels` (TODO items ticked); em-dashes replaced with en-dashes across `labels.ts`; tone rule for the Gedankenstrich added to `05-design`.
+- FAQ page dropped (route, nav entry, labels, tests). Recorded in `02-features`, `features/README.md` (`F2-F06`) and the page lists of `01`, `03`, `04`, `07`, `README`, `CLAUDE.md`; leftovers cleaned: the `/mehr` test expectation, dead `navLabels.faq`, `InfoSection` comments, `geschenke.tsx` formatting, the IBAN-placeholder comment.
+- `TODO.md` status header brought up to date; hero-photo and dress-code/gifts/bank-details items closed.
+- Suites: not run this session — changes verified by review only; run `pnpm lint` / `typecheck` / `test` / `build` before the next commit.
+
+Decisions:
+
+- **White paper, cream cards.** The cream page read as yellowed next to the real white invitation cards; the card now carries the old cream tone. Reasoning in `05-design.md` (Direction, Rejected).
+- **Gold is a stroke color, not a fill.** `accent` `#A87D15` clears only 3.7:1 on white — fine for the ≥3:1 UI-boundary rule it serves (seating stroke, alert border, card border), never for text; gold text is bronze `accent-strong`. A 4.5:1 yellow is forced into brown ochre. Measured table and accent rule in `05-design.md`.
+- **`warning` moved to orange** so it no longer sits on the gold hue. Token comment in `index.css`.
+- **Display headings 700 across the board**, not just the hero size — one base-layer rule, no per-size weights. `05-design.md` typography table.
+- **FAQ page dropped before send-out** rather than shipping its guessed answer list; Kontakt is where questions land. Reasoning beyond that not recorded — TODO.md and `02-features` carry the fact.
+- **Gedankenstrich is an en-dash with spaces**, never an em-dash. Tone rules in `05-design.md`.
+- **IBAN and account holder published** on `/geschenke` — the semi-public acceptance was already recorded (`F2-F05`); the values themselves landed today.
+
+Time: 3h
+Cost: $3
+
 ## 2026-09-20
 
 Done:

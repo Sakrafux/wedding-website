@@ -95,7 +95,7 @@ Before freezing, one deliberate dry run: fill the form as a household containing
 ### M3 — Content and quality
 
 - The design system from [05-design](05-design.md): tokens, fonts, type scale, `labels.ts`.
-- F2 pages: Start, Ablauf, Location, Anreise & Übernachtung, Dresscode, Geschenke, FAQ, Kontakt, Datenschutz.
+- F2 pages: Start, Ablauf, Location, Anreise & Übernachtung, Dresscode, Geschenke, Kontakt, Datenschutz.
 - Hero photo, countdown.
 - F11: the accessibility pass — keyboard, 200% zoom, contrast, touch targets, focus rings, screen-reader sweep of the RSVP form.
 

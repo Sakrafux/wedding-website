@@ -8,7 +8,7 @@ SQLite. Conventions: `INTEGER` primary keys, `BOOLEAN` for flags (SQLite stores 
 
 Timestamps are TEXT rather than epoch integers because at this scale performance is irrelevant and readability when inspecting the DB by hand with `sqlite3` is worth more. UTC + fixed format means lexicographic sort is chronological sort.
 
-Informational page content (schedule, travel, dress code, FAQ, …) is **not** in the database — it is hardcoded in the React components. Only data that changes at runtime lives here.
+Informational page content (schedule, travel, dress code, …) is **not** in the database — it is hardcoded in the React components. Only data that changes at runtime lives here.
 
 ## Entities
 

@@ -191,7 +191,7 @@ Forward-only. Down-migrations are not written; at this scale, restoring a backup
 
 shadcn/ui over Mantine specifically because it builds on Tailwind rather than shipping a competing style system, and because its Radix primitives are accessible by default — which matters given the guest demographic.
 
-Page content (schedule, travel, dress code, FAQ, …) is hardcoded in components. No CMS, no Markdown pipeline.
+Page content (schedule, travel, dress code, …) is hardcoded in components. No CMS, no Markdown pipeline.
 
 **SPA fallback:** the Go static handler serves `index.html` for any unmatched path that is not under `/api` and does not look like a static asset. Deep links and refreshes work.
 

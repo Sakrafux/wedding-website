@@ -11,7 +11,7 @@ Roughly 80 guests across 60 households. German only. Mobile-first. Not public, n
 | | |
 |---|---|
 | **Login** | One code per household, printed on the card. No username, no password, no email. Session lasts a year |
-| **Content** | Schedule, venue, travel, dress code, gifts, FAQ — hardcoded in components, no CMS |
+| **Content** | Schedule, venue, travel, dress code, gifts — hardcoded in components, no CMS |
 | **RSVP** | Per household, per member: attendance scope, meal, portion, allergies, seating needs, transport |
 | **Plus-ones** | Households add their own companions and children; we see the delta |
 | **Admin** | Guest list, RSVP dashboard, CSV exports, seating, budget, photo moderation |

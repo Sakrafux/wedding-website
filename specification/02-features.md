@@ -9,7 +9,7 @@ Priorities: **P0** = site is useless without it · **P1** = ship for invite send
 | ID | Feature | Actor | Priority | One-line description |
 |----|---------|-------|----------|----------------------|
 | F1 | Household login | Guest | P0 | Printed per-household code redeemed for a long-lived session. |
-| F2 | Informational content | Guest | P0 | Schedule, venue, travel, dress code, gifts, FAQ, contact. |
+| F2 | Informational content | Guest | P0 | Schedule, venue, travel, dress code, gifts, contact. |
 | F3 | RSVP | Guest | P0 | One submission per household, per-member attendance + meal + allergies. |
 | F4 | Plus-one | Guest | P0 | A guest invited alone may add one companion; everything else goes through us. |
 | F5 | Admin: households & guests | Admin | P0 | CRUD households/members, generate and export codes. |
@@ -37,7 +37,7 @@ Key decisions:
 
 ## F2 — Informational content (P0)
 
-Read-only pages authored by us: Start (greeting, date, countdown), Ablauf, Location, Anreise & Übernachtung, Dresscode, Geschenke, FAQ, Kontakt.
+Read-only pages authored by us: Start (greeting, date, countdown), Ablauf, Location, Anreise & Übernachtung, Dresscode, Geschenke, Kontakt, Datenschutz. An FAQ page existed until 2026-10-11, when it was dropped before send-out; Kontakt is where questions land now.
 
 **Decided:** content is hardcoded directly in the React components. No CMS, no Markdown pipeline, no DB rows, no admin text editor. The volume is small and changes are rare. Accepted cost: a content change means a rebuild and redeploy. Runtime-variable flags (RSVP deadline, seating published, uploads open) are the exception and live in `app_setting`.
 
