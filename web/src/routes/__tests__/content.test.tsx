@@ -367,26 +367,6 @@ describe("the content pages", () => {
     expect(screen.getByText(/Bankverbindung tragen wir hier ein/)).toBeInTheDocument();
   });
 
-  it("shows every FAQ answer without interaction", async () => {
-    stubGuest();
-
-    await renderApp("/faq");
-
-    expect(screen.getByRole("heading", { name: "Sind Kinder eingeladen?", level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/Wer allein eingeladen ist/)).toBeInTheDocument();
-    // No accordion: nothing here is a disclosure control.
-    expect(screen.queryByRole("button", { name: /Kinder/ })).not.toBeInTheDocument();
-  });
-
-  it("links an FAQ answer to the page that holds the detail", async () => {
-    stubGuest();
-
-    const { user, router } = await renderApp("/faq");
-    await user.click(screen.getByRole("link", { name: "Zum Dresscode" }));
-
-    expect(currentPath(router)).toBe("/dresscode");
-  });
-
   it("lists both of us on the contact page, each as a tel: link", async () => {
     stubGuest();
 

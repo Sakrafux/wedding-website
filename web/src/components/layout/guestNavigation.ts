@@ -11,7 +11,6 @@ import {
   CalendarDays,
   ChevronsRight,
   Gift,
-  HelpCircle,
   Home,
   MapPin,
   MoreHorizontal,
@@ -57,7 +56,6 @@ export function moreEntries(flags: Flags): NavEntry[] {
   return [
     { to: "/dresscode", label: navLabels.dresscode, icon: Shirt },
     { to: "/geschenke", label: navLabels.gifts, icon: Gift },
-    { to: "/faq", label: navLabels.faq, icon: HelpCircle },
     { to: "/kontakt", label: navLabels.contact, icon: Phone },
     { to: "/datenschutz", label: navLabels.privacy, icon: Shield },
     ...(flags.seating_published ? [{ to: "/sitzplan", label: navLabels.seating, icon: Table2 }] : []),

@@ -722,8 +722,8 @@ export const locationLabels = {
  */
 export const dresscodeLabels = {
   heading: "Dresscode",
-  lead: "Zieht an, worin ihr euch wohlfühlt — festlich, aber nicht steif.",
-  body: "Wir schreiben hier noch genauer auf, was wir selbst anziehen, damit ihr eine Vorstellung habt. Wenn der Boden oder das Wetter eine Rolle für die Schuhwahl spielen, sagen wir das an dieser Stelle dazu.",
+  lead: "Festlich, aber nicht steif.",
+  body: "Wir freuen uns über elegante Outfits – von Sommerkleid und Anzug bis hin zu Dirndl und Lederhose ist alles willkommen, was zum Feiern einlädt. Hauptsache festlich und bequem genug für eine lange Nacht. Weiße Kleider sind natürlich der Braut vorbehalten.",
 } as const;
 
 /**
@@ -736,85 +736,20 @@ export const dresscodeLabels = {
  */
 export const giftLabels = {
   heading: "Geschenke",
-  lead: "Das größte Geschenk ist, dass ihr da seid.",
-  body: "Wenn ihr uns trotzdem etwas mitbringen möchtet, freuen wir uns über einen Beitrag zu unserer Hochzeitsreise. Die genauen Worte dazu schreiben wir noch — und niemand muss etwas mitbringen.",
+  lead: "Das größte Geschenk ist, dass du da bist.",
+  body: "Trotzdem würden wir uns über etwas freuen. Zwischen der Hochzeit selbst, den anschließenden Flitterwochen oder den Einzug in unsere erste gemeinsame Wohnung, haben wir einige Kosten zu stemmen. Wir schätzen jegliche Beteiligung, idealerweise monetär. Du kannst trotzdem gerne auch andere, kleine Geschenke mitbringen, um einen persönlichen Touch beizubehalten.",
+  body2: "Grundsätzlich wollen wir uns nicht den großen Stress machen, eine umfangreiche Geschenkeliste aufzustellen, die damit einhergehende Logistik bei und nach der Hochzeit, sowie Sorgen um die Fairness allen Gästen gegenüber. Gib einfach, was du für angebracht hältst – wir können es auf jeden Fall gut gebrauchen :)",
   accountHeading: "Bankverbindung",
+  accountText: "Falls du nicht mit Bargeld hantieren möchtest, kannst du auch direkt überweisen.",
   accountHolderLabel: "Kontoinhaber",
-  accountHolder: "Noch nicht eingetragen",
+  accountHolder: "Andreas Hell",
   ibanLabel: "IBAN",
   /** Stored unspaced, which is what the copy button puts on the clipboard; the
       grouping in fours is display only. */
-  iban: "AT000000000000000000",
+  iban: "AT135300006554033820",
   ibanPending: "Die Bankverbindung tragen wir hier ein, sobald sie feststeht.",
   copyIban: "IBAN kopieren",
   ibanCopied: "IBAN kopiert",
-} as const;
-
-/**
- * The FAQ. Answers are always expanded — no accordion: a collapsed answer hides the
- * text from find-in-page and costs a tap per question.
- *
- * Seeded from what we expect to be asked; the real list follows the first phone calls
- * after send-out (TODO.md). An answer that a content page already gives links there
- * rather than restating it, so there is one copy to keep in step.
- */
-export const faqLabels = {
-  heading: "Häufige Fragen",
-  intro: "Was uns schon gefragt wurde. Ist deine Frage nicht dabei, ruf uns einfach an.",
-  entries: [
-    {
-      question: "Sind Kinder eingeladen?",
-      answer:
-        "Ja. Sag uns im Antwortformular Bescheid, wer mitkommt und wie alt die Kinder am Hochzeitstag sind — daran hängen Essen und Sitzplatz. Wenn wir ein Kind noch nicht auf eurer Liste haben, ruf uns bitte kurz an, dann tragen wir es ein.",
-      link: null,
-    },
-    {
-      question: "Darf ich jemanden mitbringen?",
-      answer:
-        "Wer allein eingeladen ist, kann im Antwortformular eine Begleitung eintragen. Für alle weiteren Personen ruft uns bitte an — wir tragen sie gern ein, wollen die Anzahl aber vorher wissen.",
-      link: null,
-    },
-    {
-      question: "Was ziehe ich an?",
-      answer: "Festlich, aber ohne Zwang. Die Einzelheiten stehen auf der Seite Dresscode.",
-      link: { to: "/dresscode", label: "Zum Dresscode" },
-    },
-    {
-      question: "Wo ist die Hochzeit, und wo kann ich parken?",
-      answer: "Beide Adressen, Parken und Anreise stehen auf der Seite Location & Anreise.",
-      link: { to: "/location", label: "Zu Location & Anreise" },
-    },
-    {
-      question: "Wie komme ich von der Kirche zur Feier?",
-      answer:
-        "Es ist eine kurze Fahrt. Im Antwortformular fragen wir, wie viele Plätze ihr braucht und wie viele ihr anbieten könnt — daran sehen wir, ob sich ein Shuttle lohnt. Wer mit wem fährt, klären wir nicht über die Seite.",
-      link: null,
-    },
-    {
-      question: "Was, wenn wir später kommen oder früher gehen müssen?",
-      answer:
-        "Kein Problem. Sag uns im Antwortformular, ob ihr zur Kirche, zur Feier oder zu beidem kommt, und schreib uns den Rest in die Nachricht am Ende des Formulars.",
-      link: null,
-    },
-    {
-      question: "Was schenken wir euch?",
-      answer:
-        "Am liebsten gar nichts außer eurer Zeit. Wenn ihr doch etwas möchtet, steht das auf der Seite Geschenke.",
-      link: { to: "/geschenke", label: "Zu den Geschenken" },
-    },
-    {
-      question: "Mein Code funktioniert nicht — was jetzt?",
-      answer:
-        "Groß- und Kleinschreibung ist egal, Leerzeichen und Bindestriche auch. Klappt es trotzdem nicht, ruf uns an — wir sagen dir den Code oder tragen deine Antwort direkt für dich ein.",
-      link: { to: "/kontakt", label: "Zum Kontakt" },
-    },
-    {
-      question: "Kann ich meine Antwort noch ändern?",
-      answer:
-        "Ja, bis zum Stichtag jederzeit. Danach geht es nicht mehr über die Seite — dann ruf uns bitte an, wir ändern es für dich.",
-      link: null,
-    },
-  ],
 } as const;
 
 export const contactLabels = {

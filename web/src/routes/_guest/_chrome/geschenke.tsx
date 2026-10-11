@@ -27,7 +27,8 @@ function GiftsPage() {
   return (
     <PageSections>
       <PageHeading title={giftLabels.heading} lead={giftLabels.lead} />
-      <p className="max-w-prose">{giftLabels.body}</p>
+        <p className="max-w-prose">{giftLabels.body}</p>
+        <p className="max-w-prose">{giftLabels.body2}</p>
 
       <InfoSection title={giftLabels.accountHeading}>
         {ibanIsPending ? <p>{giftLabels.ibanPending}</p> : <BankDetails />}
@@ -53,6 +54,10 @@ function BankDetails() {
 
   return (
     <div className="flex flex-col gap-2">
+      <p>
+          {giftLabels.accountText}
+      </p>
+
       <p>
         <span className="text-ink-muted text-small block">{giftLabels.accountHolderLabel}</span>
         {giftLabels.accountHolder}

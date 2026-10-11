@@ -18,7 +18,6 @@ import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as GuestChromeAblaufRouteImport } from './routes/_guest/_chrome/ablauf'
 import { Route as GuestChromeDatenschutzRouteImport } from './routes/_guest/_chrome/datenschutz'
 import { Route as GuestChromeDresscodeRouteImport } from './routes/_guest/_chrome/dresscode'
-import { Route as GuestChromeFaqRouteImport } from './routes/_guest/_chrome/faq'
 import { Route as GuestChromeGeschenkeRouteImport } from './routes/_guest/_chrome/geschenke'
 import { Route as GuestChromeKontaktRouteImport } from './routes/_guest/_chrome/kontakt'
 import { Route as GuestChromeMehrRouteImport } from './routes/_guest/_chrome/mehr'
@@ -73,11 +72,6 @@ const GuestChromeDatenschutzRoute = GuestChromeDatenschutzRouteImport.update({
 const GuestChromeDresscodeRoute = GuestChromeDresscodeRouteImport.update({
   id: '/dresscode',
   path: '/dresscode',
-  getParentRoute: () => GuestChromeRoute,
-} as any)
-const GuestChromeFaqRoute = GuestChromeFaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
   getParentRoute: () => GuestChromeRoute,
 } as any)
 const GuestChromeGeschenkeRoute = GuestChromeGeschenkeRouteImport.update({
@@ -155,7 +149,6 @@ export interface FileRoutesByFullPath {
   '/ablauf': typeof GuestChromeAblaufRoute
   '/datenschutz': typeof GuestChromeDatenschutzRoute
   '/dresscode': typeof GuestChromeDresscodeRoute
-  '/faq': typeof GuestChromeFaqRoute
   '/geschenke': typeof GuestChromeGeschenkeRoute
   '/kontakt': typeof GuestChromeKontaktRoute
   '/mehr': typeof GuestChromeMehrRoute
@@ -176,7 +169,6 @@ export interface FileRoutesByTo {
   '/ablauf': typeof GuestChromeAblaufRoute
   '/datenschutz': typeof GuestChromeDatenschutzRoute
   '/dresscode': typeof GuestChromeDresscodeRoute
-  '/faq': typeof GuestChromeFaqRoute
   '/geschenke': typeof GuestChromeGeschenkeRoute
   '/kontakt': typeof GuestChromeKontaktRoute
   '/mehr': typeof GuestChromeMehrRoute
@@ -201,7 +193,6 @@ export interface FileRoutesById {
   '/_guest/_chrome/ablauf': typeof GuestChromeAblaufRoute
   '/_guest/_chrome/datenschutz': typeof GuestChromeDatenschutzRoute
   '/_guest/_chrome/dresscode': typeof GuestChromeDresscodeRoute
-  '/_guest/_chrome/faq': typeof GuestChromeFaqRoute
   '/_guest/_chrome/geschenke': typeof GuestChromeGeschenkeRoute
   '/_guest/_chrome/kontakt': typeof GuestChromeKontaktRoute
   '/_guest/_chrome/mehr': typeof GuestChromeMehrRoute
@@ -225,7 +216,6 @@ export interface FileRouteTypes {
     | '/ablauf'
     | '/datenschutz'
     | '/dresscode'
-    | '/faq'
     | '/geschenke'
     | '/kontakt'
     | '/mehr'
@@ -246,7 +236,6 @@ export interface FileRouteTypes {
     | '/ablauf'
     | '/datenschutz'
     | '/dresscode'
-    | '/faq'
     | '/geschenke'
     | '/kontakt'
     | '/mehr'
@@ -270,7 +259,6 @@ export interface FileRouteTypes {
     | '/_guest/_chrome/ablauf'
     | '/_guest/_chrome/datenschutz'
     | '/_guest/_chrome/dresscode'
-    | '/_guest/_chrome/faq'
     | '/_guest/_chrome/geschenke'
     | '/_guest/_chrome/kontakt'
     | '/_guest/_chrome/mehr'
@@ -355,13 +343,6 @@ declare module '@tanstack/react-router' {
       path: '/dresscode'
       fullPath: '/dresscode'
       preLoaderRoute: typeof GuestChromeDresscodeRouteImport
-      parentRoute: typeof GuestChromeRoute
-    }
-    '/_guest/_chrome/faq': {
-      id: '/_guest/_chrome/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof GuestChromeFaqRouteImport
       parentRoute: typeof GuestChromeRoute
     }
     '/_guest/_chrome/geschenke': {
@@ -455,7 +436,6 @@ interface GuestChromeRouteChildren {
   GuestChromeAblaufRoute: typeof GuestChromeAblaufRoute
   GuestChromeDatenschutzRoute: typeof GuestChromeDatenschutzRoute
   GuestChromeDresscodeRoute: typeof GuestChromeDresscodeRoute
-  GuestChromeFaqRoute: typeof GuestChromeFaqRoute
   GuestChromeGeschenkeRoute: typeof GuestChromeGeschenkeRoute
   GuestChromeKontaktRoute: typeof GuestChromeKontaktRoute
   GuestChromeMehrRoute: typeof GuestChromeMehrRoute
@@ -470,7 +450,6 @@ const GuestChromeRouteChildren: GuestChromeRouteChildren = {
   GuestChromeAblaufRoute: GuestChromeAblaufRoute,
   GuestChromeDatenschutzRoute: GuestChromeDatenschutzRoute,
   GuestChromeDresscodeRoute: GuestChromeDresscodeRoute,
-  GuestChromeFaqRoute: GuestChromeFaqRoute,
   GuestChromeGeschenkeRoute: GuestChromeGeschenkeRoute,
   GuestChromeKontaktRoute: GuestChromeKontaktRoute,
   GuestChromeMehrRoute: GuestChromeMehrRoute,
