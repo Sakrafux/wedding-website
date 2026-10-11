@@ -20,6 +20,10 @@ web/node_modules/
 compose.yaml
 compose.override.yaml
 
-# Local runtime state: dev database and photo directory from .env.
+# Local runtime state: dev database and photo directory from .env. The *.db
+# patterns above already cover the database file wherever it lands; this covers
+# the photo directory, both for the old /local/ default and the ./data/ relative
+# path .env.example now shows.
 /local/
+/data/
 .idea

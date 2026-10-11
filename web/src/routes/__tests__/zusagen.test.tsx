@@ -425,7 +425,7 @@ describe("the RSVP form", () => {
     await user.click(screen.getByRole("button", { name: "Speichern" }));
 
     expect(screen.getByText("Bitte antworte noch für diese Personen:")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Emil Müller — Antwort fehlt" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Emil Müller – Antwort fehlt" })).toBeInTheDocument();
     expect(api.calls.some((call) => call.method === "PUT")).toBe(false);
   });
 

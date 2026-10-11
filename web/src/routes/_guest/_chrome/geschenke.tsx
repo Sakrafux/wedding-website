@@ -9,7 +9,8 @@ export const Route = createFileRoute("/_guest/_chrome/geschenke")({
   component: GiftsPage,
 });
 
-/** The IBAN placeholder, which is not a real account yet (TODO.md). */
+/** The real IBAN landed 2026-10-11; the placeholder check stays because blanking the
+    value back to `AT0000…` is the documented way to hide the block again (F2-F05). */
 const ibanIsPending = giftLabels.iban.startsWith("AT0000");
 
 /**
@@ -27,8 +28,8 @@ function GiftsPage() {
   return (
     <PageSections>
       <PageHeading title={giftLabels.heading} lead={giftLabels.lead} />
-        <p className="max-w-prose">{giftLabels.body}</p>
-        <p className="max-w-prose">{giftLabels.body2}</p>
+      <p className="max-w-prose">{giftLabels.body}</p>
+      <p className="max-w-prose">{giftLabels.body2}</p>
 
       <InfoSection title={giftLabels.accountHeading}>
         {ibanIsPending ? <p>{giftLabels.ibanPending}</p> : <BankDetails />}
@@ -54,9 +55,7 @@ function BankDetails() {
 
   return (
     <div className="flex flex-col gap-2">
-      <p>
-          {giftLabels.accountText}
-      </p>
+      <p>{giftLabels.accountText}</p>
 
       <p>
         <span className="text-ink-muted text-small block">{giftLabels.accountHolderLabel}</span>

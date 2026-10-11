@@ -75,7 +75,7 @@ describe("the admin RSVP page", () => {
     await renderApp("/admin/haushalte/12/rsvp");
 
     expect(
-      await screen.findByText("Die Frist ist abgelaufen — du kannst hier trotzdem speichern."),
+      await screen.findByText("Die Frist ist abgelaufen – du kannst hier trotzdem speichern."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Speichern" })).toBeInTheDocument();
     expect(screen.queryByText("Die Rückmeldefrist ist vorbei")).not.toBeInTheDocument();

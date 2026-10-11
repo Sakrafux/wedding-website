@@ -540,15 +540,16 @@ export const householdLabels = {
  *
  * Content is hardcoded in the frontend by decision (02-features), and every German
  * string still lives here rather than in the components – including the schedule
- * entries and the FAQ, which are content *and* copy at the same time. The rule has no
+ * entries, which are content *and* copy at the same time. The rule has no
  * exception clause, and one file is what makes the whole site proof-readable in one
  * sitting.
  *
  * Several blocks below are **placeholders**, marked as such and tracked in TODO.md:
- * the venues, the schedule, the dress code, the gift wording and the account details
- * are not decided yet. They are written as honest sentences ("steht noch nicht fest")
- * rather than as lorem ipsum, because the one thing worse than a page that says the
- * date is open is a page that says "Lorem ipsum" to eighty guests.
+ * the venues, the schedule and the hotel list are not decided yet. They are written
+ * as honest sentences ("steht noch nicht fest") rather than as lorem ipsum, because
+ * the one thing worse than a page that says the date is open is a page that says
+ * "Lorem ipsum" to eighty guests. Dresscode, Geschenke and the bank details were
+ * placeholders too until 2026-10-11.
  * ------------------------------------------------------------------------- */
 
 /**
@@ -568,7 +569,6 @@ export const navLabels = {
   /** The overflow page's own entries. */
   dresscode: "Dresscode",
   gifts: "Geschenke",
-  faq: "Häufige Fragen",
   contact: "Kontakt",
   privacy: "Datenschutz",
   seating: "Sitzplan",
@@ -738,7 +738,8 @@ export const giftLabels = {
   heading: "Geschenke",
   lead: "Das größte Geschenk ist, dass du da bist.",
   body: "Trotzdem würden wir uns über etwas freuen. Zwischen der Hochzeit selbst, den anschließenden Flitterwochen oder den Einzug in unsere erste gemeinsame Wohnung, haben wir einige Kosten zu stemmen. Wir schätzen jegliche Beteiligung, idealerweise monetär. Du kannst trotzdem gerne auch andere, kleine Geschenke mitbringen, um einen persönlichen Touch beizubehalten.",
-  body2: "Grundsätzlich wollen wir uns nicht den großen Stress machen, eine umfangreiche Geschenkeliste aufzustellen, die damit einhergehende Logistik bei und nach der Hochzeit, sowie Sorgen um die Fairness allen Gästen gegenüber. Gib einfach, was du für angebracht hältst – wir können es auf jeden Fall gut gebrauchen :)",
+  body2:
+    "Grundsätzlich wollen wir uns nicht den großen Stress machen, eine umfangreiche Geschenkeliste aufzustellen, die damit einhergehende Logistik bei und nach der Hochzeit, sowie Sorgen um die Fairness allen Gästen gegenüber. Gib einfach, was du für angebracht hältst – wir können es auf jeden Fall gut gebrauchen :)",
   accountHeading: "Bankverbindung",
   accountText: "Falls du nicht mit Bargeld hantieren möchtest, kannst du auch direkt überweisen.",
   accountHolderLabel: "Kontoinhaber",

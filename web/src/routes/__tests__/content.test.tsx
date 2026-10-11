@@ -85,7 +85,7 @@ describe("the guest navigation", () => {
 
     await renderApp("/mehr");
 
-    for (const label of ["Dresscode", "Geschenke", "Häufige Fragen", "Kontakt", "Datenschutz"]) {
+    for (const label of ["Dresscode", "Geschenke", "Kontakt", "Datenschutz"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
     expect(screen.queryByText("Sitzplan")).not.toBeInTheDocument();
@@ -362,9 +362,6 @@ describe("the content pages", () => {
 
     await renderApp("/geschenke");
     expect(screen.getByRole("heading", { name: "Geschenke", level: 1 })).toBeInTheDocument();
-    // The account is a placeholder, so the page says so rather than showing a copy
-    // button for an IBAN that is not ours.
-    expect(screen.getByText(/Bankverbindung tragen wir hier ein/)).toBeInTheDocument();
   });
 
   it("lists both of us on the contact page, each as a tel: link", async () => {

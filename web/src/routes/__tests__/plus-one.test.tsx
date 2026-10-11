@@ -113,7 +113,7 @@ describe("adding a plus-one", () => {
 
     await user.click(screen.getByRole("button", { name: "Speichern" }));
 
-    expect(await screen.findByText("Isabella Michelbacher — Antwort fehlt")).toBeInTheDocument();
+    expect(await screen.findByText("Isabella Michelbacher – Antwort fehlt")).toBeInTheDocument();
   });
 
   /**
@@ -183,7 +183,7 @@ describe("adding a plus-one", () => {
       "POST /api/rsvp/members": apiError(
         409,
         "plus_one_not_allowed",
-        "Weitere Personen tragen wir gern für euch ein — ruf uns bitte kurz an: +43 650 9408100.",
+        "Weitere Personen tragen wir gern für euch ein – ruf uns bitte kurz an: +43 650 9408100.",
       ),
     });
 

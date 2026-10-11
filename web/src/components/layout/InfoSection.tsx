@@ -2,8 +2,8 @@
  * The page shape every informational page is built from: a heading, an optional lead
  * sentence, and prose capped at the readable measure.
  *
- * It exists so `F2-F05`'s two pages, the FAQ, Kontakt and Datenschutz are one layout
- * decision rather than five. Prose is `max-w-prose` — about 66 characters — because a
+ * It exists so `F2-F05`'s two pages, Kontakt and Datenschutz are one layout
+ * decision rather than four. Prose is `max-w-prose` — about 66 characters — because a
  * line that runs the full width of a desktop is a line people lose their place in.
  */
 export function PageHeading({ title, lead }: { title: string; lead?: string }) {
@@ -15,8 +15,7 @@ export function PageHeading({ title, lead }: { title: string; lead?: string }) {
   );
 }
 
-/** One titled block of prose inside a page. `id` is what an FAQ answer or the nav
-    links straight at. */
+/** One titled block of prose inside a page. `id` is what the nav links straight at. */
 export function InfoSection({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="flex flex-col gap-3">
