@@ -32,7 +32,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "bg-surface text-ink shadow-card text-small z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border p-4 outline-none",
+          "bg-surface text-ink shadow-card text-small z-50 w-72 max-w-[calc(100vw-2rem)] rounded-xl border p-4 outline-none -mt-3",
           className,
         )}
         {...props}

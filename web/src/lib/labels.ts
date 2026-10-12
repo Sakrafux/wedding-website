@@ -250,7 +250,7 @@ export const rsvpLabels = {
       address book, and the people on it know best how they are called (`F4-F04`). */
   memberNameLabel: "Name",
   memberNameHelp:
-    "So steht der Name auf der Tischkarte und in der Liste. Ändere ihn ruhig – Spitzname, Doppelname oder „Oma Erika“ ist alles in Ordnung.",
+    "So steht der Name in der Liste. Bitte den vollständigen Namen angeben.",
   memberScopeLabel: (name: string) => `Wozu kommt ${name}?`,
   memberScopeHelp:
     "Kirche und Feier sind getrennt – manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
@@ -261,7 +261,7 @@ export const rsvpLabels = {
     "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra – sag ruhig, was wirklich passt.",
   midnightSnackLabel: (name: string) => `Mitternachtssnack für ${name}`,
   midnightSnackHelp:
-    "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele – wer schon im Bett ist, braucht keinen.",
+    "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele.",
   midnightSnackHint: "Kleine Stärkung spät am Abend",
   seatingNeedLabel: (name: string) => `Platz für ${name}`,
   seatingNeedHelp:
@@ -280,7 +280,7 @@ export const rsvpLabels = {
       sich aus, und nebeneinander lasen sie sich wie dieselbe Frage zweimal (F3-F07). */
   transportDirectionLabel: "Wie sieht es bei euch mit der Fahrt aus?",
   transportDirectionHelp:
-    "Gemeint ist die kurze Fahrt von der Kirche zur Feier. Wir sehen daran, ob sich ein Shuttle lohnt – Fahrgemeinschaften vermitteln wir nicht, das klärt sich vor Ort.",
+    "Gemeint ist die kurze Fahrt von der Kirche zur Feier. Wir sehen daran, ob wir mit einer Fahrt auskommen.",
   transportNeededLabel: "Wie viele Plätze braucht ihr?",
   transportOfferedLabel: "Wie viele Plätze könnt ihr anbieten?",
   transportSeatsHelp:
@@ -297,8 +297,8 @@ export const rsvpLabels = {
   noteLabel: "Nachricht an uns",
   noteHelp:
     "Alles, wonach das Formular nicht fragt. Wir lesen jede Nachricht – eine Antwort hier im Formular gibt es aber nicht.",
-  noteHint: "Zum Beispiel: „Wir kommen erst nach der Zeremonie“ oder „Oma braucht einen Platz nah am Ausgang“.",
-  noteReadPromise: "Wir lesen das.",
+  noteHint: "Zum Beispiel: „Wir kommen erst um 18:00“",
+  noteReadPromise: "",
   noteRemaining: (remaining: number) => `Noch ${remaining} Zeichen.`,
 
   /* F4 – the plus-one. Phrased as the question it answers rather than as an
