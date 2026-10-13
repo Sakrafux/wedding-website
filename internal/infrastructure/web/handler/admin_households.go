@@ -100,7 +100,7 @@ func (handler *AdminHouseholds) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// domain.HouseholdPatch keeps its transport fields — PUT /rsvp patches through
-	// them — so the three left nil here are the ones this endpoint no longer owns.
+	// them — so the four left nil here are the ones this endpoint no longer owns.
 	detail, err := handler.households.Update(r.Context(), id, domain.HouseholdPatch{
 		Name:      request.Name,
 		Addressee: request.Addressee,
@@ -328,6 +328,7 @@ func householdResponse(household domain.Household, members []domain.Guest) dto.A
 		AdminNote:             household.AdminNote,
 		TransportSeatsNeeded:  household.TransportSeatsNeeded,
 		TransportSeatsOffered: household.TransportSeatsOffered,
+		TaxiSeatsNeeded:       household.TaxiSeatsNeeded,
 		HasStroller:           household.HasStroller,
 		Members:               guests,
 	}

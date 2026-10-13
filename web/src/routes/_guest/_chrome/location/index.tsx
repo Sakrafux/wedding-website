@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
 import { InfoSection, PageHeading, PageSections } from "@/components/layout/InfoSection";
+import { MapLink } from "@/components/layout/MapLink";
 import { locationLabels } from "@/lib/labels";
 
 export const Route = createFileRoute("/_guest/_chrome/location/")({
@@ -15,10 +16,6 @@ export const Route = createFileRoute("/_guest/_chrome/location/")({
  * for the church address had to read past the party's car park to find it, and the two
  * sets of facts are exactly similar enough to be mixed up. The transfer section stays
  * here, because it belongs to neither venue.
- *
- * PLACEHOLDER: the venues are not booked (TODO.md). None of these three pages may go
- * out with the invitations in this state — 07-roadmap accepts a thin Ablauf page at
- * launch and explicitly does not accept an empty Location page.
  */
 function LocationOverviewPage() {
   return (
@@ -42,6 +39,7 @@ function LocationOverviewPage() {
 
       <InfoSection id="fahrt" title={locationLabels.transferHeading}>
         <p>{locationLabels.transfer}</p>
+        <MapLink url={locationLabels.transferMapUrl} />
       </InfoSection>
     </PageSections>
   );

@@ -28,6 +28,7 @@ type rsvpHousehold struct {
 	Addressee             string  `json:"addressee"`
 	TransportSeatsNeeded  int     `json:"transport_seats_needed"`
 	TransportSeatsOffered int     `json:"transport_seats_offered"`
+	TaxiSeatsNeeded       int     `json:"taxi_seats_needed"`
 	HasStroller           bool    `json:"has_stroller"`
 	RSVPNote              string  `json:"rsvp_note"`
 	RSVPSubmittedAt       *string `json:"rsvp_submitted_at"`
@@ -93,6 +94,7 @@ func submission(members ...map[string]any) map[string]any {
 	return map[string]any{
 		"transport_seats_needed":  0,
 		"transport_seats_offered": 0,
+		"taxi_seats_needed":       0,
 		"has_stroller":            false,
 		"rsvp_note":               "",
 		"members":                 members,
@@ -416,6 +418,7 @@ func TestRSVPZeroesTransportSeatsWithoutAMemberAttendingBoth(t *testing.T) {
 	response := app.putJSON("/api/rsvp", map[string]any{
 		"transport_seats_needed":  2,
 		"transport_seats_offered": 0,
+		"taxi_seats_needed":       2,
 		"has_stroller":            false,
 		"rsvp_note":               "",
 		"members":                 []map[string]any{answerFor(anna, "church_only")},
@@ -425,6 +428,29 @@ func TestRSVPZeroesTransportSeatsWithoutAMemberAttendingBoth(t *testing.T) {
 	body := response.rsvp()
 	assert.Zero(t, body.Household.TransportSeatsNeeded)
 	assert.Zero(t, body.Household.TransportSeatsOffered)
+	// The taxi trip is reception → city: a church-only household makes neither
+	// half of it, and the count dies with the party.
+	assert.Zero(t, body.Household.TaxiSeatsNeeded)
+}
+
+// The taxi count's gate is the party scope, not "attends both": a party-only
+// guest skips the trip the shuttle covers and still needs the ride home.
+func TestRSVPKeepsTaxiSeatsForAPartyOnlyHousehold(t *testing.T) {
+	t.Parallel()
+
+	app, household := newHouseholdApp(t, withAdult("Anna Müller"))
+	anna := household.Guests[0]
+
+	body := submission(answerFor(anna, "party_only"))
+	body["taxi_seats_needed"] = 2
+	body["transport_seats_needed"] = 1
+
+	response := app.putJSON("/api/rsvp", body)
+	require.Equal(t, http.StatusOK, response.Status, response.Body)
+
+	saved := response.rsvp()
+	assert.Equal(t, 2, saved.Household.TaxiSeatsNeeded)
+	assert.Zero(t, saved.Household.TransportSeatsNeeded, "the shuttle gate is still attends-both")
 }
 
 func TestRSVPRejectsSeatCountsAboveTheBound(t *testing.T) {
@@ -442,6 +468,14 @@ func TestRSVPRejectsSeatCountsAboveTheBound(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, response.Status)
 	assert.Contains(t, response.errorEnvelope().Fields, "transport_seats_needed")
+
+	taxi := submission(answerFor(household.Guests[0], "both"))
+	taxi["taxi_seats_needed"] = 21
+
+	refused := app.putJSON("/api/rsvp", taxi)
+
+	require.Equal(t, http.StatusBadRequest, refused.Status, refused.Body)
+	assert.Contains(t, refused.errorEnvelope().Fields, "taxi_seats_needed")
 }
 
 // F3-B07: the pair of counts is one subtraction, so a household on both sides of it

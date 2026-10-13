@@ -23,6 +23,7 @@ The governing constraint is the threat model from [01-vision-scope](01-vision-sc
 | Free-text household note | `household.rsvp_note` | The catch-all for anything the form missed | Own household, admin |
 | Private admin note | `household.admin_note` | Our own planning remarks | **Admin only** |
 | Transport seats needed/offered | `household` | Shuttle capacity gap | Own household, admin |
+| Taxi seats needed | `household.taxi_seats_needed` | Whether to reserve taxis for the ride home | Own household, admin |
 | Seat assignment | `seat_assignment` | The seating plan, church and party | Own household (own unit only), admin |
 | Session records incl. IP and user agent | `session` | Session validity and the audit trail | Nobody in the UI; admin via DB |
 | Login and change history | `audit_log` | Settle "but I said we were coming" | **Admin only** |

@@ -83,6 +83,8 @@ export interface RSVPHousehold {
   /** Church → reception only, and zero unless somebody in the household attends both. */
   transport_seats_needed: number;
   transport_seats_offered: number;
+  /** Reception → St. Pölten only, and zero unless somebody in the household attends the party. */
+  taxi_seats_needed: number;
   has_stroller: boolean;
   /** The household's free-text note to us. Theirs, not `admin_note`, which is ours. */
   rsvp_note: string;
@@ -179,6 +181,7 @@ export interface RSVPMemberRequest {
 export interface RSVPSaveRequest {
   transport_seats_needed: number;
   transport_seats_offered: number;
+  taxi_seats_needed: number;
   has_stroller: boolean;
   rsvp_note: string;
   members: RSVPMemberRequest[];
@@ -220,8 +223,11 @@ export interface AdminHouseholdOverview {
 /** One household in full, as the detail page edits it. */
 export interface AdminHousehold extends AdminHouseholdOverview {
   admin_note: string;
+  /** Read-only here: the four RSVP-answerable fields have one writer, which is the
+      RSVP endpoint that runs the RSVP rules. See the Go DTO for the reasoning. */
   transport_seats_needed: number;
   transport_seats_offered: number;
+  taxi_seats_needed: number;
   has_stroller: boolean;
   members: AdminGuest[];
 }

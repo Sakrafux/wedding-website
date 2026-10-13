@@ -214,6 +214,36 @@ describe("the RSVP form", () => {
     expect(screen.getByRole("button", { name: `Einen weniger: ${seatLabel}` })).toBeEnabled();
   });
 
+  // The taxi question's gate is the party scope, not "attends both": a party-only
+  // household never makes the church → reception trip and still needs the ride home.
+  it("shows the taxi question for the party answer alone, starting at zero", async () => {
+    stubRSVP({ members: [rsvpMember({ attending: "party_only" })] });
+
+    await openForm();
+
+    const seatLabel = "Wie viele Taxi-Plätze braucht ihr?";
+    // Zero is the honest "we need no seats" — there is no third card to go back to.
+    expect(screen.getByRole("button", { name: `Einen weniger: ${seatLabel}` })).toBeDisabled();
+    expect(screen.getByRole("button", { name: `Einen mehr: ${seatLabel}` })).toBeEnabled();
+    // The shuttle's question is gone at this scope: the two trips gate independently.
+    expect(screen.queryByRole("radiogroup", { name: /Fahrt aus/ })).not.toBeInTheDocument();
+  });
+
+  // Same rule as the shuttle's, one trip later: a number that vanishes without
+  // explanation is exactly the thing that gets phoned in about.
+  it("explains that the taxi answer no longer applies when the section disappears", async () => {
+    stubRSVP({
+      members: [rsvpMember({ attending: "both" })],
+      household: { ...rsvpAnswer().household, taxi_seats_needed: 2 },
+    });
+
+    const { user } = await openForm();
+
+    await user.click(card("Anna Müller").getByRole("radio", { name: /Nur zur Kirche/ }));
+
+    expect(screen.getByText(/Angaben zur Taxifahrt gelten nicht mehr/)).toBeInTheDocument();
+  });
+
   // F3-F08: three quarters of the guest list eats everything, so the common answer
   // costs no tap. Asserted on the request body, not on the radio group: a default
   // written only into `value` submits whatever the state still says, which is null.

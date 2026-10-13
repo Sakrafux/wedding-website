@@ -186,13 +186,16 @@ func TestHouseholdLogisticsDefaultsAreEmpty(t *testing.T) {
 	var household struct {
 		Needed      int  `db:"transport_seats_needed"`
 		Offered     int  `db:"transport_seats_offered"`
+		TaxiNeeded  int  `db:"taxi_seats_needed"`
 		HasStroller bool `db:"has_stroller"`
 	}
 	require.NoError(t, database.Read.Get(&household,
-		`SELECT transport_seats_needed, transport_seats_offered, has_stroller FROM household WHERE id = ?`, householdID))
+		`SELECT transport_seats_needed, transport_seats_offered, taxi_seats_needed, has_stroller
+		 FROM household WHERE id = ?`, householdID))
 
 	assert.Zero(t, household.Needed)
 	assert.Zero(t, household.Offered)
+	assert.Zero(t, household.TaxiNeeded)
 	assert.False(t, household.HasStroller)
 }
 

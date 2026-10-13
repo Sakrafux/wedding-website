@@ -73,10 +73,13 @@ type RSVPHousehold struct {
 	Addressee string `json:"addressee"`
 	// Church → reception only. Zero when nobody in the household attends both, which
 	// the server enforces rather than trusting the form to hide the fields.
-	TransportSeatsNeeded  int    `json:"transport_seats_needed"`
-	TransportSeatsOffered int    `json:"transport_seats_offered"`
-	HasStroller           bool   `json:"has_stroller"`
-	RSVPNote              string `json:"rsvp_note"`
+	TransportSeatsNeeded  int `json:"transport_seats_needed"`
+	TransportSeatsOffered int `json:"transport_seats_offered"`
+	// Reception → city only. Zero when nobody in the household attends the party —
+	// the same rule the pair above follows for its own trip.
+	TaxiSeatsNeeded int    `json:"taxi_seats_needed"`
+	HasStroller     bool   `json:"has_stroller"`
+	RSVPNote        string `json:"rsvp_note"`
 	// RSVPSubmittedAt is null until the household has answered once. The frontend
 	// reads it to choose between "Zusagen" and "Antwort ändern" in the navigation.
 	RSVPSubmittedAt *time.Time `json:"rsvp_submitted_at"`
@@ -123,9 +126,11 @@ type RSVPSaveRequest struct {
 	// A household is not a coach: the same bound as the admin household endpoints, and
 	// for the same reason — twenty catches a stray keystroke rather than a plausible
 	// answer.
-	TransportSeatsNeeded  int  `json:"transport_seats_needed" validate:"gte=0,lte=20"`
-	TransportSeatsOffered int  `json:"transport_seats_offered" validate:"gte=0,lte=20"`
-	HasStroller           bool `json:"has_stroller"`
+	TransportSeatsNeeded  int `json:"transport_seats_needed" validate:"gte=0,lte=20"`
+	TransportSeatsOffered int `json:"transport_seats_offered" validate:"gte=0,lte=20"`
+	// The same bound as the pair above for the same reason — a taxi, not a coach.
+	TaxiSeatsNeeded int  `json:"taxi_seats_needed" validate:"gte=0,lte=20"`
+	HasStroller     bool `json:"has_stroller"`
 	// The cap matches admin_note's. Not a product rule — a protection against a paste
 	// accident, since the note is shown in full in the admin inbox.
 	RSVPNote string `json:"rsvp_note" validate:"max=2000"`

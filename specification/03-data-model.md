@@ -24,6 +24,7 @@ The unit of authentication and of RSVP.
 | `code` | TEXT UNIQUE | The printed login code, normalized (uppercase, no dashes). |
 | `transport_seats_needed` | INTEGER | Default 0. Seats this household needs for the church → reception trip. Not derived from household size; some members drive themselves. Mutually exclusive with `transport_seats_offered` — enforced in the domain (`F3-B07`), not by a CHECK, so the refusal can be a field error rather than a driver error. |
 | `transport_seats_offered` | INTEGER | Default 0. Spare seats this household can offer others. Zero whenever `transport_seats_needed` is not. |
+| `taxi_seats_needed` | INTEGER | Default 0. Seats this household needs in a taxi from the reception back into the city — the count that decides whether we reserve one at all (migration `0007`). One column, not a needed/offered pair like the two above: a household can offer strangers a lift between the venues, but nobody offers a seat in a taxi we would have to order. Zeroed by the domain whenever nobody in the household attends the party (`NormalizeHouseholdAnswer`) and asked only then — the trip's scope, which is why the gate differs from the shuttle pair's "attends both". |
 | `has_stroller` | BOOLEAN | Default 0. Brings a pram, which needs floor space next to a unit rather than a seat. A flag, not a count: nobody brings two. |
 | `admin_note` | TEXT | Private note for us. Never sent to a guest session. |
 | `rsvp_note` | TEXT | Free-text note from the household to us. The deliberate escape hatch: anything the structured fields do not cover goes here. No length limit worth enforcing beyond a sane cap. Must be surfaced prominently in the admin dashboard — an unread note is a missed request. |
@@ -203,6 +204,7 @@ Everything else that is genuinely static (page text, wedding date, venue) is har
 - Midnight snack count — party attendees only.
 - Children by caterer age bracket, computed from `age` (brackets configurable, since every caterer draws them differently).
 - Transport balance: total `transport_seats_needed` vs. total `transport_seats_offered` across households — no household contributes to both sides (`F3-B07`), and the resulting gap — the number that tells us whether to hire a shuttle. Matching individual riders to drivers is done by us offline, not by the app.
+- Taxi headcount: total `taxi_seats_needed` across households — the number that sizes the taxi reservation for the reception → city trip. No balance to compute: there is no supply side, only whether one taxi is enough.
 - Special needs list: high chairs and wheelchair space per guest, prams per household — the things that must be physically arranged.
 - Consolidated dietary list, grouped so the caterer gets one readable page.
 - Delta list: all `origin = 'guest_added'` guests, newest first.

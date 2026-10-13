@@ -108,6 +108,7 @@ func (useCase *UseCase) Create(ctx context.Context, draft domain.Household) (dom
 			"admin_note":              created.AdminNote,
 			"transport_seats_needed":  created.TransportSeatsNeeded,
 			"transport_seats_offered": created.TransportSeatsOffered,
+			"taxi_seats_needed":       created.TaxiSeatsNeeded,
 			"has_stroller":            created.HasStroller,
 		}),
 	))

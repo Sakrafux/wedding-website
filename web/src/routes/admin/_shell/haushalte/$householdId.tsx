@@ -583,7 +583,7 @@ function RSVPSection({ household }: { household: AdminHousehold }) {
           : householdLabels.rsvpNotAnswered}
       </p>
 
-      {/* Read-only, next to the link that edits them properly: these three are answers,
+      {/* Read-only, next to the link that edits them properly: these four are answers,
           not settings, and editing them beside the household name bypassed the RSVP rules
           (F5-B05). */}
       <dl className="text-small flex flex-col gap-1">
@@ -596,6 +596,10 @@ function RSVPSection({ household }: { household: AdminHousehold }) {
           value={
             household.transport_seats_offered > 0 ? household.transport_seats_offered : householdLabels.rsvpNothing
           }
+        />
+        <AnswerRow
+          label={householdLabels.rsvpTaxiNeeded}
+          value={household.taxi_seats_needed > 0 ? household.taxi_seats_needed : householdLabels.rsvpNothing}
         />
         <AnswerRow
           label={householdLabels.rsvpStroller}

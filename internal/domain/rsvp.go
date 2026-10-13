@@ -114,15 +114,31 @@ func NormalizeGuestAnswer(guest Guest) Guest {
 // attend one half and which still carries a seat count would inflate the shuttle
 // capacity gap — the one number those two fields exist to produce. The form hides
 // them in that case (F3-F03); this is why it does not matter if it does not.
+//
+// The taxi count follows the same rule one trip later: reception → city, so its gate
+// is "somebody attends the party" rather than "somebody attends both" — a guest who
+// comes only to the party still needs the ride home, and a count carried past a
+// household that stopped attending the party would inflate the taxi reservation the
+// count exists to size.
 func NormalizeHouseholdAnswer(household Household, members []Guest) Household {
+	attendsBoth := false
+	attendsParty := false
 	for _, member := range members {
-		if member.Attending != nil && *member.Attending == AttendingBoth {
-			return household
+		if member.AttendsChurch() && member.AttendsParty() {
+			attendsBoth = true
+		}
+		if member.AttendsParty() {
+			attendsParty = true
 		}
 	}
 
-	household.TransportSeatsNeeded = 0
-	household.TransportSeatsOffered = 0
+	if !attendsBoth {
+		household.TransportSeatsNeeded = 0
+		household.TransportSeatsOffered = 0
+	}
+	if !attendsParty {
+		household.TaxiSeatsNeeded = 0
+	}
 	return household
 }
 
@@ -223,6 +239,7 @@ func ValidateTransportSeats(needed, offered int) error {
 type HouseholdAnswer struct {
 	TransportSeatsNeeded  int
 	TransportSeatsOffered int
+	TaxiSeatsNeeded       int
 	HasStroller           bool
 	RSVPNote              string
 }
@@ -236,6 +253,7 @@ func ApplyHouseholdAnswer(current Household, answer HouseholdAnswer, members []G
 	updated := current
 	updated.TransportSeatsNeeded = answer.TransportSeatsNeeded
 	updated.TransportSeatsOffered = answer.TransportSeatsOffered
+	updated.TaxiSeatsNeeded = answer.TaxiSeatsNeeded
 	updated.HasStroller = answer.HasStroller
 	updated.RSVPNote = answer.RSVPNote
 
@@ -244,6 +262,7 @@ func ApplyHouseholdAnswer(current Household, answer HouseholdAnswer, members []G
 	var changes Changes
 	changes.compare("transport_seats_needed", current.TransportSeatsNeeded, updated.TransportSeatsNeeded)
 	changes.compare("transport_seats_offered", current.TransportSeatsOffered, updated.TransportSeatsOffered)
+	changes.compare("taxi_seats_needed", current.TaxiSeatsNeeded, updated.TaxiSeatsNeeded)
 	changes.compare("has_stroller", current.HasStroller, updated.HasStroller)
 	// The note is recorded in the audit payload on purpose: it is the household's own
 	// words to us, the log is admin-only, and a note edited to remove a request is

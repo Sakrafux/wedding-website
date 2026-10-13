@@ -48,7 +48,7 @@ const codeAssignmentAttempts = 5
 // the one column still missing, because nothing reads it yet — F6's note inbox is
 // what adds it, here and nowhere else.
 const householdColumns = `id, name, addressee, code, transport_seats_needed, transport_seats_offered,
-	has_stroller, admin_note, rsvp_note, rsvp_submitted_at, rsvp_updated_at, last_login_at`
+	taxi_seats_needed, has_stroller, admin_note, rsvp_note, rsvp_submitted_at, rsvp_updated_at, last_login_at`
 
 // FindByCode returns the household holding this login code, or ErrNotFound.
 //
@@ -121,13 +121,13 @@ func (store *HouseholdStore) List(ctx context.Context) ([]domain.HouseholdOvervi
 func (store *HouseholdStore) Create(ctx context.Context, household domain.Household) (domain.Household, error) {
 	const insertHousehold = `
 		INSERT INTO household (name, addressee, code, transport_seats_needed, transport_seats_offered,
-		                       has_stroller, admin_note)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+		                       taxi_seats_needed, has_stroller, admin_note)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 	err := store.withGeneratedCode(func(code string) error {
 		result, err := store.database.Write.ExecContext(ctx, insertHousehold,
 			household.Name, household.Addressee, code, household.TransportSeatsNeeded, household.TransportSeatsOffered,
-			household.HasStroller, household.AdminNote)
+			household.TaxiSeatsNeeded, household.HasStroller, household.AdminNote)
 		if err != nil {
 			return err
 		}
@@ -151,12 +151,12 @@ func (store *HouseholdStore) Update(ctx context.Context, household domain.Househ
 	const updateHousehold = `
 		UPDATE household
 		SET name = ?, addressee = ?, transport_seats_needed = ?, transport_seats_offered = ?,
-		    has_stroller = ?, admin_note = ?
+		    taxi_seats_needed = ?, has_stroller = ?, admin_note = ?
 		WHERE id = ?`
 
 	result, err := store.database.Write.ExecContext(ctx, updateHousehold,
 		household.Name, household.Addressee, household.TransportSeatsNeeded, household.TransportSeatsOffered,
-		household.HasStroller, household.AdminNote, household.ID)
+		household.TaxiSeatsNeeded, household.HasStroller, household.AdminNote, household.ID)
 	if err != nil {
 		return fmt.Errorf("updating household: %w", err)
 	}
@@ -262,6 +262,7 @@ type householdRow struct {
 	Code                  string         `db:"code"`
 	TransportSeatsNeeded  int            `db:"transport_seats_needed"`
 	TransportSeatsOffered int            `db:"transport_seats_offered"`
+	TaxiSeatsNeeded       int            `db:"taxi_seats_needed"`
 	HasStroller           bool           `db:"has_stroller"`
 	AdminNote             string         `db:"admin_note"`
 	RSVPNote              string         `db:"rsvp_note"`
@@ -285,6 +286,7 @@ func (row householdRow) toDomain() (domain.Household, error) {
 		Code:                  row.Code,
 		TransportSeatsNeeded:  row.TransportSeatsNeeded,
 		TransportSeatsOffered: row.TransportSeatsOffered,
+		TaxiSeatsNeeded:       row.TaxiSeatsNeeded,
 		HasStroller:           row.HasStroller,
 		AdminNote:             row.AdminNote,
 		RSVPNote:              row.RSVPNote,

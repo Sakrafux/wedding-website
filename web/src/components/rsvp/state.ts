@@ -55,6 +55,7 @@ export interface MemberDraft {
 export interface RSVPDraft {
   transport_seats_needed: number;
   transport_seats_offered: number;
+  taxi_seats_needed: number;
   has_stroller: boolean;
   rsvp_note: string;
   /** Keyed by member id. The order comes from the response, never from this object. */
@@ -81,6 +82,7 @@ export function draftFrom(answer: RSVPResponse): RSVPDraft {
   return {
     transport_seats_needed: answer.household.transport_seats_needed,
     transport_seats_offered: answer.household.transport_seats_offered,
+    taxi_seats_needed: answer.household.taxi_seats_needed,
     has_stroller: answer.household.has_stroller,
     rsvp_note: answer.household.rsvp_note,
     members,
@@ -127,6 +129,7 @@ export function toRequest(draft: RSVPDraft, members: RSVPMember[]): RSVPSaveRequ
   return {
     transport_seats_needed: draft.transport_seats_needed,
     transport_seats_offered: draft.transport_seats_offered,
+    taxi_seats_needed: draft.taxi_seats_needed,
     has_stroller: draft.has_stroller,
     rsvp_note: draft.rsvp_note,
     members: members.map((member) => {
@@ -242,6 +245,16 @@ export function countScopeChanges(draft: RSVPDraft, members: RSVPMember[], scope
  */
 export function attendsBoth(draft: RSVPDraft, members: RSVPMember[]): boolean {
   return members.some((member) => draft.members[member.id]?.attending === "both");
+}
+
+/**
+ * Whether anybody in the household attends the party.
+ *
+ * The taxi section exists only for that case: the trip is reception → city, and the
+ * server zeroes the count otherwise (domain.NormalizeHouseholdAnswer).
+ */
+export function attendsParty(draft: RSVPDraft, members: RSVPMember[]): boolean {
+  return members.some((member) => coversParty(draft.members[member.id]?.attending ?? null));
 }
 
 /** Whether the scope covers the party, which is what gates the catering fields. */

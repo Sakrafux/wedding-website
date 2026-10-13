@@ -107,7 +107,7 @@ func TestNormalizeGuestAnswerKeepsSeatingNeedAndDietaryNoteAtEveryScope(t *testi
 }
 
 func householdWithSeats() domain.Household {
-	return domain.Household{ID: 12, TransportSeatsNeeded: 2, TransportSeatsOffered: 3}
+	return domain.Household{ID: 12, TransportSeatsNeeded: 2, TransportSeatsOffered: 3, TaxiSeatsNeeded: 4}
 }
 
 func memberAt(scope domain.Attending) domain.Guest {
@@ -141,6 +141,39 @@ func TestNormalizeHouseholdAnswerKeepsSeatsWhenAMemberAttendsBoth(t *testing.T) 
 
 	assert.Equal(t, 2, normalized.TransportSeatsNeeded)
 	assert.Equal(t, 3, normalized.TransportSeatsOffered)
+	assert.Equal(t, 4, normalized.TaxiSeatsNeeded, "a guest attending both still needs the ride home")
+}
+
+// The taxi count is the reception → city trip, which every party guest makes —
+// including one who skips the ceremony. Keeping it otherwise would inflate the
+// taxi reservation it exists to size.
+func TestNormalizeHouseholdAnswerZeroesTaxiSeatsWithoutAMemberAttendingTheParty(t *testing.T) {
+	t.Parallel()
+
+	members := []domain.Guest{
+		memberAt(domain.AttendingChurchOnly),
+		memberAt(domain.AttendingNo),
+		{},
+	}
+
+	normalized := domain.NormalizeHouseholdAnswer(householdWithSeats(), members)
+
+	assert.Zero(t, normalized.TaxiSeatsNeeded)
+}
+
+// The one case where the two gates come apart: a party-only household keeps its
+// taxi count and loses its shuttle counts, because the guest skipped the trip
+// the shuttle covers and kept the one the taxi does.
+func TestNormalizeHouseholdAnswerKeepsTaxiSeatsForAPartyOnlyHousehold(t *testing.T) {
+	t.Parallel()
+
+	members := []domain.Guest{memberAt(domain.AttendingPartyOnly)}
+
+	normalized := domain.NormalizeHouseholdAnswer(householdWithSeats(), members)
+
+	assert.Zero(t, normalized.TransportSeatsNeeded)
+	assert.Zero(t, normalized.TransportSeatsOffered)
+	assert.Equal(t, 4, normalized.TaxiSeatsNeeded)
 }
 
 // Exhaustive over the four values, so a fifth one added later fails here first —
@@ -282,14 +315,23 @@ func TestApplyHouseholdAnswerZeroesSeatsAndReportsThem(t *testing.T) {
 	updated, changes := domain.ApplyHouseholdAnswer(current, domain.HouseholdAnswer{
 		TransportSeatsNeeded:  4,
 		TransportSeatsOffered: 1,
-		RSVPNote:              "Wir kommen erst nach der Zeremonie.",
+		// Stored as sent: the party-only member below gates the shuttle pair
+		// out, but this is the trip the taxi count covers.
+		TaxiSeatsNeeded: 2,
+		RSVPNote:        "Wir kommen erst nach der Zeremonie.",
 	}, []domain.Guest{memberAt(domain.AttendingPartyOnly)})
 
 	assert.Zero(t, updated.TransportSeatsNeeded)
 	assert.Zero(t, updated.TransportSeatsOffered)
-	assert.Equal(t, map[string]any{"transport_seats_needed": 2, "rsvp_note": ""}, changes.Before)
+	assert.Equal(t, 2, updated.TaxiSeatsNeeded)
+	assert.Equal(t, map[string]any{
+		"transport_seats_needed": 2,
+		"taxi_seats_needed":      0,
+		"rsvp_note":              "",
+	}, changes.Before)
 	assert.Equal(t, map[string]any{
 		"transport_seats_needed": 0,
+		"taxi_seats_needed":      2,
 		"rsvp_note":              "Wir kommen erst nach der Zeremonie.",
 	}, changes.After)
 	assert.Equal(t, "Wir kommen erst nach der Zeremonie.", updated.RSVPNote)

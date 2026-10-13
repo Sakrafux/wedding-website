@@ -232,6 +232,7 @@ func submissionFrom(request dto.RSVPSaveRequest) rsvp.Submission {
 		Household: domain.HouseholdAnswer{
 			TransportSeatsNeeded:  request.TransportSeatsNeeded,
 			TransportSeatsOffered: request.TransportSeatsOffered,
+			TaxiSeatsNeeded:       request.TaxiSeatsNeeded,
 			HasStroller:           request.HasStroller,
 			RSVPNote:              request.RSVPNote,
 		},
@@ -254,6 +255,7 @@ func rsvpResponse(answer rsvp.Answer) dto.RSVPResponse {
 			Addressee:             answer.Household.Addressee,
 			TransportSeatsNeeded:  answer.Household.TransportSeatsNeeded,
 			TransportSeatsOffered: answer.Household.TransportSeatsOffered,
+			TaxiSeatsNeeded:       answer.Household.TaxiSeatsNeeded,
 			HasStroller:           answer.Household.HasStroller,
 			RSVPNote:              answer.Household.RSVPNote,
 			RSVPSubmittedAt:       answer.Household.RSVPSubmittedAt,

@@ -34,6 +34,12 @@ type Household struct {
 	// phone.
 	TransportSeatsNeeded  int
 	TransportSeatsOffered int
+	// TaxiSeatsNeeded is how many seats the household wants in a taxi home from
+	// the reception; whether one gets reserved at all is what the count sizes.
+	// Deliberately not a needed/offered pair like the shuttle counts above: a
+	// household can offer strangers a lift between the venues, but nobody offers
+	// a seat in a taxi we would have to order.
+	TaxiSeatsNeeded int
 	// HasStroller belongs to the household rather than to a child: a pram needs
 	// floor space rather than a seat, and nobody brings two.
 	HasStroller bool
@@ -84,6 +90,7 @@ type HouseholdPatch struct {
 	AdminNote             *string
 	TransportSeatsNeeded  *int
 	TransportSeatsOffered *int
+	TaxiSeatsNeeded       *int
 	HasStroller           *bool
 }
 
@@ -107,6 +114,9 @@ func ApplyHouseholdPatch(current Household, patch HouseholdPatch) (Household, Ch
 	if patch.TransportSeatsOffered != nil {
 		updated.TransportSeatsOffered = *patch.TransportSeatsOffered
 	}
+	if patch.TaxiSeatsNeeded != nil {
+		updated.TaxiSeatsNeeded = *patch.TaxiSeatsNeeded
+	}
 	if patch.HasStroller != nil {
 		updated.HasStroller = *patch.HasStroller
 	}
@@ -117,6 +127,7 @@ func ApplyHouseholdPatch(current Household, patch HouseholdPatch) (Household, Ch
 	changes.compare("admin_note", current.AdminNote, updated.AdminNote)
 	changes.compare("transport_seats_needed", current.TransportSeatsNeeded, updated.TransportSeatsNeeded)
 	changes.compare("transport_seats_offered", current.TransportSeatsOffered, updated.TransportSeatsOffered)
+	changes.compare("taxi_seats_needed", current.TaxiSeatsNeeded, updated.TaxiSeatsNeeded)
 	changes.compare("has_stroller", current.HasStroller, updated.HasStroller)
 
 	return updated, changes

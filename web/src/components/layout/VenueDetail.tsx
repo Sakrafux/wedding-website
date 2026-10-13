@@ -1,33 +1,36 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
 
 import { locationLabels } from "@/lib/labels";
 
 import { InfoSection, PageHeading, PageSections } from "./InfoSection";
+import { MapLink } from "./MapLink";
 
 /**
  * One venue's page: the address, a link that opens it in a map, and how to get there.
  *
  * Both venue pages render through this component — two places with the same set of
  * facts, and two hand-written pages are two places for a postcode to be wrong. What
- * differs goes in `children`: only the party page carries Übernachtung (F2-F09).
+ * differs goes in `children`: only the party page carries Abreise and Übernachtung
+ * (F2-F09).
  *
  * The map is a **plain external link**, never an embedded frame: an iframe is a third
  * party in the critical path, it needs a `frame-src` hole in the CSP (E0-07), and it
  * hands every guest's IP to a mapping company — for a link that does the same job.
- *
- * `address` and `mapUrl` are optional only while the venues are unbooked; both pages
- * ship with the address (TODO.md).
+ * Reaffirmed 2026-10-14, when the venue pages got their real addresses and maps.
  */
 export function VenueDetail({
   title,
   address,
   mapUrl,
+  arrival,
   children,
 }: {
   title: string;
-  address?: string[];
-  mapUrl?: string;
+  /** One string per rendered line. */
+  address: readonly string[];
+  mapUrl: string;
+  /** One string per rendered paragraph. */
+  arrival: readonly string[];
   children?: React.ReactNode;
 }) {
   return (
@@ -35,37 +38,21 @@ export function VenueDetail({
       <PageHeading title={title} />
 
       <InfoSection id="adresse" title={locationLabels.addressHeading}>
-        {address ? (
-          <address className="text-ink-muted not-italic">
-            {address.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </address>
-        ) : (
-          <p className="text-ink-muted">{locationLabels.addressOpen}</p>
-        )}
-
-        {mapUrl ? (
-          // Marked as external in the text as well as by the icon: nobody in this
-          // audience should be surprised by a new tab.
-          <a
-            href={mapUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary inline-flex items-center gap-2 underline"
-          >
-            <ExternalLink className="size-4" aria-hidden="true" />
-            <span>
-              {locationLabels.mapLink} {locationLabels.externalHint}
+        <address className="text-ink-muted not-italic">
+          {address.map((line) => (
+            <span key={line} className="block">
+              {line}
             </span>
-          </a>
-        ) : null}
+          ))}
+        </address>
+
+        <MapLink url={mapUrl} />
       </InfoSection>
 
       <InfoSection id="anreise" title={locationLabels.arrivalHeading}>
-        <p>{locationLabels.arrivalOpen}</p>
+        {arrival.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
       </InfoSection>
 
       {children}

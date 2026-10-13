@@ -38,7 +38,7 @@ func NewRSVPStore(database *configuration.Database) *RSVPStore {
 func (store *RSVPStore) SaveAnswer(ctx context.Context, household domain.Household, members []domain.Guest) error {
 	const updateHousehold = `
 		UPDATE household
-		SET transport_seats_needed = ?, transport_seats_offered = ?, has_stroller = ?,
+		SET transport_seats_needed = ?, transport_seats_offered = ?, taxi_seats_needed = ?, has_stroller = ?,
 		    rsvp_note = ?, rsvp_submitted_at = ?, rsvp_updated_at = ?
 		WHERE id = ?`
 
@@ -54,7 +54,7 @@ func (store *RSVPStore) SaveAnswer(ctx context.Context, household domain.Househo
 
 	return inTransaction(ctx, store.database, func(transaction *sqlx.Tx) error {
 		result, err := transaction.ExecContext(ctx, updateHousehold,
-			household.TransportSeatsNeeded, household.TransportSeatsOffered, household.HasStroller,
+			household.TransportSeatsNeeded, household.TransportSeatsOffered, household.TaxiSeatsNeeded, household.HasStroller,
 			household.RSVPNote, nullableTimestamp(household.RSVPSubmittedAt), nullableTimestamp(household.RSVPUpdatedAt),
 			household.ID)
 		if err != nil {

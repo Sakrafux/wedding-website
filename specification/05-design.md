@@ -132,6 +132,8 @@ Built on shadcn/ui (Radix primitives, copied into the repo).
 | `ScopeSelector` | The household-level "Wir kommen zu:" bulk setter. Large radio cards, not a `<select>`. |
 | `AddPlusOneSheet` | One field: the companion's name. Offered only to a household of one that has not already added somebody; every other household sees an explanation and our phone number in its place, never a disabled button. |
 | `TransportFields` | Seats needed / seats offered steppers, with plain-language explanation of what they are for. |
+| `TaxiFields` | One stepper from zero, capped at the household's own size: the ride home has no "we can offer" side and no third card to go back to. |
+| `MapLink` | A map as a plain external link, marked as such in words and icon — never an embedded frame (E0-07, and the CSP has no `frame-src`). |
 | `RsvpSummary` | Post-submit recap of exactly what was saved. Unmissable. |
 | `SeatingMap` | Renders the checked-in floor-plan SVG; colours the own table `primary-soft` with an `accent` outline, labels it with names. Pan/zoom on mobile. |
 | `GalleryGrid` / `Lightbox` | Curated gallery. |

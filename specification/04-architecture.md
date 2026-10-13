@@ -128,7 +128,7 @@ GET    /api/me                                      → household + members + fl
 
 GET    /api/rsvp                                    → own household RSVP state
 PUT    /api/rsvp                                    → full replace: per-member scope + catering,
-                                                      transport seats, household note
+                                                       transport and taxi seats, household note
 POST   /api/rsvp/members            { name }        → one adult plus-one, single-person households
 DELETE /api/rsvp/members/{id}                       → only guest_added, pre-deadline
 

@@ -15,9 +15,11 @@ import { AddPlusOne } from "./AddPlusOne";
 import { RSVPMemberCard } from "./RSVPMemberCard";
 import { RSVPSummary } from "./RSVPSummary";
 import { ScopeSelector } from "./ScopeSelector";
+import { TaxiFields } from "./TaxiFields";
 import { TransportFields } from "./TransportFields";
 import {
   attendsBoth,
+  attendsParty,
   draftFrom,
   maxNoteLength,
   memberCardId,
@@ -234,6 +236,11 @@ export function RSVPForm({
 
   const transportVisible = attendsBoth(draft, members);
   const hadTransportSeats = answer.household.transport_seats_needed > 0 || answer.household.transport_seats_offered > 0;
+  // The two trips gate independently: a party-only household loses the shuttle
+  // section and keeps the taxi one, so each needs its own visibility and its own
+  // dropped notice.
+  const taxiVisible = attendsParty(draft, members);
+  const hadTaxiSeats = answer.household.taxi_seats_needed > 0;
 
   return (
     <form
@@ -304,6 +311,14 @@ export function RSVPForm({
         draft={draft}
         visible={transportVisible}
         droppedNotice={hadTransportSeats}
+        onChange={(change) => setDraft((current) => ({ ...current, ...change }))}
+        fieldErrors={fieldErrors}
+      />
+
+      <TaxiFields
+        draft={draft}
+        visible={taxiVisible}
+        droppedNotice={hadTaxiSeats}
         onChange={(change) => setDraft((current) => ({ ...current, ...change }))}
         fieldErrors={fieldErrors}
       />

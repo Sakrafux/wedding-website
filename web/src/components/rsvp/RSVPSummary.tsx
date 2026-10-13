@@ -49,6 +49,9 @@ export function RSVPSummary({ answer }: { answer: RSVPResponse }) {
           {answer.household.transport_seats_offered > 0 ? (
             <SummaryRow label={rsvpLabels.summaryTransportOffered} value={answer.household.transport_seats_offered} />
           ) : null}
+          {answer.household.taxi_seats_needed > 0 ? (
+            <SummaryRow label={rsvpLabels.summaryTaxiNeeded} value={answer.household.taxi_seats_needed} />
+          ) : null}
           {answer.household.has_stroller ? (
             <SummaryRow label={rsvpLabels.summaryStroller} value={rsvpLabels.summaryStrollerYes} />
           ) : null}

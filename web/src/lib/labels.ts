@@ -249,8 +249,7 @@ export const rsvpLabels = {
   /** The name is editable here, not only displayed: we typed the guest list off an
       address book, and the people on it know best how they are called (`F4-F04`). */
   memberNameLabel: "Name",
-  memberNameHelp:
-    "So steht der Name in der Liste. Bitte den vollständigen Namen angeben.",
+  memberNameHelp: "So steht der Name in der Liste. Bitte den vollständigen Namen angeben.",
   memberScopeLabel: (name: string) => `Wozu kommt ${name}?`,
   memberScopeHelp:
     "Kirche und Feier sind getrennt – manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
@@ -260,8 +259,7 @@ export const rsvpLabels = {
   portionHelp:
     "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra – sag ruhig, was wirklich passt.",
   midnightSnackLabel: (name: string) => `Mitternachtssnack für ${name}`,
-  midnightSnackHelp:
-    "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele.",
+  midnightSnackHelp: "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele.",
   midnightSnackHint: "Kleine Stärkung spät am Abend",
   seatingNeedLabel: (name: string) => `Platz für ${name}`,
   seatingNeedHelp:
@@ -289,6 +287,16 @@ export const rsvpLabels = {
       is exactly the kind of thing that gets phoned in about. */
   transportDropped:
     "Die Angaben zur Fahrt gelten nicht mehr, weil niemand von euch zu Kirche und Feier kommt. Wir speichern sie nicht.",
+  taxiHeading: "Taxifahrt von der Feier nach St. Pölten",
+  /** No direction question, unlike the shuttle above: a taxi is something we would
+      order, so there is no "we can offer" side and the count starts at zero. */
+  taxiSeatsLabel: "Wie viele Taxi-Plätze braucht ihr?",
+  taxiSeatsHelp:
+    "An dieser Zahl entscheiden wir, ob wir ein (oder mehrere) Taxis für die Fahrt von der Feier nach St. Pölten reservieren.",
+  /** Same rule as the shuttle's, one trip later: the count is the household's answer,
+      and the paragraph says it went rather than letting the number vanish. */
+  taxiDropped:
+    "Die Angaben zur Taxifahrt gelten nicht mehr, weil niemand von euch zur Feier kommt. Wir speichern sie nicht.",
   strollerLabel: "Wir bringen einen Kinderwagen mit",
   strollerHelp:
     "Ein Kinderwagen braucht Platz zum Abstellen, keinen Sitzplatz. Deshalb fragen wir das einmal für den ganzen Haushalt.",
@@ -354,6 +362,7 @@ export const rsvpLabels = {
   summaryDietaryNote: "Allergien",
   summaryTransportNeeded: "Plätze gesucht",
   summaryTransportOffered: "Plätze angeboten",
+  summaryTaxiNeeded: "Taxi-Plätze gesucht",
   summaryStroller: "Kinderwagen",
   summaryStrollerYes: "Ja",
   summaryNote: "Nachricht an uns",
@@ -499,11 +508,12 @@ export const householdLabels = {
 
   rsvpHeading: "Rückmeldung",
   rsvpNotAnswered: "Dieser Haushalt hat noch nicht geantwortet.",
-  /** Shown here, editable only through the RSVP form: these three are the household's
+  /** Shown here, editable only through the RSVP form: these four are the household's
       own answers, and their one writer is the endpoint that runs the RSVP rules
       (F5-B05). */
   rsvpTransportNeeded: "Plätze gesucht (Kirche → Feier)",
   rsvpTransportOffered: "Plätze angeboten (Kirche → Feier)",
+  rsvpTaxiNeeded: "Taxi-Plätze gesucht (Feier → St. Pölten)",
   rsvpStroller: "Kinderwagen",
   rsvpYes: "Ja",
   rsvpNo: "Nein",
@@ -545,11 +555,11 @@ export const householdLabels = {
  * sitting.
  *
  * Several blocks below are **placeholders**, marked as such and tracked in TODO.md:
- * the venues, the schedule and the hotel list are not decided yet. They are written
- * as honest sentences ("steht noch nicht fest") rather than as lorem ipsum, because
- * the one thing worse than a page that says the date is open is a page that says
- * "Lorem ipsum" to eighty guests. Dresscode, Geschenke and the bank details were
- * placeholders too until 2026-10-11.
+ * the schedule is not decided yet. They are written as honest sentences ("steht noch
+ * nicht fest") rather than as lorem ipsum, because the one thing worse than a page
+ * that says the date is open is a page that says "Lorem ipsum" to eighty guests.
+ * Dresscode, Geschenke and the bank details were placeholders until 2026-10-11, and
+ * the venues and the hotel list landed 2026-10-14.
  * ------------------------------------------------------------------------- */
 
 /**
@@ -694,24 +704,48 @@ export const locationLabels = {
   partyTeaser: "Wo danach gefeiert wird. Adresse, Parken, Anreise und Tipps zum Übernachten auf der Seite zur Feier.",
   churchDetailLink: "Zur Trauung",
   partyDetailLink: "Zur Feier",
-  addressOpen: "Die Adresse steht noch nicht fest. Sie kommt hier auf die Seite, sobald wir gebucht haben.",
+  addressHeading: "Adresse",
+  /** One line per entry, as every address block on these pages renders them. */
+  churchAddress: ["Prandtauerkirche St. Pölten", "Prandtauerstraße 2", "3100 St. Pölten"],
+  partyAddress: ["Restaurant Lukić", "Bahnhofstraße 3", "3150 Wilhelmsburg"],
+  /** Short links, because they are typed by hand nowhere and outlive any embed. */
+  churchMapUrl: "https://maps.app.goo.gl/KqCTTZ5ADfeC6fMv5",
+  partyMapUrl: "https://maps.app.goo.gl/XTrsSH79hjR1dhJm7",
+  /** The route between the two venues, on the overview where the transfer text lives. */
+  transferMapUrl: "https://maps.app.goo.gl/WhqiJz9XFG92wEDy9",
   mapLink: "Auf der Karte ansehen",
   /** Said in the link text as well as by the icon: nobody in this audience should be
       surprised by a new tab. */
   externalHint: "(öffnet in einem neuen Tab)",
-  addressHeading: "Adresse",
   arrivalHeading: "Anreise & Parken",
-  arrivalOpen: "Wie ihr am besten hinkommt und wo ihr parken könnt, schreiben wir hier auf, sobald der Ort feststeht.",
+  /** One entry per rendered paragraph. */
+  churchArrival: [
+    "In der Nähe der Prandtauerkirche gibt es mehrere Parkgaragen. Die Tiefgarage Rathausplatz liegt direkt bei der Kirche, könnte am Samstag Nachmittag aber stark gefüllt sein.",
+    "Falls du öffentlich kommst, liegt die Kirche nur wenige Gehminuten vom Bahnhof entfernt und ist somit sowohl an Busse als auch Züge gut angebunden.",
+  ],
+  partyArrival: [
+    "Prinzipiell gibt es einen Parkplatz direkt angrenzend an den Saal. Ansonsten gibt es auch viele gratis Parkplätze entlang der Straßen im Ortsgebiet.",
+    "Falls du öffentlich kommst, fährt die Traisentalbahn zum Bahnhof Wilhelmsburg (ca. 400 m entfernt).",
+  ],
+  departureHeading: "Abreise",
+  /** On the party page, not the overview: it is the trip the evening ends with, and
+      it is where the taxi question below points back at the RSVP. */
+  partyDeparture: [
+    "Für die Abreise ohne eigenes Auto bieten sich entweder Öffis oder Taxis an. Der genaue Zeitplan ist derzeit noch unklar aufgrund von Schienenersatzverkehr, aber zumindest um ca. 22:30 sollte eine späte Verbindung sein (potentiell auch später).",
+    "Ansonsten würde es sich auch anbieten, gemeinsam mit dem Taxi zu fahren. Gib deshalb bei deiner Antwort an, ob du einen Platz benötigst, damit wir eine ungefähre Zahl haben.",
+  ],
+  /** On the party page, not the overview: somebody looking for a bed is looking for
+      one near where the evening ends. */
+  accommodationHeading: "Übernachtung",
+  partyAccommodation: [
+    "Die Übernachtungsmöglichkeiten in Wilhelmsburg sind begrenzt, aber potentiell möglich bei WALTNER Wilhelmsburg oder im Gasthof Franzl. Ein größeres Angebot an Hotels gibt es erst wieder in St. Pölten.",
+    "Vermutlich ist es deshalb einfacher, das Auto in St. Pölten zu lassen und bei Bedarf dort zu übernachten.",
+  ],
   /** Stays on the overview: it belongs to neither venue – it is the bit between them,
       and it is the paragraph a guest reads before answering the transport question. */
   transferHeading: "Von der Kirche zur Feier",
   transfer:
-    "Zwischen Kirche und Feier liegt eine kurze Fahrt. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden – sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
-  /** On the party page, not the overview: somebody looking for a bed is looking for
-      one near where the evening ends. */
-  accommodationHeading: "Übernachtung",
-  accommodationOpen:
-    "Eine Liste mit Hotels und Pensionen in der Nähe kommt hier auf die Seite. Zimmer reserviert haben wir nicht.",
+    "Zwischen Kirche und Feier liegt eine kurze Fahrt von 15–20 Minuten. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden – sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
   backToOverview: "Zurück zu Location & Anreise",
 } as const;
 
@@ -778,7 +812,7 @@ export const privacyLabels = {
   lead: "Kurz und ohne Juristendeutsch: Das hier läuft auf unserem eigenen Server, und außer uns bekommt niemand eure Daten zu sehen.",
   storedHeading: "Was wir speichern",
   stored:
-    "Euren Haushalt mit dem Namen, unter dem wir euch eingeladen haben, die Namen der Personen, euren Code von der Einladungskarte, und alles, was ihr im Antwortformular ausfüllt: wer kommt, wozu, was ihr esst, ob ihr Plätze im Auto braucht oder anbietet, und eure Nachricht an uns.",
+    "Euren Haushalt mit dem Namen, unter dem wir euch eingeladen haben, die Namen der Personen, euren Code von der Einladungskarte, und alles, was ihr im Antwortformular ausfüllt: wer kommt, wozu, was ihr esst, ob ihr Plätze im Auto braucht oder anbietet, ob ihr für die Heimfahrt Taxi-Plätze braucht, und eure Nachricht an uns.",
   sensitiveHeading: "Allergien und das Alter der Kinder",
   sensitive:
     "Beides fragen wir, weil das Catering es braucht: Allergien landen auf der Liste für die Küche, das Alter am Hochzeitstag entscheidet über Portion und Preis. Ihr müsst nichts ausfüllen, was ihr nicht wollt – dann ruft uns lieber an.",

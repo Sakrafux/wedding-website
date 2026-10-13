@@ -51,12 +51,13 @@ type AdminHouseholdOverview struct {
 type AdminHousehold struct {
 	AdminHouseholdOverview
 	AdminNote string `json:"admin_note"`
-	// The three RSVP-answerable fields are read-only here: they are shown on the
+	// The four RSVP-answerable fields are read-only here: they are shown on the
 	// detail page and written only through PUT /api/admin/households/{id}/rsvp, which
 	// is the path that runs the RSVP rules (F5-B05). They are absent from the create
 	// and patch requests below for exactly that reason.
 	TransportSeatsNeeded  int          `json:"transport_seats_needed"`
 	TransportSeatsOffered int          `json:"transport_seats_offered"`
+	TaxiSeatsNeeded       int          `json:"taxi_seats_needed"`
 	HasStroller           bool         `json:"has_stroller"`
 	Members               []AdminGuest `json:"members"`
 }

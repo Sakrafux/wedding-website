@@ -4,6 +4,26 @@ Work log for the wedding web app. Newest entry first. One `##` heading per day: 
 
 Entries stay short. The reasoning behind a decision belongs in the spec, the story file or a code comment — this file records *that* it was decided and *when*, and points at where it lives.
 
+## 2026-10-14
+
+Done:
+
+- Taxi count reviewed and finished against the conventions. Migration `0007`: wrong CHECK column (`transport_seats_offered` instead of `taxi_seats_needed`) fixed, header comment written; the staged copy still held the 0006 content and is re-staged. Domain: `NormalizeHouseholdAnswer` now zeroes `taxi_seats_needed` when nobody attends the party (the shuttle pair's rule, one trip later); `TaxiSeatsNeeded` doc comment written.
+- Wiring completed: taxi on `AdminHousehold` (Go + web DTO, `householdResponse`) and the admin detail's read-only answers, `RSVPSummary`, the guests.csv export (the column test caught the omission), the household create/patch SQL and audit payload, the `DisallowUnknownFields` refusal test.
+- RSVP form: the taxi question is its own `TaxiFields` section with a stepper (a number input was against the recorded decision for this audience), its own dropped notice, and a member-count cap; `TransportFields` restored to its reviewed structure. Labels in `rsvpLabels`, none inline. Domain + integration + two web tests for the party-scope gate.
+- Location pages: venue facts (Prandtauerkirche, Restaurant Lukić) moved into `locationLabels`, pages back on `VenueDetail` (now with address/map/arrival props), the map link extracted as `MapLink`; the broken `transfer` sentence completed; dead placeholder labels deleted. Embedded Google-Maps iframes removed — blocked by the CSP and the recorded rejection in `VenueDetail` (see Decisions).
+- Specs updated for the taxi count: `02-features`, `03-data-model` (column + derived count), `04-architecture` sketch, `05-design` inventory, `06-privacy-security` data table + `privacyLabels.stored`, `CLAUDE.md` transport bullet. `TODO.md`: venues and hotel list ticked, taxi decision recorded, status header current. Prettier pass on the touched files plus `popover.tsx` (pre-existing drift, one class-order line).
+- Suites: Go `gofmt`/`vet`/`test` green; web `typecheck` run, scripts otherwise executed by the user — re-run after this session's later label/test edits before committing.
+
+Decisions:
+
+- **Taxi count is gated on the party scope, not "attends both"** — a party-only guest skips the shuttle trip and still needs the ride home; the server zeroes it otherwise. Reasoning in migration `0007` and `domain/rsvp.go`.
+- **Maps stay plain links** — the iframes added with the venue facts were rejected again: no `frame-src` in the CSP (E0-07), third party in the critical path, guest IPs to Google. Recorded in `VenueDetail` and `05-design.md` (component inventory, `MapLink`).
+- **Taxi is one column, not a needed/offered pair** — nobody offers a seat in a taxi we would have to order. Migration `0007` header, `02-features`.
+
+Time: 2h
+Cost: GLM-5.2 — $5.41
+
 ## 2026-10-11
 
 Done:
@@ -28,7 +48,7 @@ Decisions:
 - **IBAN and account holder published** on `/geschenke` — the semi-public acceptance was already recorded (`F2-F05`); the values themselves landed today.
 
 Time: 3h
-Cost: $3
+Cost: GLM-5.2 — $3
 
 ## 2026-09-20
 
@@ -48,7 +68,7 @@ Decisions:
 - Edited on the existing form and saved with it, rather than through a rename endpoint: one screen, one save button, one set of deadline and audit rules.
 
 Time: 0.5h
-Cost: $10.06
+Cost: Opus 5 — $10.06
 
 ## 2026-09-19
 
@@ -68,7 +88,7 @@ Decisions:
 - The admin RSVP page shows the addressee, because it renders the guests' own RSVP body and that body carries no internal name; noted at the heading.
 
 Time: 0.5h
-Cost: $9.55
+Cost: Opus 5 — $9.55
 
 ## 2026-09-01
 
@@ -100,7 +120,7 @@ Decisions:
 - `autoCodeSplitting` stays on. Turning it off would end the per-route fetch outright, but `RSVPForm`'s ~24 kB gzipped of Radix dialog code would move into the initial bundle and be paid on the login screen by every guest. `F11-06`.
 
 Time: 2h
-Cost: $35.38
+Cost: Opus 5 — $35.38
 
 ## 2026-08-31
 

@@ -37,6 +37,7 @@ type adminHousehold struct {
 	AdminNote             string       `json:"admin_note"`
 	TransportSeatsNeeded  int          `json:"transport_seats_needed"`
 	TransportSeatsOffered int          `json:"transport_seats_offered"`
+	TaxiSeatsNeeded       int          `json:"taxi_seats_needed"`
 	HasStroller           bool         `json:"has_stroller"`
 	Members               []adminGuest `json:"members"`
 }
@@ -234,7 +235,7 @@ func TestAdminHouseholdValidationFailuresNameTheirFieldsInGerman(t *testing.T) {
 	assert.Contains(t, envelope.Fields["name"], "Bitte")
 }
 
-// The three fields a household answers have one writer, and it is the RSVP endpoint
+// The four fields a household answers have one writer, and it is the RSVP endpoint
 // that runs the RSVP rules (F5-B05). Sending them here is a caller using the wrong
 // endpoint, and DecodeJSON says so rather than writing them.
 func TestAdminHouseholdWriteRoutesRefuseTheRSVPAnsweredFields(t *testing.T) {
@@ -244,7 +245,9 @@ func TestAdminHouseholdWriteRoutesRefuseTheRSVPAnsweredFields(t *testing.T) {
 	household := seedHousehold(t, app.Database.Write, withName("Familie Müller"))
 	path := fmt.Sprintf("/api/admin/households/%d", household.ID)
 
-	for _, field := range []string{"transport_seats_needed", "transport_seats_offered", "has_stroller"} {
+	for _, field := range []string{
+		"transport_seats_needed", "transport_seats_offered", "taxi_seats_needed", "has_stroller",
+	} {
 		patched := app.patchJSON(path, map[string]any{field: 1})
 		assert.Equalf(t, http.StatusBadRequest, patched.Status, "PATCH with %q", field)
 		assert.Equal(t, "validation_failed", patched.errorEnvelope().Code)
