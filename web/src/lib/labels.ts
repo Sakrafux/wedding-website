@@ -655,7 +655,7 @@ export const startLabels = {
  */
 export const scheduleLabels = {
   heading: "Ablauf",
-  intro: "So ist der Tag geplant. Sobald die Zeiten feststehen, tragen wir sie hier ein.",
+  intro: "",
   /** Which part of the day an entry belongs to, so a guest can see at a glance what
       their own Zusage covers. The timeline is never filtered by it: somebody who nur
       zur Kirche kommt still wants to know that a party happens. */
@@ -664,19 +664,30 @@ export const scheduleLabels = {
   timeOpen: "Uhrzeit steht noch nicht fest",
   entries: [
     {
-      time: null,
+      time: "14:00 - 15:30",
       title: "Trauung",
       detail: "Die kirchliche Trauung – wo genau, steht auf der Seite Location.",
       part: "church",
     },
-    { time: null, title: "Empfang", detail: "Sekt, Zeit zum Ankommen und für Fotos.", part: "party" },
+    { time: "16:00", title: "Empfang", detail: "Zeit zum Ankommen und für Fotos. Es gibt auch Kalte Platte als Vorspeise für den ersten Hunger. Wir machen zu diesem Zeitpunkt noch unsere Hochzeitsfotos.", part: "party" },
+    { time: "17:00", title: "Unsere Ankunft", detail: "Wir würden erwarten zu dieser Zeit fertig mit unseren Hochzeitsfotos zu werden und bei der Feier Location anzukommen", part: "party" },
     {
-      time: null,
+      time: "17:30",
       title: "Abendessen",
-      detail: "Gemeinsames Essen. Was ihr esst, fragen wir im Formular.",
+      detail: "Gemeinsames Essen mit Suppe zum Start, gefolgt von Buffet. Was ihr esst, fragen wir im Formular.",
       part: "party",
     },
-    { time: null, title: "Feier", detail: "Musik, Tanz und später am Abend eine kleine Stärkung.", part: "party" },
+    {
+      time: "18:00",
+      title: "Candy Bar Eröffnung",
+      detail: "Hier könnt ihr euch über den Abend verteilt Nachspeisen holen. Wir rechnen mit ~2 pro Person, also gerne auch mehrmals zugreifen, aber bitte auch den anderen Gästen Zeit geben, sich etwas zu holen.",
+      part: "party",
+    },
+    { time: "18:30 - 22:00", title: "Feier", detail: "Musik, Tanz und Gespräche. Kein strukturiertes Programm, einfach Zeit die Feier zu genießen.", part: "party" },
+    { time: "22:00", title: "Hochzeitstore", detail: "Wir schneiden die Hochzeitstorte an, welche anschließend komplett geschnitten und verteilt wird.", part: "party" },
+    { time: "23:00", title: "Mitternachtssnack", detail: "Eine kleine Stärkung spät am Abend.", part: "party" },
+    { time: "00:00 - 01:00", title: "Ausklang", detail: "Noch ein bisschen Zeit, die Feier ausklingen zu lassen.", part: "party" },
+    { time: "02:00", title: "Sperrstunde", detail: "Spätestens zu diesem Zeitpunkt muss die Location zusperren.", part: "party" },
   ],
 } as const;
 
