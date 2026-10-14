@@ -1,6 +1,6 @@
 # TODO — Remaining Planning Work
 
-Status: as of 2026-10-14 · Building. E0 (setup), F1 (login), F5 (admin households & guests), F3 (RSVP) and F4 (plus-one) are done, and F2 (content) is built; the facts it was waiting for mostly landed 2026-10-11 (dress code, gift wording, bank details, hero photo) and the venues landed 2026-10-14 — the schedule is what still blocks send-out. See [specification/features/README.md](specification/features/README.md). A round of UI feedback on 2026-09-01 added thirteen stories across F3, F4, F5, F2 and F11 — all built the same day.
+Status: as of 2026-10-14 · Building. E0 (setup), F1 (login), F5 (admin households & guests), F3 (RSVP) and F4 (plus-one) are done, and F2 (content) is built; the facts it was waiting for mostly landed 2026-10-11 (dress code, gift wording, bank details, hero photo) and the venues and the schedule landed 2026-10-14 — the proof-read of the F2 copy is what still blocks send-out. See [specification/features/README.md](specification/features/README.md). A round of UI feedback on 2026-09-01 added thirteen stories across F3, F4, F5, F2 and F11 — all built the same day.
 
 This tracks what is left **to plan**, not to build. Build work lives in [specification/features/README.md](specification/features/README.md).
 
@@ -18,7 +18,7 @@ This tracks what is left **to plan**, not to build. Build work lives in [specifi
 
 - [x] Wedding date: **2027-07-17** assumed as the working date. Set by venue availability, so it becomes firm when the venue is booked — expected early September 2026. Alternatives were 07-16, 07-23, 07-24, all within nine days.
 - [x] Church and reception venues — landed 2026-10-14: Trauung in der **Prandtauerkirche St. Pölten**, Feier im **Restaurant Lukić, Wilhelmsburg**. Addresses, arrival prose, departure/hotel text and plain map links are on the three location pages (`locationLabels`); embedded map frames were rejected again while adding them (CSP has no `frame-src`, see `VenueDetail`). `F2-F04` can ship.
-- [ ] Schedule of the day for the Ablauf page. `/ablauf` ships thin, as 07-roadmap allows: four entries (Trauung, Empfang, Abendessen, Feier) with no times, each rendering "Uhrzeit steht noch nicht fest" rather than a guessed one. Entries live in `scheduleLabels`.
+- [x] Schedule of the day for the Ablauf page — landed 2026-10-14 with the venue facts: ten timed entries in `scheduleLabels`, from Trauung 14:00 to Sperrstunde 02:00. The page keeps rendering "Uhrzeit steht noch nicht fest" for any entry that ever lacks a time, and the content test guards that none currently does. Proof-read below still applies.
 - [ ] Room/table layout for the reception, enough to draw the floor-plan SVG.
 - [x] Hotel and pension list for `/location/feier` — landed 2026-10-14 with the venue facts: WALTNER Wilhelmsburg and Gasthof Franzl, plus the advice to keep the car and the bed in St. Pölten (`locationLabels.partyAccommodation`).
 - [x] Dress code wording; gift wishes and bank details — landed 2026-10-11: real copy in `dresscodeLabels` and `giftLabels`, account holder and IBAN in place. The IBAN-pending detection on `/geschenke` stays as the documented way to hide the block again if the value is ever blanked back to the placeholder (`F2-F05`).
@@ -139,4 +139,4 @@ Small things I know are loose, worth a pass before implementation:
 
 ## Miscellaneous
 
-- [ ] On the `/start` page we differentiate between single and multi person households for the greeting singular and plural. However, on the `/willkommen` page, we do not. On that page, only show seeded data and differentiate between singular and plural as well.
+- [x] **du/ihr systematized, 2026-10-14.** The number follows the screen's subject, per the tone rules in [05-design](specification/05-design.md): recognition copy (`/start`, `/willkommen`) uses the number we **seeded** the household in – `/willkommen` now lists seeded members only and speaks in both variants; everything after login addresses the household (plural or neutral); before login and the admin screens address the person typing; the plus-one block is singular because only a household seeded alone ever sees it; validation messages are neutral. `F1-F02` amended and retrofitted, content-page and form copy normalized in `labels.ts`, and the server message table (`respond.go`, `validate.go`) brought onto the same rules.

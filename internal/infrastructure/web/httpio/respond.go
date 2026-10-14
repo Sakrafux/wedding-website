@@ -92,7 +92,7 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// Stays general: the detail belongs at the input, not at the top of the form.
 		// 400 rather than 422 because the frontend decides how to render from the
 		// presence of fields, so a second "invalid input" status consumes nothing.
-		"Bitte prüfe die markierten Felder.",
+		"Bitte die markierten Felder prüfen.",
 	},
 	codeInternal: {
 		http.StatusInternalServerError,
@@ -107,7 +107,7 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// about capitalisation is there because it is the first thing a guest
 		// retries, and retrying the same code in capitals wastes an attempt against
 		// the rate limit for nothing.
-		"Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte — Groß- und Kleinschreibung ist egal.",
+		"Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte – Groß- und Kleinschreibung ist egal.",
 	},
 	domain.CodeInvalidCredentials: {
 		http.StatusUnauthorized,
@@ -128,7 +128,7 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// Named as a state, with the way out stated: the person reading this is a guest
 		// whose plans changed, and the phone call is the actual remedy. 409 rather than
 		// 403 — nothing is wrong with who they are.
-		"Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruf uns bitte kurz an.",
+		"Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruft uns bitte kurz an.",
 	},
 	domain.CodeMemberSetMismatch: {
 		http.StatusConflict,
@@ -144,13 +144,13 @@ var errorResponses = map[domain.ErrorCode]errorResponse{
 		// rule was hit — the guest's next step is the same either way, and naming the
 		// rule would describe a household this caller cannot see. 409 rather than 403:
 		// nothing is wrong with who they are.
-		"Weitere Personen tragen wir gern für euch ein — ruf uns bitte kurz an: +43 650 9408100.",
+		"Weitere Personen tragen wir gern für euch ein – ruft uns bitte kurz an: +43 650 9408100.",
 	},
 	domain.CodeCannotRemoveMember: {
 		http.StatusConflict,
 		// Names the actual remedy: the guest's goal is to say somebody is not coming,
 		// and the form can do exactly that.
-		"Diese Person haben wir eingetragen. Wenn sie nicht kommt, wähl bitte «Kommt nicht» aus.",
+		"Diese Person haben wir eingetragen. Wenn sie nicht kommt, wählt bitte «Kommt nicht» aus.",
 	},
 	domain.CodeUnauthenticated: {
 		http.StatusUnauthorized,

@@ -21,16 +21,19 @@ This screen exists for exactly one failure: two valid codes differing by one cha
 
 ## Instructions
 
-1. Headline names the household: "Willkommen, Hans & Erika — seid ihr das?" Use `household.addressee` from the login response — the internal `household.name` is not in it.
-2. List the known members by first name underneath. Two households with adjacent codes will almost never have the same member names, so the list is what actually catches the error; the household name alone can be ambiguous ("Familie Müller" twice is entirely plausible).
-3. Two clear actions, equal weight, both large: **"Ja, das sind wir"** → continue. **"Nein"** → call logout, return to `/`, and show a calm message: "Kein Problem — bitte prüf den Code noch einmal."
-4. The "No" path must actually log out server-side, not merely navigate. A session left behind is the bug this screen is meant to prevent.
-5. Shown **once per login**, not on every visit. Persist the acknowledgement client-side; a year-long session should not ask this daily.
-6. No third option, no "remind me later". Two buttons.
+1. Headline names the household: "Willkommen, Hans & Erika – seid ihr das?" Use `household.addressee` from the login response — the internal `household.name` is not in it.
+2. The number follows the **seeded** member count, like `/start` (`F2-F08`): "Willkommen, Franz – bist du das?" and "Ja, das bin ich" for a household we invited alone. A companion the household added itself does not flip it — we wrote the card to one person, and they are still that person.
+3. List the **seeded** members underneath. Two households with adjacent codes will almost never have the same member names, so the list is what actually catches the error; the household name alone can be ambiguous ("Familie Müller" twice is entirely plausible). A guest-added companion stays off the list: the screen confirms the identity we printed on the card, and the companion is an answer, not part of that identity.
+4. Two clear actions, equal weight, both large: **"Ja, das sind wir"** / **"Ja, das bin ich"** → continue. **"Nein"** → call logout, return to `/`, and show a calm message: "Kein Problem – bitte prüf den Code noch einmal."
+5. The "No" path must actually log out server-side, not merely navigate. A session left behind is the bug this screen is meant to prevent.
+6. Shown **once per login**, not on every visit. Persist the acknowledgement client-side; a year-long session should not ask this daily.
+7. No third option, no "remind me later". Two buttons.
 
 ## Test plan
 
 - [ ] Component: renders the household name and member first names from the API response.
+- [ ] Component: a household seeded with one renders "bist du das?" and "Ja, das bin ich".
+- [ ] Component: a guest-added companion stays off the member list and off the number – the screen still asks "bist du das?".
 - [ ] Component: "Ja" routes onward and does not show again on the next visit.
 - [ ] Integration/manual: "Nein" clears the session — `/api/me` afterwards is 401.
 - [ ] Component: a household with one member renders sensibly (no empty list, no "und" dangling).

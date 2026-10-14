@@ -110,9 +110,9 @@ describe("the admin RSVP page", () => {
       body: {
         error: {
           code: "validation_failed",
-          message: "Bitte prüfe die markierten Felder.",
+          message: "Bitte die markierten Felder prüfen.",
           request_id: "TESTID1",
-          fields: { "members.31.age": "Bitte gib ein Alter zwischen 0 und 17 Jahren an." },
+          fields: { "members.31.age": "Bitte ein Alter zwischen 0 und 17 Jahren angeben." },
         },
       },
     });
@@ -124,7 +124,7 @@ describe("the admin RSVP page", () => {
     );
     await user.click(screen.getByRole("button", { name: "Speichern" }));
 
-    expect(await screen.findByText("Bitte gib ein Alter zwischen 0 und 17 Jahren an.")).toBeInTheDocument();
-    expect(card("Emil Müller").getByText("Bitte gib ein Alter zwischen 0 und 17 Jahren an.")).toBeInTheDocument();
+    expect(await screen.findByText("Bitte ein Alter zwischen 0 und 17 Jahren angeben.")).toBeInTheDocument();
+    expect(card("Emil Müller").getByText("Bitte ein Alter zwischen 0 und 17 Jahren angeben.")).toBeInTheDocument();
   });
 });

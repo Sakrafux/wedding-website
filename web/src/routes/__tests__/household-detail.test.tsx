@@ -112,9 +112,9 @@ describe("admin household detail", () => {
       body: {
         error: {
           code: "validation_failed",
-          message: "Bitte prüfe die markierten Felder.",
+          message: "Bitte die markierten Felder prüfen.",
           request_id: "TESTID1",
-          fields: { name: "Bitte fülle dieses Feld aus." },
+          fields: { name: "Bitte dieses Feld ausfüllen." },
         },
       },
     });
@@ -127,7 +127,7 @@ describe("admin household detail", () => {
     await user.clear(household.getByLabelText("Haushalt"));
     await user.click(household.getByRole("button", { name: "Speichern" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Bitte fülle dieses Feld aus.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Bitte dieses Feld ausfüllen.");
   });
 
   // Eighty guests entered four at a time is the actual workload.

@@ -166,9 +166,13 @@ describe("the RSVP form", () => {
     const { user } = await openForm();
     const direction = within(screen.getByRole("radiogroup", { name: /Fahrt aus/ }));
 
-    // Nothing needed is the default, and it asks for no count at all.
+    // Nothing needed is the default, and the shuttle asks for no count at all —
+    // the taxi question counts from zero and is on screen from the start, so the
+    // absent stepper is the shuttle's, matched by its own label.
     expect(direction.getByRole("radio", { name: /Wir brauchen nichts/ })).toBeChecked();
-    expect(screen.queryByRole("button", { name: /Einen mehr/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Einen mehr: Wie viele Plätze braucht ihr\?/ }),
+    ).not.toBeInTheDocument();
 
     await user.click(direction.getByRole("radio", { name: /Wir bräuchten Plätze/ }));
     expect(screen.getByRole("button", { name: /Einen mehr: Wie viele Plätze braucht ihr\?/ })).toBeInTheDocument();
@@ -454,7 +458,7 @@ describe("the RSVP form", () => {
     await user.click(card("Anna Müller").getByRole("radio", { name: /Kirche und Feier/ }));
     await user.click(screen.getByRole("button", { name: "Speichern" }));
 
-    expect(screen.getByText("Bitte antworte noch für diese Personen:")).toBeInTheDocument();
+    expect(screen.getByText("Bitte antwortet noch für diese Personen:")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Emil Müller – Antwort fehlt" })).toBeInTheDocument();
     expect(api.calls.some((call) => call.method === "PUT")).toBe(false);
   });
@@ -466,9 +470,9 @@ describe("the RSVP form", () => {
       body: {
         error: {
           code: "validation_failed",
-          message: "Bitte prüfe die markierten Felder.",
+          message: "Bitte die markierten Felder prüfen.",
           request_id: "TESTID1",
-          fields: { "members.31.age": "Bitte gib ein Alter zwischen 0 und 17 Jahren an." },
+          fields: { "members.31.age": "Bitte ein Alter zwischen 0 und 17 Jahren angeben." },
         },
       },
     });
@@ -478,8 +482,8 @@ describe("the RSVP form", () => {
     await user.click(within(screen.getByRole("radiogroup", { name: /Wir kommen zu/ })).getByText("Kirche und Feier"));
     await user.click(screen.getByRole("button", { name: "Speichern" }));
 
-    expect(await screen.findByText("Bitte gib ein Alter zwischen 0 und 17 Jahren an.")).toBeInTheDocument();
-    expect(card("Emil Müller").getByText("Bitte gib ein Alter zwischen 0 und 17 Jahren an.")).toBeInTheDocument();
+    expect(await screen.findByText("Bitte ein Alter zwischen 0 und 17 Jahren angeben.")).toBeInTheDocument();
+    expect(card("Emil Müller").getByText("Bitte ein Alter zwischen 0 und 17 Jahren angeben.")).toBeInTheDocument();
   });
 
   it("offers a reload when the member list changed under the form", async () => {
@@ -510,7 +514,7 @@ describe("the RSVP form", () => {
       apiError(
         409,
         "rsvp_closed",
-        "Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruf uns bitte kurz an.",
+        "Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruft uns bitte kurz an.",
       ),
     );
 

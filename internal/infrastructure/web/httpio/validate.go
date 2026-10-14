@@ -102,20 +102,24 @@ func validateKeyedBy(body any, key func(fieldError validator.FieldError) string)
 // ("required", "max"), and eighty per-field sentences would be eighty strings to
 // proof-read where five do the job. A field that genuinely needs its own wording
 // gets it at the endpoint, not here.
+//
+// The sentences are person-neutral by decision: one sentence serves the login
+// screen, the guest form and the admin form, and the neutral infinitive is the one
+// phrasing that is correct in all three (05-design's tone rules).
 func validationMessage(fieldError validator.FieldError) string {
 	switch fieldError.Tag() {
 	case "required":
-		return "Bitte fülle dieses Feld aus."
+		return "Bitte dieses Feld ausfüllen."
 	case "min":
 		if isNumeric(fieldError) {
-			return fmt.Sprintf("Bitte gib mindestens %s an.", fieldError.Param())
+			return fmt.Sprintf("Bitte mindestens %s angeben.", fieldError.Param())
 		}
-		return fmt.Sprintf("Bitte gib mindestens %s Zeichen ein.", fieldError.Param())
+		return fmt.Sprintf("Bitte mindestens %s Zeichen eingeben.", fieldError.Param())
 	case "max":
 		if isNumeric(fieldError) {
-			return fmt.Sprintf("Bitte gib höchstens %s an.", fieldError.Param())
+			return fmt.Sprintf("Bitte höchstens %s angeben.", fieldError.Param())
 		}
-		return fmt.Sprintf("Bitte gib höchstens %s Zeichen ein.", fieldError.Param())
+		return fmt.Sprintf("Bitte höchstens %s Zeichen eingeben.", fieldError.Param())
 	case "gte":
 		return fmt.Sprintf("Der Wert darf nicht kleiner als %s sein.", fieldError.Param())
 	case "lte":
@@ -126,7 +130,7 @@ func validationMessage(fieldError validator.FieldError) string {
 		// hand-made request, or a frontend bug.
 		return "Dieser Wert ist hier nicht erlaubt."
 	default:
-		return "Bitte prüfe dieses Feld."
+		return "Bitte dieses Feld prüfen."
 	}
 }
 
@@ -162,11 +166,11 @@ func GuestFieldValidationError(err error) error {
 func GuestFieldValidationErrorUnder(prefix string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrEmptyName):
-		return fieldError(prefix+"name", "Bitte gib einen Namen an.")
+		return fieldError(prefix+"name", "Bitte einen Namen angeben.")
 	case errors.Is(err, domain.ErrAgeOnAdult):
 		return fieldError(prefix+"age", "Ein Alter speichern wir nur für Kinder.")
 	case errors.Is(err, domain.ErrAgeOutOfRange):
-		return fieldError(prefix+"age", "Bitte gib ein Alter zwischen 0 und 17 Jahren an.")
+		return fieldError(prefix+"age", "Bitte ein Alter zwischen 0 und 17 Jahren angeben.")
 	case errors.Is(err, domain.ErrSeatingNeedOnAdult):
 		return fieldError(prefix+"seating_need",
 			"Hochstuhl und „sitzt bei den Eltern“ tragen wir nur für Kinder ein.")

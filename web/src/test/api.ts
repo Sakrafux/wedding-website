@@ -36,7 +36,7 @@ export function apiError(status: number, code: string, message: string): StubRes
 export const unknownCode = apiError(
   401,
   "unknown_login_code",
-  "Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte — Groß- und Kleinschreibung ist egal.",
+  "Diesen Code kennen wir nicht. Schau bitte noch mal auf deine Karte – Groß- und Kleinschreibung ist egal.",
 );
 
 export const unauthenticated = apiError(401, "unauthenticated", "Bitte melde dich an.");

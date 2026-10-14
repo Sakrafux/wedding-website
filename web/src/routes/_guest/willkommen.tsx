@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import { confirmationLabels } from "@/lib/labels";
+import { addressFor } from "@/lib/address";
+import { confirmationAddressLabels, confirmationLabels } from "@/lib/labels";
 import { meQueryOptions, rememberHouseholdConfirmed, useLogout } from "@/lib/api/session";
 
 export const Route = createFileRoute("/_guest/willkommen")({
@@ -28,14 +29,20 @@ function ConfirmationPage() {
     return null;
   }
 
+  const copy = confirmationAddressLabels[addressFor(me.members)];
+  // The identity this screen confirms is the one printed on the card: the people
+  // we seeded. A companion the household added itself is an answer, not part of
+  // that identity, so they stay off the list – and off the number (F2-F08).
+  const seededMembers = me.members.filter((member) => member.origin === "seeded");
+
   function confirm() {
     rememberHouseholdConfirmed(me!.household.id);
     void navigate({ to: "/start" });
   }
 
   async function reject() {
-    // Logging out server-side, not merely navigating away. A session left behind
-    // is precisely the bug this screen exists to prevent — the next visit would
+    // Logging out server-side, not merely navigating away. A session left behind is
+    // precisely the bug this screen exists to prevent — the next visit would
     // walk straight back into the wrong household.
     await logout.mutateAsync();
     await navigate({ to: "/", search: { reason: "rejected" } });
@@ -44,16 +51,16 @@ function ConfirmationPage() {
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-4 py-12">
       <header className="flex flex-col gap-3 text-center">
-        <h1 className="text-h1">{confirmationLabels.heading(me.household.addressee)}</h1>
+        <h1 className="text-h1">{copy.heading(me.household.addressee)}</h1>
       </header>
 
       {/* The member list is what actually catches the error: two households with
           adjacent codes will almost never hold the same names, whereas
           "Familie Müller" twice is entirely plausible. */}
       <section className="bg-surface border-line shadow-card flex flex-col gap-2 rounded-xl border p-6">
-        <p className="text-small text-ink-muted">{confirmationLabels.membersIntro}</p>
+        <p className="text-small text-ink-muted">{copy.membersIntro}</p>
         <ul className="flex flex-col gap-1">
-          {me.members.map((member) => (
+          {seededMembers.map((member) => (
             <li key={member.id} className="text-h3">
               {member.name}
             </li>
@@ -66,7 +73,7 @@ function ConfirmationPage() {
           somebody else. */}
       <div className="flex flex-col gap-3">
         <Button size="lg" className="h-14 w-full text-lg" onClick={confirm} disabled={logout.isPending}>
-          {confirmationLabels.confirm}
+          {copy.confirm}
         </Button>
         <Button
           size="lg"

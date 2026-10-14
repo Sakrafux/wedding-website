@@ -175,12 +175,36 @@ export const loginLabels = {
   rejectedHousehold: "Kein Problem – bitte prüf den Code noch einmal.",
 } as const;
 
+/**
+ * The confirmation screen, in both numbers – like `/start`, it greets a
+ * household in the number we seeded it in (`F2-F08`).
+ *
+ * "Nein" is number-neutral, so it lives beside the variants rather than twice
+ * inside them.
+ */
+export const confirmationAddressLabels: Record<
+  Address,
+  {
+    /** Names the household, because the whole screen exists to catch a valid code
+        that belongs to somebody else. */
+    heading: (addressee: string) => string;
+    membersIntro: string;
+    confirm: string;
+  }
+> = {
+  singular: {
+    heading: (addressee) => `Willkommen, ${addressee} – bist du das?`,
+    membersIntro: "So haben wir dich notiert:",
+    confirm: "Ja, das bin ich",
+  },
+  plural: {
+    heading: (addressee) => `Willkommen, ${addressee} – seid ihr das?`,
+    membersIntro: "So haben wir euch notiert:",
+    confirm: "Ja, das sind wir",
+  },
+};
+
 export const confirmationLabels = {
-  /** Names the household, because the whole screen exists to catch a valid code
-      that belongs to somebody else. */
-  heading: (householdName: string) => `Willkommen, ${householdName} – seid ihr das?`,
-  membersIntro: "So haben wir euch notiert:",
-  confirm: "Ja, das sind wir",
   reject: "Nein",
 } as const;
 
@@ -229,7 +253,7 @@ export const rsvpLabels = {
 
   householdScopeHeading: "Wir kommen zu:",
   householdScopeHelp:
-    "Das setzt die Antwort für alle Personen unten auf einmal. Danach kannst du einzelne Personen noch ändern.",
+    "Das setzt die Antwort für alle Personen unten auf einmal. Danach könnt ihr einzelne Personen noch ändern.",
   /** Shown instead of a lit-up option once the cards disagree: a selector that stayed
       lit while the cards said something else would be a lie about what gets saved. */
   householdScopeMixed: "Ihr habt unterschiedliche Antworten – siehe unten.",
@@ -252,12 +276,12 @@ export const rsvpLabels = {
   memberNameHelp: "So steht der Name in der Liste. Bitte den vollständigen Namen angeben.",
   memberScopeLabel: (name: string) => `Wozu kommt ${name}?`,
   memberScopeHelp:
-    "Kirche und Feier sind getrennt – manche kommen nur zur Trauung oder nur zum Fest. Wähl aus, was für diese Person passt.",
+    "Kirche und Feier sind getrennt – manche kommen nur zur Trauung oder nur zum Fest. Wählt aus, was für diese Person passt.",
   mealChoiceLabel: (name: string) => `Was isst ${name}?`,
   mealChoiceHelp: "Wir geben dem Catering nur die Zahlen weiter, keine Namen. „Isst alles“ heißt: kein Sonderwunsch.",
   portionLabel: (name: string) => `Portion für ${name}`,
   portionHelp:
-    "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra – sag ruhig, was wirklich passt.",
+    "Kinderportionen sind kleiner, „Kein Essen“ ist für Babys oder wenn jemand nicht mitisst. Beides kostet uns nichts extra – sagt ruhig, was wirklich passt.",
   midnightSnackLabel: (name: string) => `Mitternachtssnack für ${name}`,
   midnightSnackHelp: "Spät am Abend gibt es noch eine kleine Stärkung. Wir müssen vorher wissen, für wie viele.",
   midnightSnackHint: "Kleine Stärkung spät am Abend",
@@ -301,7 +325,7 @@ export const rsvpLabels = {
   strollerHelp:
     "Ein Kinderwagen braucht Platz zum Abstellen, keinen Sitzplatz. Deshalb fragen wir das einmal für den ganzen Haushalt.",
 
-  noteHeading: "Willst du uns noch etwas sagen?",
+  noteHeading: "Wollt ihr uns noch etwas sagen?",
   noteLabel: "Nachricht an uns",
   noteHelp:
     "Alles, wonach das Formular nicht fragt. Wir lesen jede Nachricht – eine Antwort hier im Formular gibt es aber nicht.",
@@ -311,24 +335,27 @@ export const rsvpLabels = {
 
   /* F4 – the plus-one. Phrased as the question it answers rather than as an
      administrative option: for a guest invited alone it is the most consequential
-     thing on this page. */
+     thing on this page. Singular throughout, except the unavailable notice at the
+     end: only a household we seeded alone ever sees the rest, so "du" is the
+     number we invited them in (F2-F08) – every other household reads the notice
+     in the plural. */
   addPlusOneTrigger: "Kommst du zu zweit? Begleitung hinzufügen",
   addPlusOneHeading: "Begleitung hinzufügen",
   addPlusOneBody: "Trag die Person ein, die mit dir kommt. Wozu sie kommt, fragen wir gleich darunter im Formular.",
   addPlusOneNameLabel: "Name der Begleitung",
   addPlusOneNameHelp:
-    "Gemeint ist eine erwachsene Person, die mit dir kommt. Kinder und weitere Gäste tragen wir gern für euch ein – ruf uns dazu bitte kurz an.",
+    "Gemeint ist eine erwachsene Person, die mit dir kommt. Kinder und weitere Gäste tragen wir gern für dich ein – ruf uns dazu bitte kurz an.",
   addPlusOneSubmit: "Hinzufügen",
   addPlusOneSubmitting: "Wird hinzugefügt …",
   /** Says both things: the person is on the list, and the form still has to be
       answered and saved. The asymmetry is real, so the copy names it. */
   addPlusOneAdded: (name: string) =>
-    `${name} steht jetzt auf eurer Liste. Sag uns unten noch, wozu ${name} kommt, und speichere das Formular.`,
+    `${name} steht jetzt auf deiner Liste. Sag uns unten noch, wozu ${name} kommt, und speichere das Formular.`,
   /** Shown in place of the trigger for every household that may not add – which is
       most of them. An offer, not a refusal: the answer is yes, we just want to hear
       the Personenzahl. */
   plusOneUnavailable: "Weitere Personen tragen wir gern für euch ein.",
-  plusOneUnavailableCall: "Ruf uns dazu bitte kurz an:",
+  plusOneUnavailableCall: "Ruft uns dazu bitte kurz an:",
 
   /** "entfernen", never "löschen": it is a soft delete and the German should not
       promise otherwise. Same wording as the admin screen (F5-F02). */
@@ -336,7 +363,7 @@ export const rsvpLabels = {
   removeMemberAccessibleName: (name: string) => `${name} entfernen`,
   removeMemberConfirmTitle: "Person entfernen?",
   removeMemberConfirmBody: (name: string) =>
-    `${name} wird von eurer Liste genommen. Danach könnt ihr wieder jemanden hinzufügen.`,
+    `${name} wird von deiner Liste genommen. Danach kannst du wieder jemanden hinzufügen.`,
   removeMemberConfirmAction: "Ja, entfernen",
   removeMemberFailedHeading: "Das Entfernen hat nicht geklappt",
 
@@ -344,7 +371,7 @@ export const rsvpLabels = {
   submitting: "Wird gespeichert …",
   /** Named at the top of the form and linking to each card, so a household with one
       missing answer does not have to hunt for it. */
-  missingAnswersHeading: "Bitte antworte noch für diese Personen:",
+  missingAnswersHeading: "Bitte antwortet noch für diese Personen:",
   missingAnswerLink: (name: string) => `${name} – Antwort fehlt`,
   saveFailedHeading: "Das Speichern hat nicht geklappt",
   reload: "Neu laden",
@@ -368,13 +395,13 @@ export const rsvpLabels = {
   summaryNote: "Nachricht an uns",
   summaryNothing: "–",
   changeAnswer: "Antwort ändern",
-  changeableUntil: (date: string) => `Ändern kannst du das noch bis zum ${date}.`,
+  changeableUntil: (date: string) => `Ändern könnt ihr das noch bis zum ${date}.`,
 
   closedHeading: "Die Rückmeldefrist ist vorbei",
   closedBody: (date: string) =>
-    `Am ${date} haben wir die Zahlen ans Catering weitergegeben. Das ist, was wir notiert haben – wenn sich etwas geändert hat, ruf uns bitte kurz an:`,
+    `Am ${date} haben wir die Zahlen ans Catering weitergegeben. Das ist, was wir notiert haben – wenn sich etwas geändert hat, ruft uns bitte kurz an:`,
   closedNothingRecorded:
-    "Von euch haben wir keine Rückmeldung. Die Frist ist vorbei, aber ruf uns bitte trotzdem an – wir tragen es dann ein:",
+    "Von euch haben wir keine Rückmeldung. Die Frist ist vorbei, aber ruft uns bitte trotzdem an – wir tragen es dann ein:",
 } as const;
 
 /**
@@ -587,7 +614,7 @@ export const navLabels = {
 
 export const moreLabels = {
   heading: "Mehr",
-  intro: "Alles Weitere zur Hochzeit – und wie du uns erreichst.",
+  intro: "Alles Weitere zur Hochzeit – und wie ihr uns erreicht.",
 } as const;
 
 /**
@@ -669,8 +696,20 @@ export const scheduleLabels = {
       detail: "Die kirchliche Trauung – wo genau, steht auf der Seite Location.",
       part: "church",
     },
-    { time: "16:00", title: "Empfang", detail: "Zeit zum Ankommen und für Fotos. Es gibt auch Kalte Platte als Vorspeise für den ersten Hunger. Wir machen zu diesem Zeitpunkt noch unsere Hochzeitsfotos.", part: "party" },
-    { time: "17:00", title: "Unsere Ankunft", detail: "Wir würden erwarten zu dieser Zeit fertig mit unseren Hochzeitsfotos zu werden und bei der Feier Location anzukommen", part: "party" },
+    {
+      time: "16:00",
+      title: "Empfang",
+      detail:
+        "Zeit zum Ankommen und für Fotos. Es gibt auch Kalte Platte als Vorspeise für den ersten Hunger. Wir machen zu diesem Zeitpunkt noch unsere Hochzeitsfotos.",
+      part: "party",
+    },
+    {
+      time: "17:00",
+      title: "Unsere Ankunft",
+      detail:
+        "Wir würden erwarten zu dieser Zeit fertig mit unseren Hochzeitsfotos zu werden und bei der Feier Location anzukommen",
+      part: "party",
+    },
     {
       time: "17:30",
       title: "Abendessen",
@@ -680,14 +719,35 @@ export const scheduleLabels = {
     {
       time: "18:00",
       title: "Candy Bar Eröffnung",
-      detail: "Hier könnt ihr euch über den Abend verteilt Nachspeisen holen. Wir rechnen mit ~2 pro Person, also gerne auch mehrmals zugreifen, aber bitte auch den anderen Gästen Zeit geben, sich etwas zu holen.",
+      detail:
+        "Hier könnt ihr euch über den Abend verteilt Nachspeisen holen. Wir rechnen mit ~2 pro Person, also gerne auch mehrmals zugreifen, aber bitte auch den anderen Gästen Zeit geben, sich etwas zu holen.",
       part: "party",
     },
-    { time: "18:30 - 22:00", title: "Feier", detail: "Musik, Tanz und Gespräche. Kein strukturiertes Programm, einfach Zeit die Feier zu genießen.", part: "party" },
-    { time: "22:00", title: "Hochzeitstore", detail: "Wir schneiden die Hochzeitstorte an, welche anschließend komplett geschnitten und verteilt wird.", part: "party" },
+    {
+      time: "18:30 - 22:00",
+      title: "Feier",
+      detail: "Musik, Tanz und Gespräche. Kein strukturiertes Programm, einfach Zeit die Feier zu genießen.",
+      part: "party",
+    },
+    {
+      time: "22:00",
+      title: "Hochzeitstore",
+      detail: "Wir schneiden die Hochzeitstorte an, welche anschließend komplett geschnitten und verteilt wird.",
+      part: "party",
+    },
     { time: "23:00", title: "Mitternachtssnack", detail: "Eine kleine Stärkung spät am Abend.", part: "party" },
-    { time: "00:00 - 01:00", title: "Ausklang", detail: "Noch ein bisschen Zeit, die Feier ausklingen zu lassen.", part: "party" },
-    { time: "02:00", title: "Sperrstunde", detail: "Spätestens zu diesem Zeitpunkt muss die Location zusperren.", part: "party" },
+    {
+      time: "00:00 - 01:00",
+      title: "Ausklang",
+      detail: "Noch ein bisschen Zeit, die Feier ausklingen zu lassen.",
+      part: "party",
+    },
+    {
+      time: "02:00",
+      title: "Sperrstunde",
+      detail: "Spätestens zu diesem Zeitpunkt muss die Location zusperren.",
+      part: "party",
+    },
   ],
 } as const;
 
@@ -732,18 +792,18 @@ export const locationLabels = {
   /** One entry per rendered paragraph. */
   churchArrival: [
     "In der Nähe der Prandtauerkirche gibt es mehrere Parkgaragen. Die Tiefgarage Rathausplatz liegt direkt bei der Kirche, könnte am Samstag Nachmittag aber stark gefüllt sein.",
-    "Falls du öffentlich kommst, liegt die Kirche nur wenige Gehminuten vom Bahnhof entfernt und ist somit sowohl an Busse als auch Züge gut angebunden.",
+    "Falls ihr öffentlich kommt, liegt die Kirche nur wenige Gehminuten vom Bahnhof entfernt und ist somit sowohl an Busse als auch Züge gut angebunden.",
   ],
   partyArrival: [
     "Prinzipiell gibt es einen Parkplatz direkt angrenzend an den Saal. Ansonsten gibt es auch viele gratis Parkplätze entlang der Straßen im Ortsgebiet.",
-    "Falls du öffentlich kommst, fährt die Traisentalbahn zum Bahnhof Wilhelmsburg (ca. 400 m entfernt).",
+    "Falls ihr öffentlich kommt, fährt die Traisentalbahn zum Bahnhof Wilhelmsburg (ca. 400 m entfernt).",
   ],
   departureHeading: "Abreise",
   /** On the party page, not the overview: it is the trip the evening ends with, and
       it is where the taxi question below points back at the RSVP. */
   partyDeparture: [
     "Für die Abreise ohne eigenes Auto bieten sich entweder Öffis oder Taxis an. Der genaue Zeitplan ist derzeit noch unklar aufgrund von Schienenersatzverkehr, aber zumindest um ca. 22:30 sollte eine späte Verbindung sein (potentiell auch später).",
-    "Ansonsten würde es sich auch anbieten, gemeinsam mit dem Taxi zu fahren. Gib deshalb bei deiner Antwort an, ob du einen Platz benötigst, damit wir eine ungefähre Zahl haben.",
+    "Ansonsten würde es sich auch anbieten, gemeinsam mit dem Taxi zu fahren. Gebt deshalb bei eurer Antwort an, wie viele Plätze ihr benötigt, damit wir eine ungefähre Zahl haben.",
   ],
   /** On the party page, not the overview: somebody looking for a bed is looking for
       one near where the evening ends. */
@@ -756,7 +816,7 @@ export const locationLabels = {
       and it is the paragraph a guest reads before answering the transport question. */
   transferHeading: "Von der Kirche zur Feier",
   transfer:
-    "Zwischen Kirche und Feier liegt eine kurze Fahrt von 15–20 Minuten. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden – sag uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
+    "Zwischen Kirche und Feier liegt eine kurze Fahrt von 15–20 Minuten. Ob wir einen Shuttle organisieren, hängt davon ab, wie viele Plätze gebraucht werden – sagt uns im Antwortformular, ob ihr Plätze braucht oder welche anbieten könnt.",
   backToOverview: "Zurück zu Location & Anreise",
 } as const;
 
@@ -781,12 +841,12 @@ export const dresscodeLabels = {
  */
 export const giftLabels = {
   heading: "Geschenke",
-  lead: "Das größte Geschenk ist, dass du da bist.",
-  body: "Trotzdem würden wir uns über etwas freuen. Zwischen der Hochzeit selbst, den anschließenden Flitterwochen oder den Einzug in unsere erste gemeinsame Wohnung, haben wir einige Kosten zu stemmen. Wir schätzen jegliche Beteiligung, idealerweise monetär. Du kannst trotzdem gerne auch andere, kleine Geschenke mitbringen, um einen persönlichen Touch beizubehalten.",
+  lead: "Das größte Geschenk ist, dass ihr da seid.",
+  body: "Trotzdem würden wir uns über etwas freuen. Zwischen der Hochzeit selbst, den anschließenden Flitterwochen oder den Einzug in unsere erste gemeinsame Wohnung, haben wir einige Kosten zu stemmen. Wir schätzen jegliche Beteiligung, idealerweise monetär. Ihr könnt trotzdem gerne auch andere, kleine Geschenke mitbringen, um einen persönlichen Touch beizubehalten.",
   body2:
-    "Grundsätzlich wollen wir uns nicht den großen Stress machen, eine umfangreiche Geschenkeliste aufzustellen, die damit einhergehende Logistik bei und nach der Hochzeit, sowie Sorgen um die Fairness allen Gästen gegenüber. Gib einfach, was du für angebracht hältst – wir können es auf jeden Fall gut gebrauchen :)",
+    "Grundsätzlich wollen wir uns nicht den großen Stress machen, eine umfangreiche Geschenkeliste aufzustellen, die damit einhergehende Logistik bei und nach der Hochzeit, sowie Sorgen um die Fairness allen Gästen gegenüber. Gebt einfach, was ihr für angebracht haltet – wir können es auf jeden Fall gut gebrauchen :)",
   accountHeading: "Bankverbindung",
-  accountText: "Falls du nicht mit Bargeld hantieren möchtest, kannst du auch direkt überweisen.",
+  accountText: "Falls ihr nicht mit Bargeld hantieren möchtet, könnt ihr auch direkt überweisen.",
   accountHolderLabel: "Kontoinhaber",
   accountHolder: "Andreas Hell",
   ibanLabel: "IBAN",
@@ -800,10 +860,10 @@ export const giftLabels = {
 
 export const contactLabels = {
   heading: "Kontakt",
-  intro: "Ruf einfach an – wir sind beide erreichbar.",
+  intro: "Ruft einfach an – wir sind beide erreichbar.",
   codeHelpHeading: "Wenn der Code nicht funktioniert",
   codeHelp:
-    "Der Code steht auf eurer Einladungskarte, sechs Zeichen, Groß- und Kleinschreibung egal. Klappt es nicht, ruf uns an: wir sagen dir den Code am Telefon oder tragen eure Antwort gleich selbst ein.",
+    "Der Code steht auf eurer Einladungskarte, sechs Zeichen, Groß- und Kleinschreibung egal. Klappt es nicht, ruft uns an: wir sagen euch den Code am Telefon oder tragen eure Antwort gleich selbst ein.",
 } as const;
 
 /**
@@ -836,6 +896,6 @@ export const privacyLabels = {
     "Die Seite geht ungefähr drei Monate nach der Hochzeit offline, und die Daten gehen mit ihr. Was wir behalten, ist eine private Kopie für uns selbst – so, wie man ein Gästebuch behält.",
   rightsHeading: "Ändern oder löschen",
   rights:
-    "Ruf uns an oder schreib uns, dann ändern oder löschen wir es. Kein Formular, kein Verfahren – bei achtzig Gästen ist ein Anruf schneller als alles andere.",
+    "Ruft uns an oder schreibt uns, dann ändern oder löschen wir es. Kein Formular, kein Verfahren – bei achtzig Gästen ist ein Anruf schneller als alles andere.",
   contactLink: "Zum Kontakt",
 } as const;

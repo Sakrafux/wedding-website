@@ -174,7 +174,7 @@ describe("admin household list", () => {
     stubApi({
       "GET /api/admin/me": ok(adminSession),
       "GET /api/admin/households": householdList(),
-      "POST /api/admin/households": apiError(400, "validation_failed", "Bitte prüfe die markierten Felder."),
+      "POST /api/admin/households": apiError(400, "validation_failed", "Bitte die markierten Felder prüfen."),
     });
 
     const { user } = await renderApp("/admin/haushalte");
@@ -182,7 +182,7 @@ describe("admin household list", () => {
     await user.type(await screen.findByLabelText("Name des Haushalts"), "x");
     await user.click(screen.getByRole("button", { name: "Anlegen" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Bitte prüfe die markierten Felder.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Bitte die markierten Felder prüfen.");
   });
 
   // An admin whose eight hours ran out mid-edit must not land on "Gib den Code von

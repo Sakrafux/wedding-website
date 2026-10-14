@@ -123,7 +123,7 @@ Built on shadcn/ui (Radix primitives, copied into the repo).
 | Component | Purpose |
 |---|---|
 | `CodeInput` | Login. Big monospaced-feel field, auto-uppercase, strips whitespace and dashes as you type, so the value in the field is the value that gets sent. The card prints the code ungrouped (`ABC234`), which is what removed the dash problem rather than solving it. `inputmode="text"` `autocapitalize="characters"`, no autocorrect. The hint sits outside the field, never as a placeholder. |
-| `HouseholdConfirmCard` | "Willkommen, Familie Müller — bist das du?" with a clear "Nein, zurück". |
+| `HouseholdConfirmCard` | "Willkommen, Familie Müller – seid ihr das?" with a clear "Nein". du/ihr by the seeded number (`F2-F08`). |
 | `HeroSection` | Photo, names, date, countdown. |
 | `CountdownBadge` | Days until the wedding. Hidden after the day. |
 | `ScheduleTimeline` | Ablauf as a vertical timeline. |
@@ -240,6 +240,9 @@ The one and only mapping from English enum values to German UI text. Lives at `w
 
 - Informal **du** throughout, including error messages. Never mix registers on one screen.
 - Prefer neutral phrasing where it reads naturally ("Bitte bis zum 1. Mai zurückmelden") so the register is less conspicuous to older relatives, but do not contort a sentence to avoid `du`.
+- **The number follows the screen's subject, not a global choice.** Before login the copy addresses the person typing – singular, one person holds the phone. After login it addresses the household – plural or neutral, which is the number the invitation's shared text must use anyway. The admin screens are singular: there is exactly one admin.
+- **The greeting moments are the exception:** `/start` and `/willkommen` use the number we **seeded** the household with (`F2-F08`), because the card was printed for those people and a companion the household added is an answer, not a change of who we wrote to. Both variants are written out as a `Record<"singular" | "plural", …>` in `labels.ts` – German does not conjugate by find-and-replace. The plus-one block (`F4-F01`) is singular throughout for the same reason: only a household we seeded alone ever sees it.
+- A sentence about one member ("Was isst Anna?") conjugates with its subject – agreement, not address. Validation messages stay person-neutral: one sentence serves the login screen, the guest form and the admin form, and neutral infinitive phrasing is the one register that fits all three.
 - Gender-neutral where it costs nothing (`Gäste`, `Personen`); no forced constructions in decorative copy.
 - Short sentences. No jargon: never "RSVP", "Session", "Account", "Login-Code" → use "Zusagen", "angemeldet", "dein Code".
 - The Gedankenstrich is an **en-dash with spaces** (` – `), never an em-dash — German typographic convention. `labels.ts` was normalized to this on 2026-10-11.

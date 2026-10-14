@@ -24,7 +24,7 @@ func TestRSVPWriteIsRefusedAfterTheDeadline(t *testing.T) {
 	envelope := response.errorEnvelope()
 	assert.Equal(t, "rsvp_closed", envelope.Code)
 	assert.Equal(t,
-		"Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruf uns bitte kurz an.",
+		"Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruft uns bitte kurz an.",
 		envelope.Message)
 
 	stored := app.get("/api/rsvp").rsvp()

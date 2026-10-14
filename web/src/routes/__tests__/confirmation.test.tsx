@@ -20,14 +20,44 @@ describe("household confirmation", () => {
     expect(screen.getByText("Emil Müller")).toBeInTheDocument();
   });
 
+  // The number we seeded the household in, like /start (F2-F08).
   it("renders a single-member household without a dangling list", async () => {
     stubApi({
-      "GET /api/me": ok(bootstrap({ members: [{ id: 30, name: "Anna Müller", kind: "adult", origin: "seeded" }] })),
+      "GET /api/me": ok(
+        bootstrap({
+          household: { id: 12, addressee: "Franz Huber" },
+          members: [{ id: 30, name: "Franz Huber", kind: "adult", origin: "seeded" }],
+        }),
+      ),
     });
 
     await renderApp("/willkommen");
 
+    expect(screen.getByRole("heading")).toHaveTextContent("Willkommen, Franz Huber – bist du das?");
+    expect(screen.getByRole("button", { name: "Ja, das bin ich" })).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  // The identity this screen confirms is the one printed on the card: a companion
+  // the household added itself is an answer, not part of it.
+  it("keeps a guest-added companion off the list and off the number", async () => {
+    stubApi({
+      "GET /api/me": ok(
+        bootstrap({
+          household: { id: 12, addressee: "Franz Huber" },
+          members: [
+            { id: 30, name: "Franz Huber", kind: "adult", origin: "seeded" },
+            { id: 44, name: "Isabella Michelbacher", kind: "adult", origin: "guest_added" },
+          ],
+        }),
+      ),
+    });
+
+    await renderApp("/willkommen");
+
+    expect(screen.getByRole("heading")).toHaveTextContent("Willkommen, Franz Huber – bist du das?");
+    expect(screen.getByText("Franz Huber")).toBeInTheDocument();
+    expect(screen.queryByText("Isabella Michelbacher")).not.toBeInTheDocument();
   });
 
   it("continues on 'Ja' and does not ask again", async () => {

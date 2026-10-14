@@ -85,7 +85,7 @@ func TestASecondPlusOneIsRefused(t *testing.T) {
 	envelope := response.errorEnvelope()
 	assert.Equal(t, "plus_one_not_allowed", envelope.Code)
 	assert.Equal(t,
-		"Weitere Personen tragen wir gern für euch ein — ruf uns bitte kurz an: +43 650 9408100.",
+		"Weitere Personen tragen wir gern für euch ein – ruft uns bitte kurz an: +43 650 9408100.",
 		envelope.Message)
 	assert.Len(t, app.get("/api/rsvp").rsvp().Members, 2, "nothing may be written")
 }
@@ -245,7 +245,7 @@ func TestASeededMemberCannotBeRemoved(t *testing.T) {
 	envelope := response.errorEnvelope()
 	assert.Equal(t, "cannot_remove_member", envelope.Code)
 	assert.Equal(t,
-		"Diese Person haben wir eingetragen. Wenn sie nicht kommt, wähl bitte «Kommt nicht» aus.",
+		"Diese Person haben wir eingetragen. Wenn sie nicht kommt, wählt bitte «Kommt nicht» aus.",
 		envelope.Message)
 	assert.Nil(t, deletedAt(t, app, household.Guests[0].ID))
 }

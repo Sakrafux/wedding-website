@@ -4,10 +4,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import heroPhotoJpg from "@/assets/hero.jpg";
 import heroPhotoWebp from "@/assets/hero.webp";
 import { Button } from "@/components/ui/button";
+import { addressFor } from "@/lib/address";
 import { rsvpQueryOptions } from "@/lib/api/rsvp";
 import { meQueryOptions } from "@/lib/api/session";
 import { formatShortDate } from "@/lib/dates";
-import { type Address, startAddressLabels, startLabels } from "@/lib/labels";
+import { startAddressLabels, startLabels } from "@/lib/labels";
 import { daysUntilWedding, weddingDateLong } from "@/lib/wedding";
 
 export const Route = createFileRoute("/_guest/_chrome/start")({
@@ -69,17 +70,6 @@ function StartPage() {
       </div>
     </div>
   );
-}
-
-/**
- * Singular or plural, from the people we seeded into the household.
- *
- * `origin === "seeded"` and not the current member count: a guest invited alone who
- * adds a companion is still the person we wrote to, and switching to "ihr" the moment
- * they name somebody reads as the site correcting them (F2-F08).
- */
-function addressFor(members: { origin: string }[]): Address {
-  return members.filter((member) => member.origin === "seeded").length > 1 ? "plural" : "singular";
 }
 
 /**

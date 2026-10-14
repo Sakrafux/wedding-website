@@ -301,7 +301,7 @@ describe("the start page", () => {
 });
 
 describe("the content pages", () => {
-  it("renders the schedule in order, and says so when a time is not fixed", async () => {
+  it("renders the schedule in order, with a time on every entry", async () => {
     stubGuest();
 
     await renderApp("/ablauf");
@@ -310,10 +310,19 @@ describe("the content pages", () => {
     expect(entries.map((item) => item.querySelector("h2")?.textContent)).toEqual([
       "Trauung",
       "Empfang",
+      "Unsere Ankunft",
       "Abendessen",
+      "Candy Bar Eröffnung",
       "Feier",
+      "Hochzeitstore",
+      "Mitternachtssnack",
+      "Ausklang",
+      "Sperrstunde",
     ]);
-    expect(screen.getAllByText("Uhrzeit steht noch nicht fest").length).toBe(entries.length);
+    // The schedule landed 2026-10-14, so every entry carries a time. "Uhrzeit
+    // steht noch nicht fest" renders only for an entry without one, and this
+    // guard is what makes an accidentally time-less entry visible in a test.
+    expect(screen.queryByText("Uhrzeit steht noch nicht fest")).not.toBeInTheDocument();
     // The church entry is marked, and the party entries are not hidden from a guest
     // who is only coming to the church.
     expect(within(entries[0] as HTMLElement).getByText("Kirche")).toBeInTheDocument();

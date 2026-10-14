@@ -183,7 +183,7 @@ describe("adding a plus-one", () => {
       "POST /api/rsvp/members": apiError(
         409,
         "plus_one_not_allowed",
-        "Weitere Personen tragen wir gern für euch ein – ruf uns bitte kurz an: +43 650 9408100.",
+        "Weitere Personen tragen wir gern für euch ein – ruft uns bitte kurz an: +43 650 9408100.",
       ),
     });
 
@@ -193,7 +193,7 @@ describe("adding a plus-one", () => {
     await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
 
     const sheet = within(await screen.findByRole("dialog"));
-    expect(await sheet.findByText(/ruf uns bitte kurz an/)).toBeInTheDocument();
+    expect(await sheet.findByText(/ruft uns bitte kurz an/)).toBeInTheDocument();
   });
 
   it("switches the page to the read-only view when the deadline passed while it was open", async () => {
@@ -201,7 +201,7 @@ describe("adding a plus-one", () => {
       "POST /api/rsvp/members": apiError(
         409,
         "rsvp_closed",
-        "Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruf uns bitte kurz an.",
+        "Die Rückmeldefrist ist vorbei. Wenn sich etwas geändert hat, ruft uns bitte kurz an.",
       ),
     });
 
@@ -256,7 +256,7 @@ describe("removing a member", () => {
     await user.click(card("Isabella Michelbacher").getByRole("button", { name: /entfernen/ }));
 
     const confirmation = within(await screen.findByRole("alertdialog"));
-    expect(confirmation.getByText(/Isabella Michelbacher wird von eurer Liste genommen/)).toBeInTheDocument();
+    expect(confirmation.getByText(/Isabella Michelbacher wird von deiner Liste genommen/)).toBeInTheDocument();
 
     // The refetch answers with the household as it now is, plus_one restored.
     api.set("GET /api/rsvp", ok(soloAnswer()));
@@ -274,7 +274,7 @@ describe("removing a member", () => {
       "DELETE /api/rsvp/members/44": apiError(
         409,
         "cannot_remove_member",
-        "Diese Person haben wir eingetragen. Wenn sie nicht kommt, wähl bitte «Kommt nicht» aus.",
+        "Diese Person haben wir eingetragen. Wenn sie nicht kommt, wählt bitte «Kommt nicht» aus.",
       ),
     });
 

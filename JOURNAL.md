@@ -14,15 +14,24 @@ Done:
 - Location pages: venue facts (Prandtauerkirche, Restaurant Lukić) moved into `locationLabels`, pages back on `VenueDetail` (now with address/map/arrival props), the map link extracted as `MapLink`; the broken `transfer` sentence completed; dead placeholder labels deleted. Embedded Google-Maps iframes removed — blocked by the CSP and the recorded rejection in `VenueDetail` (see Decisions).
 - Specs updated for the taxi count: `02-features`, `03-data-model` (column + derived count), `04-architecture` sketch, `05-design` inventory, `06-privacy-security` data table + `privacyLabels.stored`, `CLAUDE.md` transport bullet. `TODO.md`: venues and hotel list ticked, taxi decision recorded, status header current. Prettier pass on the touched files plus `popover.tsx` (pre-existing drift, one class-order line).
 - Suites: Go `gofmt`/`vet`/`test` green; web `typecheck` run, scripts otherwise executed by the user — re-run after this session's later label/test edits before committing.
+- du/ihr systematized end to end: number rules written into `05-design`'s tone section (screen's subject; seeded greeting moments; neutral validation), `HouseholdConfirmCard` inventory line updated.
+- `F1-F02` amended (seeded number, seeded-only member list) and retrofitted: `confirmationAddressLabels` with both variants, `addressFor` extracted to `web/src/lib/address.ts` and shared with `/start`, `/willkommen` lists seeded members only.
+- Copy normalized onto the rules: content pages (`mehr`, location ×4, geschenke ×4, kontakt ×2, datenschutz rights) to plural; RSVP-form strays (scope helps, portion help, note heading, missing-answers heading, changeable-until, closed notices) to plural; plus-one block singular with its reason in the `rsvpLabels` comment; unavailable call plural.
+- Server copy onto the same rules: `respond.go` (three RSVP sentences plural, validation summary neutral, login sentence's dash normalized), `validate.go` validation messages neutral with the reason on `validationMessage`; Go and web test strings updated to match.
+- Two stale tests caught by the user's run, fallout from today's earlier commits, fixed: the schedule test now asserts the ten timed entries ("Uhrzeit steht noch nicht fest" as a guard), the transport test scopes its no-stepper assertion to the shuttle's own label (the taxi stepper is on screen from the start).
+- `TODO.md`: du/ihr item and schedule item ticked with the decisions recorded, status header current. Suites green; web verified by the user (this machine's `pnpm`/`vitest` are broken in WSL — disk I/O plus a missing rolldown native binding).
 
 Decisions:
 
 - **Taxi count is gated on the party scope, not "attends both"** — a party-only guest skips the shuttle trip and still needs the ride home; the server zeroes it otherwise. Reasoning in migration `0007` and `domain/rsvp.go`.
 - **Maps stay plain links** — the iframes added with the venue facts were rejected again: no `frame-src` in the CSP (E0-07), third party in the critical path, guest IPs to Google. Recorded in `VenueDetail` and `05-design.md` (component inventory, `MapLink`).
 - **Taxi is one column, not a needed/offered pair** — nobody offers a seat in a taxi we would have to order. Migration `0007` header, `02-features`.
+- **du/ihr follows the screen's subject** — recognition copy uses the seeded number, everything after login is plural or neutral, before login and admin are singular, the plus-one block is singular, validation is neutral. Rules in `05-design` (tone section); `F1-F02` amended and built.
+- **`/willkommen` confirms the printed identity** — seeded members only, and the verb in the number we seeded. `F1-F02`.
+- **Server validation messages stay neutral** — one sentence serves the login screen, the guest form and the admin form. `validate.go` (on `validationMessage`), `05-design`.
 
-Time: 2h
-Cost: GLM-5.2 — $5.41
+Time: 4h
+Cost: GLM-5.2 — $7.69
 
 ## 2026-10-11
 
